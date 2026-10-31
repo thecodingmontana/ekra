@@ -41,6 +41,8 @@ scripts/    repo scripts (git hooks)
 - **Local first.** Everything must work on a developer machine (`docker compose up` + `pnpm dev`) before anything
   else. No reverse proxy is shipped: in dev, Vite proxies `/api` and `/ws` to the server; in production the operator
   brings their own proxy (Caddy, Nginx, …). No server/deploy setup until we decide to set up a server.
+- **Document every setup step in [SETUP.md](SETUP.md).** A new service, env variable, port or tool updates SETUP.md
+  (and `.env.example`) in the same commit.
 
 - **Biome** formats and lints everything: tabs, double quotes. Run `pnpm check:fix` before committing. No ESLint/Prettier.
 - **TypeScript strict** everywhere; each workspace's `tsconfig.json` extends `tsconfig.base.json`.

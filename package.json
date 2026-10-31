@@ -58,6 +58,10 @@
 		"check": "biome check .",
 		"check:fix": "biome check --write .",
 		"format": "biome format --write .",
+		"services:up": "docker compose --env-file .env -f infra/docker-compose.yml up -d --wait",
+		"services:down": "docker compose --env-file .env -f infra/docker-compose.yml down",
+		"services:logs": "docker compose --env-file .env -f infra/docker-compose.yml logs -f",
+		"services:reset": "docker compose --env-file .env -f infra/docker-compose.yml down -v",
 		"prepare": "lefthook install"
 	},
 	"devDependencies": {

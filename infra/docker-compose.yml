@@ -1,0 +1,39 @@
+# Local development services. Start from the repo root with `pnpm services:up` (see SETUP.md).
+# Host ports default to 5433 / 8334 so they don't clash with a natively installed Postgres or SeaweedFS.
+name: ekra
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-ekra}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  seaweedfs:
+    image: chrislusf/seaweedfs:4.51
+    restart: unless-stopped
+    # One process runs master, volume, filer and the S3 gateway.
+    command: server -dir=/data -s3 -s3.port=8333
+    environment:
+      AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY:?set S3_ACCESS_KEY in .env}
+      AWS_SECRET_ACCESS_KEY: ${S3_SECRET_KEY:?set S3_SECRET_KEY in .env}
+    ports:
+      - "127.0.0.1:${S3_PORT:-8334}:8333"
+    volumes:
+      - seaweedfs-data:/data
+
+volumes:
+  postgres-data:
+  seaweedfs-data:
