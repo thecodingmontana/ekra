@@ -5,6 +5,3 @@ packages:
 allowBuilds:
   # hooks are installed by the root "prepare" script instead
   lefthook: false
-
-minimumReleaseAgeExclude:
-  - lucide-react@1.66.0
