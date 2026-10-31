@@ -2,12 +2,14 @@ import assert from "node:assert/strict";
 import { after, test } from "node:test";
 import { member, organization, session, user } from "@ekra/db";
 import { eq } from "drizzle-orm";
-import { app } from "../app.ts";
 import { db } from "../db.ts";
-import { linkInLatestEmail } from "../test-helpers.ts";
+import {
+	cookieFrom,
+	linkInLatestEmail,
+	call as send,
+} from "../test-helpers.ts";
 import { nameFromEmail } from "./name-from-email.ts";
 
-const ORIGIN = "http://localhost:3000";
 const email = `amina.k-${Date.now()}@test.ekra`;
 const slug = `acme-${Date.now()}`;
 let cookie = "";
@@ -17,17 +19,9 @@ after(async () => {
 	await db.delete(user).where(eq(user.email, email));
 });
 
-/** A request the way the browser sends it: same origin, with the session cookie once signed in. */
+/** A browser request, with this file's session cookie once signed in. */
 const call = (path: string, init: RequestInit = {}) =>
-	app.request(path, {
-		...init,
-		headers: {
-			origin: ORIGIN,
-			"content-type": "application/json",
-			cookie,
-			...init.headers,
-		},
-	});
+	send(path, { cookie, ...init });
 
 const graphql = async (query: string) =>
 	(await (
@@ -58,10 +52,7 @@ test("signing in with an emailed link creates the account and a session", async 
 
 	const opened = await call(linkInLatestEmail(email));
 	assert.equal(opened.status, 302, "the link signs in and redirects");
-	cookie = opened.headers
-		.getSetCookie()
-		.map((c) => c.split(";")[0])
-		.join("; ");
+	cookie = cookieFrom(opened);
 	assert.match(cookie, /session_token=/);
 
 	const viewer = (await graphql("{ viewer { email name } }")).data?.viewer;
@@ -79,10 +70,8 @@ test("a used sign-in link can't be used again", async () => {
 		body: JSON.stringify({ email, callbackURL: "/" }),
 	});
 	const link = linkInLatestEmail(email);
-	await app.request(link, { headers: { origin: ORIGIN } });
-	const again = await app.request(link, {
-		headers: { origin: ORIGIN },
-	});
+	await send(link);
+	const again = await send(link);
 	assert.match(
 		again.headers.get("location") ?? "",
 		/error=/,
