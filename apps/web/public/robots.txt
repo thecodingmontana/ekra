@@ -1,0 +1,3 @@
+# The app sits behind sign-in; the marketing site (apps/site) is what search engines should index.
+User-agent: *
+Disallow: /

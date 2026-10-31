@@ -3,7 +3,8 @@
 Ekra (from the Arabic اقرأ, _iqra'_: "read!") is a self-hosted, multi-tenant learning platform for companies training
 their teams and creators publishing courses.
 
-> Early development. The plan and phases are in [PLAN.md](PLAN.md); progress is tracked in Zadaci (project Ekra).
+> Early development. The plan and phases are in [PLAN.md](PLAN.md). We track our work in
+> [Zadaci](https://zadaci.vercel.app) (project Ekra); contributors can use Zadaci or any tracker they prefer.
 
 ## What it will do
 

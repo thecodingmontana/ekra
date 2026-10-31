@@ -1,0 +1,47 @@
+import type { ApolloClientIntegration } from "@apollo/client-integration-tanstack-start";
+import appCss from "@ekra/ui/globals.css?url";
+import {
+	createRootRouteWithContext,
+	HeadContent,
+	Scripts,
+} from "@tanstack/react-router";
+import type { ReactNode } from "react";
+
+export const Route =
+	createRootRouteWithContext<ApolloClientIntegration.RouterContext>()({
+		head: () => ({
+			meta: [
+				{ charSet: "utf-8" },
+				{ name: "viewport", content: "width=device-width, initial-scale=1" },
+				{ title: "Ekra" },
+				{ name: "description", content: "Learning for teams and creators." },
+			],
+			links: [
+				{ rel: "stylesheet", href: appCss },
+				{ rel: "icon", href: "/favicon.ico" },
+			],
+		}),
+		notFoundComponent: () => (
+			<main className="mx-auto flex min-h-svh max-w-md flex-col justify-center gap-2 p-6">
+				<h1 className="font-heading text-xl font-medium">Page not found</h1>
+				<p className="text-muted-foreground text-sm">
+					The page you're looking for doesn't exist.
+				</p>
+			</main>
+		),
+		shellComponent: RootDocument,
+	});
+
+function RootDocument({ children }: { children: ReactNode }) {
+	return (
+		<html lang="en">
+			<head>
+				<HeadContent />
+			</head>
+			<body className="bg-background text-foreground antialiased">
+				{children}
+				<Scripts />
+			</body>
+		</html>
+	);
+}

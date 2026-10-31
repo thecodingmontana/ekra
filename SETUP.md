@@ -189,6 +189,7 @@ openssl rand -hex 24
 | `S3_ACCESS_KEY`, `S3_SECRET_KEY`                    | S3 credentials. SeaweedFS creates an admin user with them on start                                     |
 | `SERVER_HOST`, `SERVER_PORT`                        | Where the API server listens (default `127.0.0.1:4000`)                                                |
 | `NODE_ENV`                                          | `development` (default), `test` or `production`. GraphiQL is off in production                         |
+| `API_URL`                                           | Where the web app reaches the API server (default `http://127.0.0.1:4000`)                             |
 
 Each app checks its variables when it starts (with [`@t3-oss/env-core`](https://env.t3.gg) and zod, in the app's
 `src/env.ts`). A missing or invalid value stops it with a message naming the variable.
@@ -328,6 +329,41 @@ pnpm --filter @ekra/server dev    # restarts on file changes
 - Tests: `pnpm --filter @ekra/server test`.
 
 Node 24 runs the TypeScript directly, so the server has no build step.
+
+### Web app (`apps/web`)
+
+Start the API server first, then:
+
+```bash
+pnpm --filter @ekra/web dev       # http://localhost:3000
+```
+
+- The page shows **API: ok** when the web app can reach the API.
+- The browser only talks to `/api` on port 3000. The web server forwards `/api/*` to `API_URL`, in development and in
+  the production build, so cookies stay on one origin.
+- Production build: `pnpm --filter @ekra/web build`, then `pnpm --filter @ekra/web start` (serves `.output/`).
+- UI components come from `packages/ui` (shadcn/ui on Base UI). Add one with
+  `pnpm dlx shadcn@latest add <component> -c apps/web`; it lands in `packages/ui/src/components`.
+
+### Checking the UI in a browser (agent-browser)
+
+We check pages with [agent-browser](https://github.com/vercel-labs/agent-browser), a browser CLI that people and AI
+coding agents can both drive. Install it once:
+
+```bash
+npm install -g agent-browser
+agent-browser install --with-deps   # downloads Chrome and, on Linux, its system libraries
+```
+
+Then, with the apps running:
+
+```bash
+agent-browser open http://localhost:3000
+agent-browser snapshot -i                      # the page's interactive elements
+agent-browser get text "[data-testid=api-status]"
+agent-browser screenshot home.png
+agent-browser close
+```
 
 ## 11. Git hooks and commits
 
