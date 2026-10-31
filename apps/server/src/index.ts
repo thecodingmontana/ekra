@@ -1,4 +1,5 @@
 import { serve } from "@hono/node-server";
+import { log } from "evlog";
 import { app } from "./app.ts";
 import { closeDb } from "./db.ts";
 import { env } from "./env.ts";
@@ -6,7 +7,7 @@ import { env } from "./env.ts";
 const server = serve(
 	{ fetch: app.fetch, port: env.SERVER_PORT, hostname: env.SERVER_HOST },
 	(info) => {
-		console.log(`Ekra API on http://${info.address}:${info.port}/api`);
+		log.info("server", `Ekra API on http://${info.address}:${info.port}/api`);
 	},
 );
 

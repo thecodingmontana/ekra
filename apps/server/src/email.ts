@@ -1,4 +1,5 @@
 import { createMailer, type EmailMessage } from "@ekra/email";
+import { log } from "evlog";
 import { env } from "./env.ts";
 
 /**
@@ -13,8 +14,9 @@ function pickProvider() {
 		env.NODE_ENV !== "production"
 	) {
 		if (env.NODE_ENV === "development") {
-			console.warn(
-				"[email] RESEND_API_KEY isn't set: printing emails here instead (see SETUP.md).",
+			log.warn(
+				"email",
+				"RESEND_API_KEY isn't set: printing emails here instead (see SETUP.md).",
 			);
 		}
 		return createMailer({
@@ -35,10 +37,12 @@ export const mailer = pickProvider();
 
 /** Sends without making the caller wait or fail: used where a slow or failed send must not leak timing or block. */
 export function sendInBackground(message: EmailMessage) {
+	// runs after the response, so it logs its own event rather than the request's
 	mailer.send(message).catch((error: unknown) => {
-		console.error(
-			`[email] couldn't send "${message.subject}" to ${message.to}:`,
-			error,
-		);
+		log.error({
+			action: "email.send",
+			email: { subject: message.subject, to: message.to },
+			error: error instanceof Error ? error.message : String(error),
+		});
 	});
 }

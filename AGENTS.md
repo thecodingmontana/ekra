@@ -208,7 +208,7 @@ The full plan, decisions and phases live in [PLAN.md](PLAN.md). Read it before s
 ## Stack
 
 TanStack Start (web) · Tailwind 4 + shadcn/ui on Base UI · Hono (API server) · Better Auth · GraphQL Yoga + Apollo Client · Drizzle ORM + PostgreSQL ·
-own WebSockets and WebRTC · SeaweedFS (S3 API) · pg-boss worker · Docker Compose on our own server.
+own WebSockets and WebRTC · SeaweedFS (S3 API) · pg-boss worker · evlog (structured logs) · Docker Compose on our own server.
 No Vercel, Supabase or Cloudinary.
 
 ## Layout
@@ -286,6 +286,24 @@ All work is tracked in Zadaci: workspace `the-goods-lab`, project **Ekra** (task
 
 Sign-in is **Better Auth** (Google, email sign-in links, passkeys, two-step codes), served by the Hono server under
 `/api/auth/*`. Copy and adapt zadaci's config (`src/lib/auth.ts`). Don't add another auth library.
+
+## Logging (evlog)
+
+Logs are **[evlog](https://www.evlog.dev)** wide events: one structured event per request (method, path, status,
+duration, GraphQL operation, signed-in user and organization, error), set up in `apps/server/src/log.ts`.
+
+- No `console.log`. In a request, add to its event: `useLogger().set({ course: { id } })` (from `evlog/hono`), or
+  `c.get("log")` in a Hono handler. Outside a request (startup, background sends, jobs), use `log` from `evlog`.
+- Throw errors that explain themselves: `createError({ message, status, why, fix })` from `evlog`. `app.onError`
+  logs the full error and returns only `message`, `why` and `fix` to the client.
+- Group fields by thing (`{ user: { id }, course: { id } }`), never log a whole request body, secret or token.
+- The worker will log one event per job with `createLogger()` (evlog's standalone API) and `log.emit()`.
+- In development, events also go to `apps/server/.evlog/logs/*.jsonl` (gitignored). In production they are JSON on
+  stdout for the operator's log collector, with emails, IPs and tokens masked.
+
+Agent skills for this (installed with evlog's skills): **review-logging-patterns** (set up evlog, review logging,
+structured errors), **analyze-logs** (read `.evlog/logs` to debug errors and slow requests) and **build-audit-logs**
+(audit trails for sensitive actions such as role changes and data exports). Use them for logging work.
 
 ## Checking UI in a browser
 

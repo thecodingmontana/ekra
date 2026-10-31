@@ -12,3 +12,6 @@ coverage
 .DS_Store
 .claude/settings.local.json
 .mcp.json
+
+# evlog local log files (development)
+.evlog/

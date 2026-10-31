@@ -351,6 +351,12 @@ pnpm --filter @ekra/server dev    # restarts on file changes
 
 Node 24 runs the TypeScript directly, so the server has no build step.
 
+**Logs.** The server logs with [evlog](https://www.evlog.dev): one event per request, shown as a short tree in the
+terminal (method, path, status, time, GraphQL operation, who). In development every event is also written to
+`apps/server/.evlog/logs/<date>.jsonl` (gitignored), which is handy for searching or for an AI agent to read. In
+production each event is one JSON line on stdout, with emails, IPs and tokens masked, ready for whatever log
+collector you run (Docker logs, Loki, Axiom, …). No setup or env variables needed.
+
 ### Signing in (Better Auth)
 
 Sign-in, sessions, organizations, members, roles, invitations and teams are handled by

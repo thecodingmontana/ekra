@@ -27,6 +27,7 @@ their teams and creators publishing courses.
 | Files and video | SeaweedFS (S3 API), ffmpeg, HLS                                                  |
 | Realtime        | WebSockets, WebRTC                                                               |
 | Jobs            | pg-boss                                                                          |
+| Logging         | evlog (structured wide events)                                                   |
 | Tooling         | pnpm workspaces, Turborepo, Biome, Lefthook, TypeScript                          |
 
 ## Getting started

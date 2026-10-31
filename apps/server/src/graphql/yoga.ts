@@ -3,6 +3,8 @@ import { costLimitPlugin } from "@escape.tech/graphql-armor-cost-limit";
 import { maxAliasesPlugin } from "@escape.tech/graphql-armor-max-aliases";
 import { maxDepthPlugin } from "@escape.tech/graphql-armor-max-depth";
 import { asc, eq } from "drizzle-orm";
+import { identifyUser } from "evlog/better-auth";
+import { useLogger } from "evlog/hono";
 import { GraphQLError } from "graphql";
 import { createSchema, createYoga, useErrorHandler } from "graphql-yoga";
 import { auth, signInMethods } from "../auth/index.ts";
@@ -90,9 +92,19 @@ const isUnexpected = (error: GraphQLError) =>
 
 export const yoga = createYoga<object, GraphQLContext>({
 	schema,
-	context: async ({ request }) => ({
-		session: await auth.api.getSession({ headers: request.headers }),
-	}),
+	context: async ({ request, params }) => {
+		const session = await auth.api.getSession({ headers: request.headers });
+		const log = useLogger();
+		log.set({ graphql: { operation: params.operationName ?? "anonymous" } });
+		// who made the request, on its log event (the session is loaded here anyway)
+		if (session)
+			identifyUser(log, session, {
+				extend: (s) => ({
+					organizationId: s.session.activeOrganizationId ?? null,
+				}),
+			});
+		return { session };
+	},
 	// Yoga logs every request at "info": keep the logs to problems
 	logging: "warn",
 	// crashes reach the client as "Unexpected error." and are logged below with the details
@@ -103,11 +115,13 @@ export const yoga = createYoga<object, GraphQLContext>({
 		costLimitPlugin({ maxCost: LIMITS.cost }),
 		useErrorHandler(({ errors }) => {
 			for (const error of errors)
-				if (error instanceof GraphQLError && isUnexpected(error))
-					console.error(
-						`[graphql] ${error.path?.join(".") ?? "request"}:`,
-						error.originalError?.stack ?? error.message,
-					);
+				if (error instanceof GraphQLError && isUnexpected(error)) {
+					const log = useLogger();
+					log.set({
+						graphql: { failedAt: error.path?.join(".") ?? "request" },
+					});
+					log.error(error.originalError ?? error);
+				}
 		}),
 	],
 	graphqlEndpoint: "/api/graphql",
