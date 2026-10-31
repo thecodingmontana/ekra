@@ -45,7 +45,11 @@ export const auth = betterAuth({
 	trustedOrigins: [env.BETTER_AUTH_URL],
 	database: drizzleAdapter(db, { provider: "pg", schema }),
 	// the same 16-character nanoid ids as every other table (packages/db)
-	advanced: { database: { generateId: () => generateId() } },
+	advanced: {
+		database: { generateId: () => generateId() },
+		// a visitor's IP is the last address in X-Forwarded-For that isn't one of our proxies (the web app adds it)
+		ipAddress: { trustedProxies: env.TRUSTED_PROXIES },
+	},
 	// counted in Postgres rather than in memory, so limits hold across server restarts and instances
 	rateLimit: { storage: "database" },
 	emailAndPassword: {

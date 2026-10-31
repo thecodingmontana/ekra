@@ -18,6 +18,20 @@ export const env = createEnv({
 		BETTER_AUTH_SECRET: z.string().min(32),
 		// the address people open the app at (the web app, which forwards /api here)
 		BETTER_AUTH_URL: z.url().default("http://localhost:3000"),
+		// proxies in front of the web app (Caddy, Nginx, a load balancer): their addresses are skipped when finding
+		// a visitor's IP for rate limits. Comma-separated IPs or CIDRs; this machine (loopback) is always trusted.
+		TRUSTED_PROXIES: z
+			.string()
+			.default("")
+			.transform((v) => [
+				"127.0.0.1",
+				"::1",
+				"::ffff:127.0.0.1",
+				...v
+					.split(",")
+					.map((s) => s.trim())
+					.filter(Boolean),
+			]),
 		// optional: "Continue with Google" appears only when both are set
 		GOOGLE_CLIENT_ID: z.string().min(1).optional(),
 		GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),

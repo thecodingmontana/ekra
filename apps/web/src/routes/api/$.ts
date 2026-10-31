@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { getRequestIP } from "@tanstack/react-start/server";
 import { env } from "@/env";
 
 // Response headers that describe the upstream body's encoding; fetch already decoded it, so don't pass them on.
@@ -21,6 +22,11 @@ async function forward({ request }: { request: Request }): Promise<Response> {
 	headers.delete("host");
 	headers.set("x-forwarded-host", url.host);
 	headers.set("x-forwarded-proto", url.protocol.replace(":", ""));
+	// add who connected to us (the browser, or the operator's proxy), like any proxy does; the API trusts only
+	// TRUSTED_PROXIES in this chain, so a browser can't pick its own address to dodge sign-in rate limits
+	const peer = getRequestIP();
+	const chain = request.headers.get("x-forwarded-for");
+	if (peer) headers.set("x-forwarded-for", chain ? `${chain}, ${peer}` : peer);
 
 	const upstream = await fetch(
 		new URL(`${url.pathname}${url.search}`, env.API_URL),

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { after, test } from "node:test";
-import { member, organization, user } from "@ekra/db";
+import { member, organization, session, user } from "@ekra/db";
 import { eq } from "drizzle-orm";
 import { app } from "../app.ts";
 import { db } from "../db.ts";
@@ -158,6 +158,31 @@ test("slugAvailable says whether an address is free", async () => {
 	assert.equal(await available(slug), false, "taken by the test organization");
 	assert.equal(await available(`free-${Date.now()}`), true);
 	assert.equal(await available("www"), false, "reserved");
+});
+
+test("the visitor's IP is the last forwarded address that isn't our proxy", async () => {
+	const signInFrom = async (forwardedFor: string) => {
+		await call("/api/auth/sign-in/magic-link", {
+			method: "POST",
+			body: JSON.stringify({ email, callbackURL: "/" }),
+		});
+		const opened = await call(linkInLatestEmail(email), {
+			headers: { "x-forwarded-for": forwardedFor },
+		});
+		const token = opened.headers
+			.getSetCookie()
+			.join(";")
+			.match(/session_token=([^.;]+)/)?.[1];
+		const [row] = await db
+			.select({ ip: session.ipAddress })
+			.from(session)
+			.where(eq(session.token, token ?? ""));
+		return row?.ip;
+	};
+	// browser → web app (loopback) → API
+	assert.equal(await signInFrom("203.0.113.7, 127.0.0.1"), "203.0.113.7");
+	// a browser that sends its own header can't choose its address: the web app appends the real one
+	assert.equal(await signInFrom("6.6.6.6, 198.51.100.4"), "198.51.100.4");
 });
 
 test("nameFromEmail turns an address into a readable name", () => {
