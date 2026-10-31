@@ -9,7 +9,7 @@
 		"dev": "node --watch --env-file-if-exists=../../.env src/index.ts",
 		"start": "node --env-file-if-exists=../../.env src/index.ts",
 		"typecheck": "tsc --noEmit",
-		"test": "node --env-file-if-exists=../../.env --import ./src/test-env.ts --test 'src/**/*.test.ts'"
+		"test": "node --env-file-if-exists=../../.env --import ./src/test-env.ts src/test-migrate.ts && node --env-file-if-exists=../../.env --import ./src/test-env.ts --test 'src/**/*.test.ts'"
 	},
 	"dependencies": {
 		"@better-auth/passkey": "1.7.14",
