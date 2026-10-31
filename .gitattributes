@@ -1,0 +1,6 @@
+# Normalize line endings (WSL and Windows editors).
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.webp binary
+*.mp4 binary
