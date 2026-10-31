@@ -92,3 +92,24 @@ test("an emailed link no longer signs in on its own: it asks for the second step
 	assert.equal(right.status, 200);
 	assert.match(cookieFrom(right), /session_token=[^;\s]/);
 });
+
+test("a trusted device skips the code on the next email-link sign-in", async () => {
+	const challenged = cookieFrom(await openSignInLink());
+	const verified = await post(
+		"/api/auth/two-factor/verify-backup-code",
+		{ code: backupCodes[1], trustDevice: true },
+		challenged,
+	);
+	assert.equal(verified.status, 200);
+	const trust = cookieFrom(verified)
+		.split("; ")
+		.filter((c) => c.includes("trust_device="))
+		.join("; ");
+	assert.match(trust, /trust_device=/);
+
+	await post("/api/auth/sign-in/magic-link", { email, callbackURL: "/" });
+	const opened = await call(linkInLatestEmail(email), { cookie: trust });
+	assert.equal(opened.status, 302);
+	assert.notEqual(opened.headers.get("location"), "/two-factor");
+	assert.match(cookieFrom(opened), /session_token=[^;\s]/);
+});

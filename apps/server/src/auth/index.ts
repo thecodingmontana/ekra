@@ -17,6 +17,7 @@ import { mailer, sendInBackground } from "../email.ts";
 import { env } from "../env.ts";
 import { nameFromEmail } from "./name-from-email.ts";
 import { ac, roles } from "./permissions.ts";
+import { isTrustedDevice } from "./trusted-device.ts";
 
 const MAGIC_LINK_MINUTES = 10;
 const RESET_PASSWORD_MINUTES = 60;
@@ -124,6 +125,8 @@ export const auth = betterAuth({
 				return;
 			const data = ctx.context.newSession;
 			if (!data?.user.twoFactorEnabled) return;
+			// "Trust this device" skips the code, as it does after password sign-in
+			if (await isTrustedDevice(ctx, data.user.id)) return;
 
 			deleteSessionCookie(ctx, true);
 			await ctx.context.internalAdapter.deleteSession(data.session.token);
