@@ -1,8 +1,13 @@
+import { fileURLToPath } from "node:url";
 import { drizzle } from "drizzle-orm/postgres-js";
+import { migrate } from "drizzle-orm/postgres-js/migrator";
 import postgres from "postgres";
 import { env } from "./env.ts";
+import * as schema from "./schema/index.ts";
 
 export * from "./schema/index.ts";
+/** Every table, as one object (Better Auth's Drizzle adapter looks tables up in it). */
+export { schema };
 
 /**
  * A database connection. Each app makes one at startup and closes it on shutdown.
@@ -18,3 +23,17 @@ export function createDb(url: string = env.DATABASE_URL) {
 }
 
 export type Db = ReturnType<typeof createDb>["db"];
+
+/** Apply every pending migration to the database at `url` (tests use this; apps use `pnpm db:migrate`). */
+export async function migrateDatabase(url: string) {
+	const { db, close } = createDb(url);
+	try {
+		await migrate(db, {
+			migrationsFolder: fileURLToPath(
+				new URL("../migrations", import.meta.url),
+			),
+		});
+	} finally {
+		await close();
+	}
+}

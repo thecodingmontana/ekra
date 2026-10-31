@@ -1,5 +1,6 @@
 import { serve } from "@hono/node-server";
 import { app } from "./app.ts";
+import { closeDb } from "./db.ts";
 import { env } from "./env.ts";
 
 const server = serve(
@@ -9,7 +10,9 @@ const server = serve(
 	},
 );
 
-// finish open requests before exiting (Ctrl+C, docker stop)
+// finish open requests, then close the database, before exiting (Ctrl+C, docker stop)
 for (const signal of ["SIGINT", "SIGTERM"] as const) {
-	process.once(signal, () => server.close(() => process.exit(0)));
+	process.once(signal, () =>
+		server.close(() => closeDb().then(() => process.exit(0))),
+	);
 }

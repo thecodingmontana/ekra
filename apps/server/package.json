@@ -9,14 +9,17 @@
 		"dev": "node --watch --env-file-if-exists=../../.env src/index.ts",
 		"start": "node --env-file-if-exists=../../.env src/index.ts",
 		"typecheck": "tsc --noEmit",
-		"test": "node --test 'src/**/*.test.ts'"
+		"test": "node --env-file-if-exists=../../.env --import ./src/test-env.ts --test 'src/**/*.test.ts'"
 	},
 	"dependencies": {
+		"@ekra/db": "workspace:*",
 		"@escape.tech/graphql-armor-cost-limit": "2.4.3",
 		"@escape.tech/graphql-armor-max-aliases": "2.6.2",
 		"@escape.tech/graphql-armor-max-depth": "2.4.2",
 		"@hono/node-server": "^2.1.5",
 		"@t3-oss/env-core": "^0.13.11",
+		"better-auth": "1.7.14",
+		"drizzle-orm": "1.0.0-rc.5",
 		"graphql": "^16.10.0",
 		"graphql-yoga": "^6.0.1",
 		"hono": "^4.13.14",

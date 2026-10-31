@@ -1,8 +1,7 @@
 import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
 import { eq } from "drizzle-orm";
-import { migrate } from "drizzle-orm/postgres-js/migrator";
-import { createDb, organization } from "./index.ts";
+import { createDb, migrateDatabase, organization } from "./index.ts";
 
 // Tests write and delete rows: refuse to run them against anything but a test database.
 const url = process.env.TEST_DATABASE_URL;
@@ -15,11 +14,7 @@ if (!url || !/test/i.test(new URL(url).pathname)) {
 const { db, close } = createDb(url);
 const slug = `test-${Date.now()}`;
 
-before(async () => {
-	await migrate(db, {
-		migrationsFolder: new URL("../migrations", import.meta.url).pathname,
-	});
-});
+before(() => migrateDatabase(url));
 
 after(async () => {
 	await db.delete(organization).where(eq(organization.slug, slug));
@@ -38,7 +33,7 @@ test("creates an organization with a time-ordered id and default kind", async ()
 		"a version 7 UUID",
 	);
 	assert.equal(created.kind, "company");
-	assert.ok(created.created_at instanceof Date);
+	assert.ok(created.createdAt instanceof Date);
 });
 
 test("refuses a second organization with the same slug", async () => {

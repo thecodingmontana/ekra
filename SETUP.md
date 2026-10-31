@@ -176,20 +176,23 @@ openssl rand -hex 24
 
 `POSTGRES_PASSWORD` appears again inside `DATABASE_URL` and `TEST_DATABASE_URL`: use the same value in all three.
 
-| Variable                                            | What it is                                                                                             |
-| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | Database user, password and name created on first start                                                |
-| `POSTGRES_PORT`                                     | Port on your machine for Postgres (default `5433`, so it doesn't clash with a native Postgres on 5432) |
-| `DATABASE_URL`                                      | Connection string the apps use                                                                         |
-| `TEST_DATABASE_URL`                                 | Separate database for tests (`ekra_test`, created automatically)                                       |
-| `S3_PORT`                                           | Port on your machine for SeaweedFS's S3 API (default `8334`)                                           |
-| `S3_ENDPOINT`                                       | S3 address the apps use                                                                                |
-| `S3_REGION`                                         | Any value; SeaweedFS ignores it but S3 clients need one                                                |
-| `S3_BUCKET`                                         | Bucket for uploads and videos                                                                          |
-| `S3_ACCESS_KEY`, `S3_SECRET_KEY`                    | S3 credentials. SeaweedFS creates an admin user with them on start                                     |
-| `SERVER_HOST`, `SERVER_PORT`                        | Where the API server listens (default `127.0.0.1:4000`)                                                |
-| `NODE_ENV`                                          | `development` (default), `test` or `production`. GraphiQL is off in production                         |
-| `API_URL`                                           | Where the web app reaches the API server (default `http://127.0.0.1:4000`)                             |
+| Variable                                            | What it is                                                                                                              |
+| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | Database user, password and name created on first start                                                                 |
+| `POSTGRES_PORT`                                     | Port on your machine for Postgres (default `5433`, so it doesn't clash with a native Postgres on 5432)                  |
+| `DATABASE_URL`                                      | Connection string the apps use                                                                                          |
+| `TEST_DATABASE_URL`                                 | Separate database for tests (`ekra_test`, created automatically)                                                        |
+| `S3_PORT`                                           | Port on your machine for SeaweedFS's S3 API (default `8334`)                                                            |
+| `S3_ENDPOINT`                                       | S3 address the apps use                                                                                                 |
+| `S3_REGION`                                         | Any value; SeaweedFS ignores it but S3 clients need one                                                                 |
+| `S3_BUCKET`                                         | Bucket for uploads and videos                                                                                           |
+| `S3_ACCESS_KEY`, `S3_SECRET_KEY`                    | S3 credentials. SeaweedFS creates an admin user with them on start                                                      |
+| `SERVER_HOST`, `SERVER_PORT`                        | Where the API server listens (default `127.0.0.1:4000`)                                                                 |
+| `NODE_ENV`                                          | `development` (default), `test` or `production`. GraphiQL is off in production                                          |
+| `API_URL`                                           | Where the web app reaches the API server (default `http://127.0.0.1:4000`)                                              |
+| `BETTER_AUTH_SECRET`                                | Signs sign-in sessions ([Better Auth](https://www.better-auth.com)). 32+ random characters: `openssl rand -base64 48`   |
+| `BETTER_AUTH_URL`                                   | The address people open the app at (default `http://localhost:3000`, the web app)                                       |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`          | Optional. "Continue with Google" appears only when both are set (callback `<BETTER_AUTH_URL>/api/auth/callback/google`) |
 
 Each app checks its variables when it starts (with [`@t3-oss/env-core`](https://env.t3.gg) and zod, in the app's
 `src/env.ts`). A missing or invalid value stops it with a message naming the variable.
@@ -345,6 +348,20 @@ pnpm --filter @ekra/server dev    # restarts on file changes
 - Tests: `pnpm --filter @ekra/server test`.
 
 Node 24 runs the TypeScript directly, so the server has no build step.
+
+### Signing in (Better Auth)
+
+Sign-in, sessions, organizations, members, roles, invitations and teams are handled by
+[Better Auth](https://www.better-auth.com), served by the API server at `/api/auth/*`.
+
+- **Emailed sign-in links:** email sending isn't set up yet, so in development the server prints the link in its
+  terminal (`[auth] sign-in link for you@example.com: http://localhost:3000/api/auth/magic-link/verify?...`). Open it
+  to sign in. In production, sending a link fails until an email service is configured.
+- **Google:** set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` (a Google OAuth client with the callback above).
+- **Roles in an organization:** owner, admin, trainer, learner, guest. Whoever creates an organization is its owner.
+- **Schema:** the auth tables live in `packages/db/src/schema/auth.ts`. They were generated with Better Auth's CLI
+  (`npx auth generate`) and are kept by hand; after changing auth plugins, regenerate into a scratch file and copy
+  over what changed, then `pnpm db:generate`.
 
 ### Web app (`apps/web`)
 
