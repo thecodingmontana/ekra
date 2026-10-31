@@ -9,7 +9,7 @@ The full plan, decisions and phases live in [PLAN.md](PLAN.md). Read it before s
 
 ## Stack
 
-TanStack Start (web) · Hono (API server) · Better Auth · GraphQL Yoga + Apollo Client · Drizzle ORM + PostgreSQL ·
+TanStack Start (web) · Tailwind 4 + shadcn/ui on Base UI · Hono (API server) · Better Auth · GraphQL Yoga + Apollo Client · Drizzle ORM + PostgreSQL ·
 own WebSockets and WebRTC · SeaweedFS (S3 API) · pg-boss worker · Docker Compose on our own server.
 No Vercel, Supabase or Cloudinary.
 
@@ -44,6 +44,8 @@ scripts/    repo scripts (git hooks)
 
 - **Biome** formats and lints everything: tabs, double quotes. Run `pnpm check:fix` before committing. No ESLint/Prettier.
 - **TypeScript strict** everywhere; each workspace's `tsconfig.json` extends `tsconfig.base.json`.
+- **UI:** shadcn/ui components on **Base UI** (`@base-ui/react`), kept in `packages/ui` and added with the shadcn CLI.
+  Never use Radix (`radix-ui`, `@radix-ui/*`), even when copying components from zadaci: port them to Base UI.
 - Files are kebab-case. Server-only modules end in `.server.ts`.
 - **Few third-party libraries.** Prefer platform APIs (WebRTC, MediaRecorder, fetch, Web Crypto) and our own small code.
   Add a dependency only when writing it ourselves is unreasonable, and say why in the PR.
