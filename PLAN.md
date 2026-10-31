@@ -84,6 +84,35 @@ infra/  docker-compose.yml (local services), seaweedfs/, coturn/
 
 Rule: `core`, `realtime`, `graphql-client` have no DOM/Node imports (reused by mobile/desktop).
 
+## Where Rust fits
+
+Rust earns its place where a service runs for a long time, holds many connections, moves a lot of bytes, or needs
+predictable latency and memory. It doesn't where the code is mostly glue around TypeScript libraries we rely on
+(Better Auth, Drizzle, Yoga) or calls into code that is already native (libvips, ffmpeg).
+
+| Service                                            | Rust?                    | Why                                                                                                                                                       | When                                              |
+| -------------------------------------------------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| Desktop app                                        | **Yes** (Tauri)          | Tauri's core is Rust: native file access, offline downloads, OS integration                                                                               | Desktop phase                                     |
+| SFU for big live classes                           | **Yes**, first choice    | Forwards many media streams per room with low latency and stable memory (str0m or webrtc-rs)                                                              | Phase 7b                                          |
+| Realtime gateway (WebSockets, signaling, presence) | **Yes, when load grows** | One Rust process holds far more open connections than Node, with less memory. Same message types as `packages/realtime`; checks sessions against Postgres | Split out of `server` once connection counts hurt |
+| Video streaming gateway                            | **Yes, when needed**     | Serves HLS segments from SeaweedFS with per-learner signed tokens, so paid/private videos can't be shared. High throughput, simple logic                  | With paid courses or private video at scale       |
+| Self-hosted transcription                          | **Likely**               | Wraps whisper.cpp (whisper-rs) or candle as a small job worker; no Python stack to run                                                                    | When we move off the transcription API            |
+| Certificates (PDF)                                 | **Maybe**                | Typst (a Rust typesetting engine) renders crisp PDF certificates from a template, fast and without a headless browser                                     | Phase 6, if HTML-to-PDF looks poor                |
+| Search                                             | **Maybe**                | Postgres full-text + pgvector first; if it outgrows that, Tantivy (Rust) or Meilisearch (built in Rust)                                                   | Phase 9+, only if Postgres search is too slow     |
+| Admin CLI for self-hosters                         | **Maybe**                | One static binary for backups, restores, creating the first organization                                                                                  | After the first real server install               |
+| API server (GraphQL, auth)                         | No                       | Shares types and code with web; Better Auth, Drizzle, Yoga are TypeScript                                                                                 | —                                                 |
+| Image and video pipeline                           | No                       | sharp (libvips) and ffmpeg already do the heavy work in native code; Rust would only orchestrate                                                          | —                                                 |
+| Quiz scoring, unlock rules                         | No                       | Must run in the browser and React Native too; TypeScript in `packages/core`                                                                               | —                                                 |
+
+**How Rust services join the monorepo** (only when the first one is built, not before):
+
+- They live in `services/<name>/` as a Cargo workspace (root `Cargo.toml`), next to the pnpm workspace.
+- Each has a tiny `package.json` whose scripts call `cargo`, so `pnpm dev/build/test` and Turborepo run them too.
+- Contracts are explicit: Postgres tables (jobs, sessions) or HTTP/WebSocket messages described once (JSON Schema or
+  shared type definitions) and checked on both sides.
+- Tooling: `rustfmt` and `clippy` in the Lefthook hooks and CI, a Docker image per service, and SETUP.md gains the
+  `rustup` install step.
+
 ## Patterns to mirror (zadaci, `~/the-going-merry/zadaci`)
 
 | Category    | Source                                                            | Pattern                                                                                 |
