@@ -1,4 +1,5 @@
 import type { ApolloClientIntegration } from "@apollo/client-integration-tanstack-start";
+import { Toaster } from "@ekra/ui/components/toast/toaster";
 import appCss from "@ekra/ui/globals.css?url";
 import {
 	createRootRouteWithContext,
@@ -44,6 +45,7 @@ function RootDocument({ children }: { children: ReactNode }) {
 			</head>
 			<body className="bg-background text-foreground antialiased">
 				{children}
+				<Toaster position="top-center" />
 				<Scripts />
 			</body>
 		</html>

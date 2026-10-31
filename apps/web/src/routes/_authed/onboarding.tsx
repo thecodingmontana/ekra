@@ -8,6 +8,8 @@ import {
 	FieldLabel,
 } from "@ekra/ui/components/field";
 import { Input } from "@ekra/ui/components/input";
+import { Spinner } from "@ekra/ui/components/spinner";
+import { toast } from "@ekra/ui/lib/toast";
 import {
 	createFileRoute,
 	Link,
@@ -58,7 +60,6 @@ function Onboarding() {
 	const [slug, setSlug] = useState("");
 	const [slugEdited, setSlugEdited] = useState(false);
 	const [busy, setBusy] = useState(false);
-	const [problem, setProblem] = useState<string | null>(null);
 
 	const url = slugEdited ? slug : slugify(name);
 	const urlProblem = url ? slugProblem(url) : null;
@@ -73,14 +74,13 @@ function Onboarding() {
 		}
 		if (urlProblem || slugStatus !== "available") return;
 		setBusy(true);
-		setProblem(null);
 		const result = await authClient.organization.create({
 			name: name.trim(),
 			slug: url,
 			kind,
 		});
 		setBusy(false);
-		if (result.error) return setProblem(authErrorMessage(result.error));
+		if (result.error) return void toast.error(authErrorMessage(result.error));
 		setStep(2);
 	}
 
@@ -232,7 +232,6 @@ function Onboarding() {
 										)}
 									</div>
 								</Field>
-								{problem && <FieldError role="alert">{problem}</FieldError>}
 							</>
 						)}
 
@@ -275,19 +274,12 @@ function Onboarding() {
 									(!name.trim() || !!urlProblem || slugStatus !== "available"))
 							}
 						>
-							{busy && (
-								<span
-									className="icon-[hugeicons--loading-03] size-4 motion-safe:animate-spin"
-									aria-hidden="true"
-								/>
-							)}
-							{busy
-								? "Creating…"
-								: step === 2
-									? "Open Ekra"
-									: step === 1
-										? "Create organization"
-										: "Continue"}
+							{busy && <Spinner />}
+							{step === 2
+								? "Open Ekra"
+								: step === 1
+									? "Create organization"
+									: "Continue"}
 							{!busy && <ArrowChip />}
 						</Button>
 					</div>

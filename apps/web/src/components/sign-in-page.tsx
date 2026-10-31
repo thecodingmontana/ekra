@@ -1,6 +1,8 @@
 import { ArrowChip, Button, buttonVariants } from "@ekra/ui/components/button";
 import { Field, FieldError, FieldLabel } from "@ekra/ui/components/field";
 import { InputWithIcon } from "@ekra/ui/components/input-with-icon";
+import { Spinner } from "@ekra/ui/components/spinner";
+import { toast } from "@ekra/ui/lib/toast";
 import { Link, useHydrated } from "@tanstack/react-router";
 import { type FormEvent, type ReactNode, useState } from "react";
 import { AuthShell } from "@/components/auth-shell";
@@ -62,8 +64,10 @@ export function SignInPage({
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [name, setName] = useState("");
-	const [busy, setBusy] = useState(false);
+	// which action is running: its button shows a spinner and the others wait
+	const [busy, setBusy] = useState<"form" | "google" | "passkey" | null>(null);
 	const [sent, setSent] = useState<string | null>(null);
+	// a problem the page was opened with (an expired link); failures of what you do here show as toasts
 	const [problem, setProblem] = useState<string | null>(
 		linkErrorMessage(error),
 	);
@@ -76,12 +80,18 @@ export function SignInPage({
 		doneNote?: string,
 	) {
 		event.preventDefault();
-		setBusy(true);
+		setBusy("form");
 		setProblem(null);
 		const result = await run();
-		setBusy(false);
-		if (result?.error) return setProblem(authErrorMessage(result.error));
-		if (doneNote) setSent(doneNote);
+		if (result?.error) {
+			setBusy(null);
+			return void toast.error(authErrorMessage(result.error));
+		}
+		if (doneNote) {
+			setBusy(null);
+			setSent(doneNote);
+		}
+		// keep the spinner until the next page opens
 		else window.location.assign(callbackURL);
 	}
 
@@ -140,23 +150,42 @@ export function SignInPage({
 			type="submit"
 			size="lg"
 			className="w-full"
-			disabled={!hydrated || busy}
+			disabled={!hydrated || !!busy}
+			aria-busy={busy === "form"}
 		>
-			{busy ? "One moment…" : label}
-			{!busy && <ArrowChip />}
+			{busy === "form" && <Spinner />}
+			{label}
+			{busy !== "form" && <ArrowChip />}
 		</Button>
 	);
 
 	async function signInWithPasskey() {
 		setProblem(null);
+		setBusy("passkey");
 		const result = await authClient.signIn.passkey();
 		// closing the browser's passkey prompt isn't an error worth showing
 		if (result?.error) {
+			setBusy(null);
 			if (!/cancel|abort|not ?allowed/i.test(result.error.message ?? ""))
-				setProblem(authErrorMessage(result.error));
+				toast.error(authErrorMessage(result.error));
 			return;
 		}
 		window.location.assign(callbackURL);
+	}
+
+	// Google sign-in leaves the page; the spinner stays until it does
+	async function continueWithGoogle(errorCallbackURL: string) {
+		setProblem(null);
+		setBusy("google");
+		const result = await authClient.signIn.social({
+			provider: "google",
+			callbackURL,
+			errorCallbackURL,
+		});
+		if (result?.error) {
+			setBusy(null);
+			toast.error(authErrorMessage(result.error));
+		}
 	}
 
 	const chooser = (
@@ -166,16 +195,15 @@ export function SignInPage({
 					variant="outline"
 					size="lg"
 					className="w-full"
-					disabled={!hydrated}
-					onClick={() =>
-						authClient.signIn.social({
-							provider: "google",
-							callbackURL,
-							errorCallbackURL: "/sign-in",
-						})
-					}
+					disabled={!hydrated || !!busy}
+					aria-busy={busy === "google"}
+					onClick={() => continueWithGoogle("/sign-in")}
 				>
-					<span aria-hidden className="icon-[devicon--google] size-4" />
+					{busy === "google" ? (
+						<Spinner />
+					) : (
+						<span aria-hidden className="icon-[devicon--google] size-4" />
+					)}
 					Continue with Google
 				</Button>
 			)}
@@ -210,13 +238,18 @@ export function SignInPage({
 				variant="outline"
 				size="lg"
 				className="w-full"
-				disabled={!hydrated}
+				disabled={!hydrated || !!busy}
+				aria-busy={busy === "passkey"}
 				onClick={signInWithPasskey}
 			>
-				<span
-					aria-hidden
-					className="icon-[solar--key-minimalistic-linear] size-4"
-				/>
+				{busy === "passkey" ? (
+					<Spinner />
+				) : (
+					<span
+						aria-hidden
+						className="icon-[solar--key-minimalistic-linear] size-4"
+					/>
+				)}
 				Sign in with a passkey
 			</Button>
 		</div>
@@ -230,16 +263,15 @@ export function SignInPage({
 					variant="outline"
 					size="lg"
 					className="w-full"
-					disabled={!hydrated}
-					onClick={() =>
-						authClient.signIn.social({
-							provider: "google",
-							callbackURL,
-							errorCallbackURL: "/sign-up",
-						})
-					}
+					disabled={!hydrated || !!busy}
+					aria-busy={busy === "google"}
+					onClick={() => continueWithGoogle("/sign-up")}
 				>
-					<span aria-hidden className="icon-[devicon--google] size-4" />
+					{busy === "google" ? (
+						<Spinner />
+					) : (
+						<span aria-hidden className="icon-[devicon--google] size-4" />
+					)}
 					Sign up with Google
 				</Button>
 			)}

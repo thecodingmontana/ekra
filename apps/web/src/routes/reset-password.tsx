@@ -1,6 +1,8 @@
 import { ArrowChip, Button } from "@ekra/ui/components/button";
 import { Field, FieldError, FieldLabel } from "@ekra/ui/components/field";
 import { InputWithIcon } from "@ekra/ui/components/input-with-icon";
+import { Spinner } from "@ekra/ui/components/spinner";
+import { toast } from "@ekra/ui/lib/toast";
 import { createFileRoute, Link, useHydrated } from "@tanstack/react-router";
 import { type FormEvent, useState } from "react";
 import { AuthShell } from "@/components/auth-shell";
@@ -73,7 +75,8 @@ function ResetPassword() {
 			token,
 		});
 		setBusy(false);
-		if (result.error) return setProblem(authErrorMessage(result.error));
+		if (result.error) return void toast.error(authErrorMessage(result.error));
+		toast.success("Password changed");
 		setDone(true);
 	}
 
@@ -108,8 +111,10 @@ function ResetPassword() {
 					size="lg"
 					className="w-full"
 					disabled={!hydrated || busy}
+					aria-busy={busy}
 				>
-					{busy ? "Saving…" : "Save new password"}
+					{busy && <Spinner />}
+					Save new password
 					{!busy && <ArrowChip />}
 				</Button>
 			</form>
