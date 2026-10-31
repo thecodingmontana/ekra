@@ -54,7 +54,9 @@ scripts/    repo scripts (git hooks)
 - **Reuse zadaci.** `~/the-going-merry/zadaci` has the same stack. Copy and adapt what's needed (auth, editor, AI,
   permissions, emails, tests helpers) instead of writing from scratch.
 - Every tenant table has `org_id`, enforced by Postgres row-level security. Never query tenant data without it.
-- Validate input at boundaries with zod. Never commit secrets; use `.env.local` (gitignored) and keep `.env.example` current.
+- Validate input at boundaries with zod. Never commit secrets; use `.env` (gitignored) and keep `.env.example` current.
+- **Env variables:** each app declares and validates its variables in `src/env.ts` with `@t3-oss/env-core` + zod and
+  reads config only through `env`, never `process.env` directly.
 - Tests use Node's built-in runner against a real test database; API tests call the Hono app with `app.request()`.
 
 ## Git

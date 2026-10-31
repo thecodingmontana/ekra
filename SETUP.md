@@ -187,6 +187,11 @@ openssl rand -hex 24
 | `S3_REGION`                                         | Any value; SeaweedFS ignores it but S3 clients need one                                                |
 | `S3_BUCKET`                                         | Bucket for uploads and videos                                                                          |
 | `S3_ACCESS_KEY`, `S3_SECRET_KEY`                    | S3 credentials. SeaweedFS creates an admin user with them on start                                     |
+| `SERVER_HOST`, `SERVER_PORT`                        | Where the API server listens (default `127.0.0.1:4000`)                                                |
+| `NODE_ENV`                                          | `development` (default), `test` or `production`. GraphiQL is off in production                         |
+
+Each app checks its variables when it starts (with [`@t3-oss/env-core`](https://env.t3.gg) and zod, in the app's
+`src/env.ts`). A missing or invalid value stops it with a message naming the variable.
 
 ## 8. Local services: Postgres and SeaweedFS
 
@@ -311,6 +316,18 @@ If `postgresql-18` isn't in your distro, add the official repo first:
 pnpm services:up   # Postgres + SeaweedFS
 pnpm dev           # all apps
 ```
+
+### API server (`apps/server`)
+
+```bash
+pnpm --filter @ekra/server dev    # restarts on file changes
+```
+
+- Health check: <http://127.0.0.1:4000/api/health> answers `{"status":"ok"}`.
+- GraphQL: `http://127.0.0.1:4000/api/graphql`. Open it in a browser for GraphiQL (development only) and try `{ health }`.
+- Tests: `pnpm --filter @ekra/server test`.
+
+Node 24 runs the TypeScript directly, so the server has no build step.
 
 ## 11. Git hooks and commits
 
