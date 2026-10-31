@@ -25,8 +25,10 @@ A separate static marketing site (`apps/site`) tells people about Ekra and is th
 | DB               | PostgreSQL + Drizzle ORM 1.0 RC, drizzle-kit migrations, RLS per tenant                                                                                                                                |
 | Client data      | **Apollo Client 4** (as in zadaci). No offline sync.                                                                                                                                                   |
 | Realtime         | Own WebSockets (`@hono/node-ws`), fan-out via Postgres LISTEN/NOTIFY; ping → Apollo refetch                                                                                                            |
-| Files            | **SeaweedFS** via S3 API (`@aws-sdk/client-s3`, presigned URLs); sharp for images                                                                                                                      |
-| Video            | ffmpeg → HLS in worker; Vidstack player                                                                                                                                                                |
+| Files            | **SeaweedFS** via S3 API (`@aws-sdk/client-s3`, presigned URLs)                                                                                                                                        |
+| Images           | **Always compressed before storing** (sharp/libvips): auto-rotate, strip metadata (EXIF/GPS), cap at 2560px, AVIF + WebP at 320/640/1280/1920 widths. Raw uploads are never kept or served             |
+| Video            | **Always transcoded** in the worker (ffmpeg): probe first, adaptive HLS ladder up to the source size, loudness normalized, poster + scrub thumbnails, MP4 download copy; original kept for re-encodes  |
+| Rust             | Considered per service, not by default. Media heavy lifting is already native (libvips, ffmpeg). First real candidate: the Phase 7b SFU. Any Rust service talks over Postgres jobs or HTTP             |
 | Transcripts      | Behind one `transcribe()` function. Default: API (Deepgram / OpenAI) first, self-hosted faster-whisper later (needs GPU) — _confirm_                                                                   |
 | Live classes     | Browser-native WebRTC, our own signaling over the Hono WebSocket, coturn for STUN/TURN. Mesh for small rooms (≤6); SFU added later only for big classes (mediasoup or Pion, behind the same signaling) |
 | Recording        | Browser `MediaRecorder` on the trainer's side → upload → existing HLS + transcript pipeline                                                                                                            |
@@ -71,6 +73,7 @@ packages/
   realtime/        WS message types + client
   graphql-client/  typed operations
   storage/         S3 client (SeaweedFS)
+  media/           image pipeline (sharp) and video job definitions (ffmpeg args), shared by server and worker
   editor/          Tiptap config + doc sanitizer
   ai/              TanStack AI tools/prompts/rotation (from zadaci)
   emails/          React Email templates
@@ -150,12 +153,30 @@ Rule: `core`, `realtime`, `graphql-client` have no DOM/Node imports (reused by m
 
 ### Phase 3 — Editor, versions, uploads (M)
 
-- **Action**: port Tiptap + sanitizer + autosave; `content_version` with author, diff, restore; presigned uploads to SeaweedFS; sharp image processing.
+- **Action**: port Tiptap + sanitizer + autosave; `content_version` with author, diff, restore; presigned uploads to SeaweedFS; image pipeline (below).
+- **Image pipeline** (`packages/media`, used by server and worker): uploads land in a private `incoming/` prefix;
+  sharp checks the real format from the bytes (JPEG, PNG, WebP, AVIF, GIF, HEIC; SVG is rejected or rasterized),
+  refuses decompression bombs (`limitInputPixels`), auto-rotates, strips metadata, caps the long edge at 2560px and
+  writes AVIF (quality ~55) and WebP (~75) at 320/640/1280/1920 widths (never larger than the source), plus width,
+  height and a tiny blur placeholder for the database. Animated GIFs become animated WebP. Then `incoming/` is deleted.
+  Pages render `<picture>` with `srcset`, so browsers fetch the smallest file that looks sharp.
+- **Validate**: tests with a large JPEG (smaller output, no EXIF/GPS left), a PNG with transparency (kept), a
+  fake image (refused), a pixel bomb (refused).
 
 ### Phase 4 — Video courses (M)
 
 - **Action**: course/section/lesson; upload → pg-boss → ffmpeg HLS (360/720/1080) + thumbnail → `transcribe()` → VTT + `transcript_segment`; course landing + lesson player screens; autoplay, Complete, Next; watch progress events.
-- **Validate**: sample video produces HLS + captions; clicking a timestamp seeks.
+- **Video pipeline** (worker): large files upload straight to S3 with resumable multipart uploads. Then:
+  1. `ffprobe` checks it's really video, and its duration, size, frame rate and audio; per-tenant limits apply.
+  2. ffmpeg builds an HLS ladder of H.264 + AAC renditions (360p, 540p, 720p, 1080p, only up to the source size),
+     quality-based encoding (CRF) with bitrate caps, 2-second aligned keyframes for smooth quality switching.
+  3. Audio is loudness-normalized (EBU R128) so every lesson plays at the same volume.
+  4. A poster frame, a thumbnail sprite for scrubbing previews, and a fast-start MP4 for downloads.
+  5. `transcribe()` → captions (VTT) and transcript segments.
+     The original stays in a private prefix so videos can be re-encoded later (new codecs like AV1, better settings)
+     without asking trainers to upload again. Job progress shows in the UI; a failed step retries, then reports clearly.
+- **Validate**: sample video produces HLS + captions; clicking a timestamp seeks; a phone video (portrait, 60fps,
+  quiet audio) and a long 4K screen recording both play smoothly and sound right; a renamed non-video file is refused.
 
 ### Phase 5 — Quizzes + unlock rules (M)
 
@@ -173,7 +194,9 @@ Rule: `core`, `realtime`, `graphql-client` have no DOM/Node imports (reused by m
 
 ### Phase 7b — Large classes (L, only if needed)
 
-- **Action**: add an SFU behind the same signaling protocol: mediasoup (Node, fits the stack) or a small Pion (Go) service. Server-side recording. Lifts the 6-person cap.
+- **Action**: add an SFU behind the same signaling protocol: a small Rust service (str0m or webrtc-rs), mediasoup
+  (Node, fits the stack) or Pion (Go). Rust is the leading candidate here: long-running, latency-sensitive media
+  forwarding is where its speed and memory safety pay off. Server-side recording. Lifts the 6-person cap.
 
 ### Phase 8 — Custom domains (M)
 

@@ -17,7 +17,7 @@ No Vercel, Supabase or Cloudinary.
 
 ```
 apps/       web, server, worker, site (marketing, the only thing on Vercel); mobile and desktop later
-packages/   db, api, core, realtime, graphql-client, storage, editor, ai, emails, ui, config
+packages/   db, api, core, realtime, graphql-client, storage, media, editor, ai, emails, ui, config
 infra/      docker-compose.yml for local services (postgres, seaweedfs), service configs
 scripts/    repo scripts (git hooks)
 ```
@@ -55,6 +55,11 @@ scripts/    repo scripts (git hooks)
   permissions, emails, tests helpers) instead of writing from scratch.
 - Every tenant table has `org_id`, enforced by Postgres row-level security. Never query tenant data without it.
 - Validate input at boundaries with zod. Never commit secrets; use `.env` (gitignored) and keep `.env.example` current.
+- **Media:** never store or serve a raw upload. Images always go through the image pipeline (sharp: strip metadata,
+  resize, AVIF + WebP sizes); videos always go through the worker's ffmpeg pipeline (HLS ladder, normalized audio).
+  See PLAN.md, Phases 3 and 4.
+- **Rust** is allowed for a service when it clearly pays off (e.g. a media/SFU service); it talks to the rest over
+  Postgres jobs or HTTP. Default is TypeScript.
 - **Env variables:** each app declares and validates its variables in `src/env.ts` with `@t3-oss/env-core` + zod and
   reads config only through `env`, never `process.env` directly.
 - Tests use Node's built-in runner against a real test database; API tests call the Hono app with `app.request()`.
