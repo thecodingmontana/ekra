@@ -1,4 +1,4 @@
-import { parseError } from "evlog";
+import { EvlogError, parseError } from "evlog";
 import type { EvlogVariables } from "evlog/hono";
 import { Hono } from "hono";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
@@ -16,6 +16,13 @@ app.use(requestLogs);
 app.onError((error, c) => {
 	c.get("log").error(error);
 	const { message, status, why, fix } = parseError(error);
+	// a crash's own message can name hosts, SQL or settings: only errors raised on purpose
+	// (createError from evlog) explain themselves to the client
+	if (status >= 500 && !(error instanceof EvlogError))
+		return c.json(
+			{ message: "Something went wrong. Try again in a moment." },
+			500,
+		);
 	return c.json({ message, why, fix }, status as ContentfulStatusCode);
 });
 

@@ -1,7 +1,21 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { createError } from "evlog";
 import { app } from "./app.ts";
 import { LIMITS } from "./graphql/yoga.ts";
+
+// routes for the error test, added before any request (Hono builds its router on the first one)
+app.get("/test-crash", () => {
+	throw new Error("connect ECONNREFUSED 10.0.0.5:5432 password=hunter2");
+});
+app.get("/test-declined", () => {
+	throw createError({
+		message: "Card declined",
+		status: 402,
+		why: "Insufficient funds",
+		fix: "Use another card",
+	});
+});
 
 const graphql = (query: string) =>
 	app.request("/api/graphql", {
@@ -38,4 +52,19 @@ test("GraphQL refuses a query with too many aliases", async () => {
 test("unknown routes are 404", async () => {
 	const res = await app.request("/api/nope");
 	assert.equal(res.status, 404);
+});
+
+test("a crash tells the client nothing; an error raised on purpose explains itself", async () => {
+	const crash = await app.request("/api/test-crash");
+	assert.equal(crash.status, 500);
+	const body = JSON.stringify(await crash.json());
+	assert.doesNotMatch(body, /ECONNREFUSED|hunter2|10\.0\.0\.5/);
+
+	const declined = await app.request("/api/test-declined");
+	assert.equal(declined.status, 402);
+	assert.deepEqual(await declined.json(), {
+		message: "Card declined",
+		why: "Insufficient funds",
+		fix: "Use another card",
+	});
 });
