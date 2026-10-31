@@ -70,7 +70,7 @@ export function SignInPage({
 	// every form here does one auth call, then shows its error or a "check your email" note
 	async function submit(
 		event: FormEvent,
-		run: () => Promise<{ error: unknown } | undefined>,
+		run: () => Promise<{ error: unknown; data?: unknown } | undefined>,
 		doneNote?: string,
 	) {
 		event.preventDefault();
@@ -81,6 +81,11 @@ export function SignInPage({
 			setBusy(null);
 			return void toast.error(authErrorMessage(result.error));
 		}
+		// the password was right, but this account also asks for a code from the authenticator app
+		if ((result?.data as { twoFactorRedirect?: boolean })?.twoFactorRedirect)
+			return window.location.assign(
+				`/two-factor?next=${encodeURIComponent(callbackURL)}`,
+			);
 		if (doneNote) {
 			setBusy(null);
 			setSent(doneNote);

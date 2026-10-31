@@ -19,6 +19,7 @@ export type Viewer = {
 	email: string;
 	image: string | null;
 	activeOrganizationId: string | null;
+	twoFactorEnabled: boolean;
 	memberships: Membership[];
 };
 
@@ -31,6 +32,7 @@ export const VIEWER = gql`
 			email
 			image
 			activeOrganizationId
+			twoFactorEnabled
 			memberships {
 				role
 				organization {

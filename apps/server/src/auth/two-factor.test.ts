@@ -62,6 +62,15 @@ test("turning on two-step sign-in needs a code from the app before it counts", a
 	assert.equal(confirmed.status, 200);
 	const [on] = await db.select().from(user).where(eq(user.email, email));
 	assert.equal(on?.twoFactorEnabled, true);
+	const viewer = await post(
+		"/api/graphql",
+		{ query: "{ viewer { twoFactorEnabled } }" },
+		// confirming swaps the session for a new one
+		cookieFrom(confirmed),
+	);
+	assert.deepEqual(await viewer.json(), {
+		data: { viewer: { twoFactorEnabled: true } },
+	});
 });
 
 test("an emailed link no longer signs in on its own: it asks for the second step", async () => {

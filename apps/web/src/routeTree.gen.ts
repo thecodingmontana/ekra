@@ -15,9 +15,11 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as TwoFactorRouteImport } from './routes/two-factor'
 import { Route as AuthedIndexRouteImport } from './routes/_authed/index'
 import { Route as AuthedOnboardingRouteImport } from './routes/_authed/onboarding'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
+import { Route as AuthedSettingsSecurityRouteImport } from './routes/_authed/settings.security'
 
 const AuthedRoute = AuthedRouteImport.update({
   id: '/_authed',
@@ -48,6 +50,11 @@ const TermsRoute = TermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TwoFactorRoute = TwoFactorRouteImport.update({
+  id: '/two-factor',
+  path: '/two-factor',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthedIndexRoute = AuthedIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -63,6 +70,11 @@ const ApiSplatRoute = ApiSplatRouteImport.update({
   path: '/api/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthedSettingsSecurityRoute = AuthedSettingsSecurityRouteImport.update({
+  id: '/settings/security',
+  path: '/settings/security',
+  getParentRoute: () => AuthedRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthedIndexRoute
@@ -71,8 +83,10 @@ export interface FileRoutesByFullPath {
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/terms': typeof TermsRoute
+  '/two-factor': typeof TwoFactorRoute
   '/onboarding': typeof AuthedOnboardingRoute
   '/api/$': typeof ApiSplatRoute
+  '/settings/security': typeof AuthedSettingsSecurityRoute
 }
 export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
@@ -80,9 +94,11 @@ export interface FileRoutesByTo {
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/terms': typeof TermsRoute
+  '/two-factor': typeof TwoFactorRoute
   '/onboarding': typeof AuthedOnboardingRoute
   '/api/$': typeof ApiSplatRoute
   '/': typeof AuthedIndexRoute
+  '/settings/security': typeof AuthedSettingsSecurityRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -92,9 +108,11 @@ export interface FileRoutesById {
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/terms': typeof TermsRoute
+  '/two-factor': typeof TwoFactorRoute
   '/_authed/onboarding': typeof AuthedOnboardingRoute
   '/api/$': typeof ApiSplatRoute
   '/_authed/': typeof AuthedIndexRoute
+  '/_authed/settings/security': typeof AuthedSettingsSecurityRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -105,8 +123,10 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/terms'
+    | '/two-factor'
     | '/onboarding'
     | '/api/$'
+    | '/settings/security'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/privacy'
@@ -114,9 +134,11 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/terms'
+    | '/two-factor'
     | '/onboarding'
     | '/api/$'
     | '/'
+    | '/settings/security'
   id:
     | '__root__'
     | '/_authed'
@@ -125,9 +147,11 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/terms'
+    | '/two-factor'
     | '/_authed/onboarding'
     | '/api/$'
     | '/_authed/'
+    | '/_authed/settings/security'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -137,6 +161,7 @@ export interface RootRouteChildren {
   SignInRoute: typeof SignInRoute
   SignUpRoute: typeof SignUpRoute
   TermsRoute: typeof TermsRoute
+  TwoFactorRoute: typeof TwoFactorRoute
   ApiSplatRoute: typeof ApiSplatRoute
 }
 
@@ -184,6 +209,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/two-factor': {
+      id: '/two-factor'
+      path: '/two-factor'
+      fullPath: '/two-factor'
+      preLoaderRoute: typeof TwoFactorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authed/': {
       id: '/_authed/'
       path: '/'
@@ -205,17 +237,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authed/settings/security': {
+      id: '/_authed/settings/security'
+      path: '/settings/security'
+      fullPath: '/settings/security'
+      preLoaderRoute: typeof AuthedSettingsSecurityRouteImport
+      parentRoute: typeof AuthedRoute
+    }
   }
 }
 
 interface AuthedRouteChildren {
   AuthedOnboardingRoute: typeof AuthedOnboardingRoute
   AuthedIndexRoute: typeof AuthedIndexRoute
+  AuthedSettingsSecurityRoute: typeof AuthedSettingsSecurityRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedOnboardingRoute: AuthedOnboardingRoute,
   AuthedIndexRoute: AuthedIndexRoute,
+  AuthedSettingsSecurityRoute: AuthedSettingsSecurityRoute,
 }
 
 const AuthedRouteWithChildren =
@@ -228,6 +269,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignInRoute: SignInRoute,
   SignUpRoute: SignUpRoute,
   TermsRoute: TermsRoute,
+  TwoFactorRoute: TwoFactorRoute,
   ApiSplatRoute: ApiSplatRoute,
 }
 export const routeTree = rootRouteImport

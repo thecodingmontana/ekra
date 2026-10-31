@@ -1,6 +1,7 @@
-import { Button } from "@ekra/ui/components/button";
+import { Button, buttonVariants } from "@ekra/ui/components/button";
 import {
 	createFileRoute,
+	Link,
 	Outlet,
 	redirect,
 	useLocation,
@@ -73,6 +74,12 @@ function AuthedLayout() {
 					</label>
 				)}
 				<span className="flex-1" />
+				<Link
+					to="/settings/security"
+					className={buttonVariants({ variant: "ghost", size: "sm" })}
+				>
+					Security
+				</Link>
 				<Button variant="ghost" size="sm" onClick={signOut}>
 					Sign out
 				</Button>

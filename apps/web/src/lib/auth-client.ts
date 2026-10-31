@@ -2,6 +2,7 @@ import { passkeyClient } from "@better-auth/passkey/client";
 import {
 	magicLinkClient,
 	organizationClient,
+	twoFactorClient,
 } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 
@@ -14,6 +15,8 @@ export const authClient = createAuthClient({
 	plugins: [
 		magicLinkClient(),
 		passkeyClient(),
+		// the sign-in page sends people to /two-factor itself, so no redirect callback here
+		twoFactorClient(),
 		organizationClient({
 			teams: { enabled: true },
 			schema: {
@@ -47,5 +50,7 @@ export function authErrorMessage(error: unknown): string {
 		return "Confirm your email first. We just sent you a new link.";
 	if (status === 401) return "That email and password don't match.";
 	if (status === 429) return "Too many tries. Wait a minute and try again.";
+	if (/invalid (code|backup)/i.test(message ?? ""))
+		return "That code didn't work. Check it and try again.";
 	return message ?? "Something went wrong. Try again.";
 }

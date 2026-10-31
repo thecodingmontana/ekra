@@ -43,6 +43,8 @@ const schema = createSchema<GraphQLContext>({
 			image: String
 			"The organization this session is working in, if one is chosen."
 			activeOrganizationId: ID
+			"Two-step sign-in with an authenticator app is on."
+			twoFactorEnabled: Boolean!
 			"Every organization this person belongs to, with their role in it."
 			memberships: [Membership!]!
 		}
@@ -86,6 +88,7 @@ const schema = createSchema<GraphQLContext>({
 							...session.user,
 							activeOrganizationId:
 								session.session.activeOrganizationId ?? null,
+							twoFactorEnabled: session.user.twoFactorEnabled ?? false,
 						}
 					: null,
 		},
