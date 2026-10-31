@@ -318,6 +318,22 @@ pnpm services:up   # Postgres + SeaweedFS
 pnpm dev           # all apps
 ```
 
+### Database (`packages/db`)
+
+The schema lives in `packages/db/src/schema` ([Drizzle ORM](https://orm.drizzle.team)); migrations are SQL files in
+`packages/db/migrations` and are committed.
+
+```bash
+pnpm db:migrate      # apply migrations to DATABASE_URL (run after pulling, and once after pnpm services:up)
+pnpm db:generate     # after changing the schema: write a new migration, then commit it
+pnpm db:studio       # browse the data in Drizzle Studio
+```
+
+Ids are time-ordered UUIDs made by Postgres 18 itself (`uuidv7()`), so Postgres 18 or newer is required.
+
+Tests use the separate `ekra_test` database (`TEST_DATABASE_URL`) and apply the migrations to it themselves; they
+refuse to run against a database whose name doesn't contain `test`.
+
 ### API server (`apps/server`)
 
 ```bash

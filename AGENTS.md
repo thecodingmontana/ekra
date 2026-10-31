@@ -224,15 +224,18 @@ scripts/    repo scripts (git hooks)
 
 ## Commands
 
-| Command                         | What it does                                       |
-| ------------------------------- | -------------------------------------------------- |
-| `pnpm install`                  | Install everything and set up git hooks (Lefthook) |
-| `pnpm dev`                      | Run all apps (Turborepo)                           |
-| `pnpm build`                    | Build all apps and packages                        |
-| `pnpm typecheck`                | TypeScript in every workspace                      |
-| `pnpm test`                     | Tests in every workspace                           |
-| `pnpm check` / `pnpm check:fix` | Biome lint + format check / auto-fix               |
-| `pnpm --filter <name> <script>` | Run a script in one workspace                      |
+| Command                         | What it does                                        |
+| ------------------------------- | --------------------------------------------------- |
+| `pnpm install`                  | Install everything and set up git hooks (Lefthook)  |
+| `pnpm dev`                      | Run all apps (Turborepo)                            |
+| `pnpm build`                    | Build all apps and packages                         |
+| `pnpm typecheck`                | TypeScript in every workspace                       |
+| `pnpm test`                     | Tests in every workspace                            |
+| `pnpm check` / `pnpm check:fix` | Biome lint + format check / auto-fix                |
+| `pnpm --filter <name> <script>` | Run a script in one workspace                       |
+| `pnpm services:up`              | Start local Postgres + SeaweedFS (Docker)           |
+| `pnpm db:migrate`               | Apply migrations to `DATABASE_URL`                  |
+| `pnpm db:generate`              | Write a migration after a schema change (commit it) |
 
 ## Conventions
 
