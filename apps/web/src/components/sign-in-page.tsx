@@ -188,6 +188,21 @@ export function SignInPage({
 				<span aria-hidden className="icon-[solar--letter-linear] size-4" />
 				Continue with email
 			</Link>
+			<Link
+				to="/sign-in"
+				{...go("link")}
+				className={buttonVariants({
+					variant: "outline",
+					size: "lg",
+					className: "w-full",
+				})}
+			>
+				<span
+					aria-hidden
+					className="icon-[solar--magic-stick-3-linear] size-4"
+				/>
+				Email me a sign-in link
+			</Link>
 			{methods.includes("passkey") && (
 				<Button
 					variant="outline"
@@ -373,6 +388,15 @@ export function SignInPage({
 							Other ways to sign in
 						</Link>
 					</>
+				)}
+				{mode === "sign-up" && (
+					<Link
+						to="/sign-in"
+						{...go("link")}
+						className="underline-offset-2 hover:underline"
+					>
+						Email me a sign-up link instead
+					</Link>
 				)}
 				{mode !== "email" && mode !== "sign-in" && (
 					<Link
