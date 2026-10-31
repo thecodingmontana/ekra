@@ -11,10 +11,16 @@ import { createSchema, createYoga, useErrorHandler } from "graphql-yoga";
 import { auth, signInMethods } from "../auth/index.ts";
 import { db } from "../db.ts";
 import { env } from "../env.ts";
+import { type ActiveOrg, activeOrg, requireOrg } from "./tenant.ts";
 
-/** What every resolver knows about the request: the Better Auth session, or null when signed out. */
+/**
+ * What every resolver knows about the request: the Better Auth session (null when signed out) and the organization
+ * it works in with the person's role (null when none, or when they aren't a member of it). Tenant resolvers use
+ * `requireOrg` (./tenant.ts).
+ */
 export type GraphQLContext = {
 	session: Awaited<ReturnType<typeof auth.api.getSession>>;
+	org: ActiveOrg | null;
 };
 
 /**
@@ -34,6 +40,14 @@ const schema = createSchema<GraphQLContext>({
 			signInMethods: [String!]!
 			"Whether an organization address is free to take (signed in only; false when it breaks the rules)."
 			slugAvailable(slug: String!): Boolean!
+			"The organization this session works in, with your role there. Refused without one."
+			organization: ActiveOrganization!
+		}
+
+		type ActiveOrganization {
+			organization: Organization!
+			"owner, admin, trainer, learner or guest"
+			role: String!
 		}
 
 		type Viewer {
@@ -68,6 +82,14 @@ const schema = createSchema<GraphQLContext>({
 		Query: {
 			health: () => "ok",
 			signInMethods: () => signInMethods,
+			organization: async (_parent, _args, ctx) => {
+				const { id, role } = requireOrg(ctx);
+				const [row] = await db
+					.select()
+					.from(organization)
+					.where(eq(organization.id, id));
+				return { organization: row, role };
+			},
 			slugAvailable: async (
 				_parent,
 				{ slug }: { slug: string },
@@ -123,7 +145,11 @@ export const yoga = createYoga<object, GraphQLContext>({
 					organizationId: s.session.activeOrganizationId ?? null,
 				}),
 			});
-		return { session };
+		const org = await activeOrg(
+			session?.user.id,
+			session?.session.activeOrganizationId,
+		);
+		return { session, org };
 	},
 	// Yoga logs every request at "info": keep the logs to problems
 	logging: "warn",
