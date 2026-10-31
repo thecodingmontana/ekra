@@ -57,6 +57,8 @@ export function SignInPage({
 	error?: string;
 }) {
 	const hydrated = useHydrated();
+	// sign-up opens on its method chooser; picking email shows the form
+	const [withEmail, setWithEmail] = useState(false);
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [name, setName] = useState("");
@@ -203,26 +205,74 @@ export function SignInPage({
 				/>
 				Email me a sign-in link
 			</Link>
-			{methods.includes("passkey") && (
+			<Button
+				variant="outline"
+				size="lg"
+				className="w-full"
+				disabled={!hydrated}
+				onClick={signInWithPasskey}
+			>
+				<span
+					aria-hidden
+					className="icon-[solar--key-minimalistic-linear] size-4"
+				/>
+				Sign in with a passkey
+			</Button>
+		</div>
+	);
+
+	let form: ReactNode;
+	const signUpChooser = (
+		<div className="flex flex-col gap-2">
+			{methods.includes("google") && (
 				<Button
 					variant="outline"
 					size="lg"
 					className="w-full"
 					disabled={!hydrated}
-					onClick={signInWithPasskey}
+					onClick={() =>
+						authClient.signIn.social({
+							provider: "google",
+							callbackURL,
+							errorCallbackURL: "/sign-up",
+						})
+					}
 				>
-					<span
-						aria-hidden
-						className="icon-[solar--key-minimalistic-linear] size-4"
-					/>
-					Sign in with a passkey
+					<span aria-hidden className="icon-[devicon--google] size-4" />
+					Sign up with Google
 				</Button>
 			)}
+			<Button
+				variant="outline"
+				size="lg"
+				className="w-full"
+				disabled={!hydrated}
+				onClick={() => setWithEmail(true)}
+			>
+				<span aria-hidden className="icon-[solar--letter-linear] size-4" />
+				Sign up with email
+			</Button>
+			<Link
+				to="/sign-in"
+				{...go("link")}
+				className={buttonVariants({
+					variant: "outline",
+					size: "lg",
+					className: "w-full",
+				})}
+			>
+				<span
+					aria-hidden
+					className="icon-[solar--magic-stick-3-linear] size-4"
+				/>
+				Email me a sign-up link
+			</Link>
 		</div>
 	);
 
-	let form: ReactNode;
-	if (mode === "sign-up") {
+	if (mode === "sign-up" && !withEmail) {
+		form = signUpChooser;
+	} else if (mode === "sign-up") {
 		form = (
 			<form
 				className="flex flex-col gap-3"
@@ -327,24 +377,6 @@ export function SignInPage({
 	return (
 		<AuthShell title={title} description={description}>
 			<div className="flex flex-col gap-3">
-				{methods.includes("google") && mode === "sign-up" && (
-					<Button
-						variant="outline"
-						size="lg"
-						className="w-full"
-						disabled={!hydrated}
-						onClick={() =>
-							authClient.signIn.social({
-								provider: "google",
-								callbackURL,
-								errorCallbackURL: "/sign-in",
-							})
-						}
-					>
-						<span aria-hidden className="icon-[devicon--google] size-4" />
-						Continue with Google
-					</Button>
-				)}
 				{form}
 				{problem && <FieldError role="alert">{problem}</FieldError>}
 			</div>
@@ -389,14 +421,14 @@ export function SignInPage({
 						</Link>
 					</>
 				)}
-				{mode === "sign-up" && (
-					<Link
-						to="/sign-in"
-						{...go("link")}
+				{mode === "sign-up" && withEmail && (
+					<button
+						type="button"
+						onClick={() => setWithEmail(false)}
 						className="underline-offset-2 hover:underline"
 					>
-						Email me a sign-up link instead
-					</Link>
+						Other ways to sign up
+					</button>
 				)}
 				{mode !== "email" && mode !== "sign-in" && (
 					<Link
