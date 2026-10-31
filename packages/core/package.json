@@ -1,0 +1,15 @@
+{
+	"name": "@ekra/core",
+	"version": "0.0.0",
+	"private": true,
+	"description": "Ekra's shared rules in plain TypeScript (no DOM, no Node): used by the server, web, mobile and desktop.",
+	"license": "PolyForm-Noncommercial-1.0.0",
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"scripts": {
+		"typecheck": "tsc --noEmit",
+		"test": "node --test 'src/**/*.test.ts'"
+	}
+}

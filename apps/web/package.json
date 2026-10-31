@@ -16,10 +16,12 @@
 	"dependencies": {
 		"@apollo/client": "^4.3.5",
 		"@apollo/client-integration-tanstack-start": "0.14.4-rc.0",
+		"@ekra/core": "workspace:*",
 		"@ekra/ui": "workspace:*",
 		"@t3-oss/env-core": "^0.13.11",
 		"@tanstack/react-router": "1.170.46",
 		"@tanstack/react-start": "1.169.4",
+		"better-auth": "1.7.14",
 		"graphql": "^16.10.0",
 		"lucide-react": "^1.66.0",
 		"nitro": "3.0.260610-beta",

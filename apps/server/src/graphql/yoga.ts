@@ -1,9 +1,12 @@
+import { member, organization } from "@ekra/db";
 import { costLimitPlugin } from "@escape.tech/graphql-armor-cost-limit";
 import { maxAliasesPlugin } from "@escape.tech/graphql-armor-max-aliases";
 import { maxDepthPlugin } from "@escape.tech/graphql-armor-max-depth";
+import { asc, eq } from "drizzle-orm";
 import { GraphQLError } from "graphql";
 import { createSchema, createYoga, useErrorHandler } from "graphql-yoga";
-import { auth } from "../auth/index.ts";
+import { auth, signInMethods } from "../auth/index.ts";
+import { db } from "../db.ts";
 import { env } from "../env.ts";
 
 /** What every resolver knows about the request: the Better Auth session, or null when signed out. */
@@ -24,6 +27,8 @@ const schema = createSchema<GraphQLContext>({
 			health: String!
 			"The signed-in person, or null when signed out."
 			viewer: Viewer
+			"Ways to sign in that are switched on: email-link, and google when configured."
+			signInMethods: [String!]!
 		}
 
 		type Viewer {
@@ -33,11 +38,29 @@ const schema = createSchema<GraphQLContext>({
 			image: String
 			"The organization this session is working in, if one is chosen."
 			activeOrganizationId: ID
+			"Every organization this person belongs to, with their role in it."
+			memberships: [Membership!]!
+		}
+
+		type Membership {
+			"owner, admin, trainer, learner or guest"
+			role: String!
+			organization: Organization!
+		}
+
+		type Organization {
+			id: ID!
+			name: String!
+			slug: String!
+			"company or creator"
+			kind: String!
+			logo: String
 		}
 	`,
 	resolvers: {
 		Query: {
 			health: () => "ok",
+			signInMethods: () => signInMethods,
 			viewer: (_parent, _args, { session }) =>
 				session
 					? {
@@ -46,6 +69,17 @@ const schema = createSchema<GraphQLContext>({
 								session.session.activeOrganizationId ?? null,
 						}
 					: null,
+		},
+		Viewer: {
+			memberships: async ({ id }: { id: string }) => {
+				const rows = await db
+					.select({ role: member.role, organization })
+					.from(member)
+					.innerJoin(organization, eq(member.organizationId, organization.id))
+					.where(eq(member.userId, id))
+					.orderBy(asc(organization.name));
+				return rows;
+			},
 		},
 	},
 });

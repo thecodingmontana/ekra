@@ -184,6 +184,9 @@ importers:
 
   apps/server:
     dependencies:
+      '@ekra/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@ekra/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -229,6 +232,9 @@ importers:
       '@apollo/client-integration-tanstack-start':
         specifier: 0.14.4-rc.0
         version: 0.14.4-rc.0(@apollo/client@4.3.5(graphql@16.14.2)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(rxjs@7.8.2))(@tanstack/react-router@1.170.46(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@tanstack/react-start@1.169.4(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(rolldown@1.2.16)(vite@8.3.5(@types/node@26.6.6)(jiti@2.7.0)))(@tanstack/router-core@1.171.39)(@types/react@19.3.0)(graphql@16.14.2)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(rxjs@7.8.2)
+      '@ekra/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@ekra/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -241,6 +247,9 @@ importers:
       '@tanstack/react-start':
         specifier: 1.169.4
         version: 1.169.4(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(rolldown@1.2.16)(vite@8.3.5(@types/node@26.6.6)(jiti@2.7.0))
+      better-auth:
+        specifier: 1.7.14
+        version: 1.7.14(@tanstack/react-start@1.169.4(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(rolldown@1.2.16)(vite@8.3.5(@types/node@26.6.6)(jiti@2.7.0)))(drizzle-kit@1.0.0-rc.5(drizzle-orm@1.0.0-rc.5(postgres@3.4.9)(zod@4.6.7)))(drizzle-orm@1.0.0-rc.5(postgres@3.4.9)(zod@4.6.7))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       graphql:
         specifier: ^16.10.0
         version: 16.14.2
@@ -287,6 +296,8 @@ importers:
       vite:
         specifier: ^8.3.5
         version: 8.3.5(@types/node@26.6.6)(jiti@2.7.0)
+
+  packages/core: {}
 
   packages/db:
     dependencies:

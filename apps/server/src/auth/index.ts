@@ -1,6 +1,8 @@
+import { slugProblem } from "@ekra/core";
 import { schema } from "@ekra/db";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { APIError } from "better-auth/api";
 import { magicLink, organization } from "better-auth/plugins";
 import { db } from "../db.ts";
 import { env } from "../env.ts";
@@ -14,6 +16,17 @@ const MAGIC_LINK_MINUTES = 10;
  * shortcut: no email delivery yet; links are printed in the server terminal. Add a mail transport before production.
  */
 export const devOutbox = new Map<string, string>();
+
+function assertSlug(slug: string) {
+	const problem = slugProblem(slug);
+	if (problem) throw new APIError("BAD_REQUEST", { message: problem });
+}
+
+/** Sign-in methods that are switched on, so the sign-in page only offers those. */
+export const signInMethods = [
+	"email-link",
+	...(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET ? ["google"] : []),
+];
 
 /** Better Auth: sign-in, sessions, organizations, members, roles, invitations and teams. Served at /api/auth/*. */
 export const auth = betterAuth({
@@ -70,6 +83,15 @@ export const auth = betterAuth({
 			roles,
 			creatorRole: "owner",
 			teams: { enabled: true },
+			organizationHooks: {
+				// the slug becomes a subdomain, so it must follow hostname rules (packages/core)
+				beforeCreateOrganization: async ({ organization }) => {
+					assertSlug(organization.slug ?? "");
+				},
+				beforeUpdateOrganization: async ({ organization }) => {
+					if (organization.slug !== undefined) assertSlug(organization.slug);
+				},
+			},
 			schema: {
 				organization: {
 					additionalFields: {

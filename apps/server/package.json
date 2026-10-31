@@ -12,6 +12,7 @@
 		"test": "node --env-file-if-exists=../../.env --import ./src/test-env.ts --test 'src/**/*.test.ts'"
 	},
 	"dependencies": {
+		"@ekra/core": "workspace:*",
 		"@ekra/db": "workspace:*",
 		"@escape.tech/graphql-armor-cost-limit": "2.4.3",
 		"@escape.tech/graphql-armor-max-aliases": "2.6.2",

@@ -12,22 +12,12 @@ export default defineConfig(async ({ mode }) => {
 	for (const [key, value] of Object.entries(loadEnv(mode, ROOT, ""))) {
 		process.env[key] ??= value;
 	}
-	const { env } = await import("./src/env.ts");
-
-	// The browser only ever talks to /api on this origin. Nitro forwards it to the Hono API, in dev and in the
-	// built server alike (Vite's own proxy never sees requests: Nitro answers them first).
-	// shortcut: plain HTTP only, no WebSocket upgrade yet; add it with the realtime work (Phase 1).
-	const routeRules = { "/api/**": { proxy: `${env.API_URL}/api/**` } };
+	// fail fast on bad settings; /api/* is forwarded to the API by src/routes/api/$.ts
+	await import("./src/env.ts");
 
 	return {
 		envDir: ROOT,
 		resolve: { tsconfigPaths: true },
-		plugins: [
-			devtools(),
-			nitro({ routeRules }),
-			tailwindcss(),
-			tanstackStart(),
-			viteReact(),
-		],
+		plugins: [devtools(), nitro(), tailwindcss(), tanstackStart(), viteReact()],
 	};
 });

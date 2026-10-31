@@ -114,6 +114,39 @@ test("creating an organization makes its creator the owner and its active organi
 	assert.equal(viewer?.activeOrganizationId, created.id);
 });
 
+test("the viewer lists their organizations with their role", async () => {
+	const body = (await (
+		await call("/api/graphql", {
+			method: "POST",
+			body: JSON.stringify({
+				query: "{ viewer { memberships { role organization { slug kind } } } }",
+			}),
+		})
+	).json()) as {
+		data?: {
+			viewer: {
+				memberships: {
+					role: string;
+					organization: { slug: string; kind: string };
+				}[];
+			};
+		};
+	};
+	assert.deepEqual(body.data?.viewer.memberships, [
+		{ role: "owner", organization: { slug, kind: "creator" } },
+	]);
+});
+
+test("the server refuses slugs that can't be subdomains", async () => {
+	for (const bad of ["www", "Bad Slug", "ab", "-acme"]) {
+		const res = await call("/api/auth/organization/create", {
+			method: "POST",
+			body: JSON.stringify({ name: "Nope", slug: bad }),
+		});
+		assert.equal(res.status, 400, bad);
+	}
+});
+
 test("nameFromEmail turns an address into a readable name", () => {
 	assert.equal(nameFromEmail("amina.k@acme.com"), "Amina K");
 	assert.equal(nameFromEmail("john_doe+lms@x.io"), "John Doe Lms");

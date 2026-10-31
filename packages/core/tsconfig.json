@@ -1,0 +1,9 @@
+{
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		// tests use node:test; the library code itself must not import Node or DOM APIs
+		"types": ["node"],
+		"erasableSyntaxOnly": true
+	},
+	"include": ["src"]
+}
