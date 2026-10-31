@@ -1,7 +1,6 @@
 import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { cn } from "@ekra/ui/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
-import { ArrowRight } from "lucide-react";
 
 // zadaci's button, on Base UI, in Ekra green: a solid brand fill with inset highlights, a small press-scale, and
 // compact sizes (default 30px, lg 36px).
@@ -66,10 +65,10 @@ function ArrowChip() {
 		>
 			<span className="flex w-12 -translate-x-1/2 transition-transform duration-300 ease-[cubic-bezier(0.77,0,0.175,1)] group-hover/button:translate-x-0 motion-reduce:transition-none">
 				<span className="flex size-6">
-					<ArrowRight className="m-auto size-3.5" />
+					<span className="m-auto icon-[solar--arrow-right-linear] size-3.5" />
 				</span>
 				<span className="flex size-6">
-					<ArrowRight className="m-auto size-3.5" />
+					<span className="m-auto icon-[solar--arrow-right-linear] size-3.5" />
 				</span>
 			</span>
 		</span>

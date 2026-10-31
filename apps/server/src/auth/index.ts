@@ -1,4 +1,4 @@
-import { slugProblem } from "@ekra/core";
+import { passwordProblem, slugProblem } from "@ekra/core";
 import { generateId, schema } from "@ekra/db";
 import {
 	resetPasswordEmail,
@@ -7,7 +7,7 @@ import {
 } from "@ekra/email";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { APIError } from "better-auth/api";
+import { APIError, createAuthMiddleware } from "better-auth/api";
 import { magicLink, organization } from "better-auth/plugins";
 import { db } from "../db.ts";
 import { mailer, sendInBackground } from "../email.ts";
@@ -87,6 +87,23 @@ export const auth = betterAuth({
 				}),
 			},
 		},
+	},
+	hooks: {
+		// the same password rules the forms show (packages/core), so calling the API directly can't skip them
+		before: createAuthMiddleware(async (ctx) => {
+			const body = ctx.body as
+				| { password?: unknown; newPassword?: unknown }
+				| undefined;
+			const password =
+				ctx.path === "/sign-up/email"
+					? body?.password
+					: ctx.path === "/reset-password" || ctx.path === "/change-password"
+						? body?.newPassword
+						: undefined;
+			if (typeof password !== "string") return;
+			const problem = passwordProblem(password);
+			if (problem) throw new APIError("BAD_REQUEST", { message: problem });
+		}),
 	},
 	socialProviders:
 		env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET

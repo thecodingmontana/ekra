@@ -12,8 +12,8 @@ import {
 } from "../test-helpers.ts";
 
 const email = `pat.lee-${Date.now()}@test.ekra`;
-const password = "correct horse battery";
-const newPassword = "a whole new passphrase";
+const password = "Correct horse battery 9";
+const newPassword = "A whole new passphrase 7";
 
 after(async () => {
 	await db.delete(user).where(eq(user.email, email));
@@ -110,4 +110,15 @@ test("asking to reset an unknown address looks the same and sends nothing", asyn
 	});
 	assert.equal(res.status, 200);
 	assert.equal(emailsTo(nobody).length, 0);
+});
+
+test("the server enforces the strength rules the form shows", async () => {
+	const res = await post("/api/auth/sign-up/email", {
+		name: "Weak",
+		email: `weak-${Date.now()}@test.ekra`,
+		password: "longbutnorules",
+	});
+	assert.equal(res.status, 400);
+	const body = (await res.json()) as { message?: string };
+	assert.match(body.message ?? "", /at least 1 number/);
 });

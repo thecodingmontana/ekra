@@ -22,7 +22,7 @@ export const Route = createFileRoute("/_authed")({
 		if (!data?.viewer) {
 			throw redirect({
 				to: "/sign-in",
-				search: { next: location.href, error: undefined },
+				search: { next: location.href, error: undefined, mode: undefined },
 			});
 		}
 		return { viewer: data.viewer };
@@ -47,7 +47,7 @@ function AuthedLayout() {
 		await apollo.clearStore();
 		await navigate({
 			to: "/sign-in",
-			search: { next: undefined, error: undefined },
+			search: { next: undefined, error: undefined, mode: undefined },
 		});
 	}
 

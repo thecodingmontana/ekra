@@ -17,6 +17,10 @@
 	"dependencies": {
 		"@base-ui/react": "^1.9.0",
 		"@ekra/fonts": "workspace:*",
+		"@iconify-json/devicon": "^1.2.74",
+		"@iconify-json/hugeicons": "^1.2.35",
+		"@iconify-json/solar": "^1.2.13",
+		"@iconify/tailwind4": "^1.2.3",
 		"class-variance-authority": "^0.7.1",
 		"cn": "^0.5.1",
 		"lucide-react": "^1.66.0",

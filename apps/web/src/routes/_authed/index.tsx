@@ -6,11 +6,15 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@ekra/ui/components/card";
-import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { CreateOrganization } from "@/components/create-organization";
+import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
 import { authClient } from "@/lib/auth-client";
 
 export const Route = createFileRoute("/_authed/")({
+	// someone with no organization yet sets one up first
+	beforeLoad: ({ context }) => {
+		if (context.viewer.memberships.length === 0)
+			throw redirect({ to: "/onboarding" });
+	},
 	head: () => ({ meta: [{ title: "Home · Ekra" }] }),
 	component: Home,
 });
@@ -29,14 +33,6 @@ function Home() {
 	const active = viewer.memberships.find(
 		(m) => m.organization.id === viewer.activeOrganizationId,
 	);
-
-	if (viewer.memberships.length === 0) {
-		return (
-			<main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center p-6">
-				<CreateOrganization firstOne />
-			</main>
-		);
-	}
 
 	if (!active) {
 		return (

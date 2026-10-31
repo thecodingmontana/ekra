@@ -25,11 +25,25 @@ export const authClient = createAuthClient({
 	],
 });
 
-/** Better Auth's error codes on a returned sign-in link, in words a person can act on. */
-export function signInLinkError(code: string | undefined): string | null {
+/** The ?error= code an emailed link or Google returns with, in words a person can act on. */
+export function linkErrorMessage(code: string | undefined): string | null {
 	if (!code) return null;
+	if (code === "access_denied") return "Google sign-in was cancelled.";
 	if (/expired|invalid/i.test(code)) {
-		return "That sign-in link has expired or was already used. Send yourself a new one.";
+		return "That link has expired or was already used. Ask for a new one.";
 	}
-	return "Something went wrong signing you in. Try again.";
+	return "We couldn't sign you in. Try again.";
+}
+
+/** A Better Auth error from a form, in words a person can act on. */
+export function authErrorMessage(error: unknown): string {
+	const { status, message } = (error ?? {}) as {
+		status?: number;
+		message?: string;
+	};
+	if (status === 403)
+		return "Confirm your email first. We just sent you a new link.";
+	if (status === 401) return "That email and password don't match.";
+	if (status === 429) return "Too many tries. Wait a minute and try again.";
+	return message ?? "Something went wrong. Try again.";
 }
