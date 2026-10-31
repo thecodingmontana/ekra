@@ -1,3 +1,4 @@
+import { passkeyClient } from "@better-auth/passkey/client";
 import {
 	magicLinkClient,
 	organizationClient,
@@ -12,6 +13,7 @@ import { createAuthClient } from "better-auth/react";
 export const authClient = createAuthClient({
 	plugins: [
 		magicLinkClient(),
+		passkeyClient(),
 		organizationClient({
 			teams: { enabled: true },
 			schema: {

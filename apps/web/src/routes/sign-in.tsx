@@ -1,4 +1,4 @@
-import { ArrowChip, Button } from "@ekra/ui/components/button";
+import { ArrowChip, Button, buttonVariants } from "@ekra/ui/components/button";
 import { Field, FieldError, FieldLabel } from "@ekra/ui/components/field";
 import { InputWithIcon } from "@ekra/ui/components/input-with-icon";
 import {
@@ -17,7 +17,7 @@ import {
 	linkErrorMessage,
 } from "@/lib/auth-client";
 
-const MODES = ["sign-in", "sign-up", "forgot", "link"] as const;
+const MODES = ["sign-in", "email", "sign-up", "forgot", "link"] as const;
 type Mode = (typeof MODES)[number];
 
 /** Only same-site paths, so a sign-in link can't send people to another site. */
@@ -57,8 +57,12 @@ export const Route = createFileRoute("/sign-in")({
 
 const COPY: Record<Mode, { title: string; description: string }> = {
 	"sign-in": {
-		title: "Welcome back",
-		description: "Sign in to your learning.",
+		title: "Welcome to Ekra",
+		description: "Sign in with Google, your email or a passkey.",
+	},
+	email: {
+		title: "Sign in with email",
+		description: "Use your password, or get a sign-in link.",
 	},
 	"sign-up": {
 		title: "Create your account",
@@ -166,6 +170,68 @@ function SignIn() {
 		</Button>
 	);
 
+	async function signInWithPasskey() {
+		setProblem(null);
+		const result = await authClient.signIn.passkey();
+		// closing the browser's passkey prompt isn't an error worth showing
+		if (result?.error) {
+			if (!/cancel|abort|not ?allowed/i.test(result.error.message ?? ""))
+				setProblem(authErrorMessage(result.error));
+			return;
+		}
+		window.location.assign(callbackURL);
+	}
+
+	const chooser = (
+		<div className="flex flex-col gap-2">
+			{methods.includes("google") && (
+				<Button
+					variant="outline"
+					size="lg"
+					className="w-full"
+					disabled={!hydrated}
+					onClick={() =>
+						authClient.signIn.social({
+							provider: "google",
+							callbackURL,
+							errorCallbackURL: "/sign-in",
+						})
+					}
+				>
+					<span aria-hidden className="icon-[devicon--google] size-4" />
+					Continue with Google
+				</Button>
+			)}
+			<Link
+				to="/sign-in"
+				{...go("email")}
+				className={buttonVariants({
+					variant: "outline",
+					size: "lg",
+					className: "w-full",
+				})}
+			>
+				<span aria-hidden className="icon-[solar--letter-linear] size-4" />
+				Continue with email
+			</Link>
+			{methods.includes("passkey") && (
+				<Button
+					variant="outline"
+					size="lg"
+					className="w-full"
+					disabled={!hydrated}
+					onClick={signInWithPasskey}
+				>
+					<span
+						aria-hidden
+						className="icon-[solar--key-minimalistic-linear] size-4"
+					/>
+					Sign in with a passkey
+				</Button>
+			)}
+		</div>
+	);
+
 	let form: ReactNode;
 	if (mode === "sign-up") {
 		form = (
@@ -243,7 +309,7 @@ function SignIn() {
 				{action("Email me a sign-in link")}
 			</form>
 		);
-	} else {
+	} else if (mode === "email") {
 		form = (
 			<form
 				className="flex flex-col gap-3"
@@ -265,35 +331,48 @@ function SignIn() {
 				{action("Sign in")}
 			</form>
 		);
+	} else {
+		form = chooser;
 	}
 
 	return (
 		<AuthShell title={title} description={description}>
 			<div className="flex flex-col gap-3">
-				{methods.includes("google") &&
-					(mode === "sign-in" || mode === "sign-up") && (
-						<Button
-							variant="outline"
-							size="lg"
-							className="w-full"
-							disabled={!hydrated}
-							onClick={() =>
-								authClient.signIn.social({
-									provider: "google",
-									callbackURL,
-									errorCallbackURL: "/sign-in",
-								})
-							}
-						>
-							<span aria-hidden className="icon-[devicon--google] size-4" />
-							Continue with Google
-						</Button>
-					)}
+				{methods.includes("google") && mode === "sign-up" && (
+					<Button
+						variant="outline"
+						size="lg"
+						className="w-full"
+						disabled={!hydrated}
+						onClick={() =>
+							authClient.signIn.social({
+								provider: "google",
+								callbackURL,
+								errorCallbackURL: "/sign-in",
+							})
+						}
+					>
+						<span aria-hidden className="icon-[devicon--google] size-4" />
+						Continue with Google
+					</Button>
+				)}
 				{form}
 				{problem && <FieldError role="alert">{problem}</FieldError>}
 			</div>
 			<div className="flex flex-col items-center gap-1 text-sm text-muted-foreground">
 				{mode === "sign-in" && (
+					<span>
+						New here?{" "}
+						<Link
+							to="/sign-in"
+							{...go("sign-up")}
+							className="text-foreground underline underline-offset-2"
+						>
+							Create an account
+						</Link>
+					</span>
+				)}
+				{mode === "email" && (
 					<>
 						<Link
 							to="/sign-in"
@@ -312,9 +391,16 @@ function SignIn() {
 								Create an account
 							</Link>
 						</span>
+						<Link
+							to="/sign-in"
+							{...go("sign-in")}
+							className="underline-offset-2 hover:underline"
+						>
+							Other ways to sign in
+						</Link>
 					</>
 				)}
-				{mode !== "sign-in" && (
+				{mode !== "email" && mode !== "sign-in" && (
 					<Link
 						to="/sign-in"
 						{...go("sign-in")}

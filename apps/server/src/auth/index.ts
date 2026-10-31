@@ -1,3 +1,4 @@
+import { passkey } from "@better-auth/passkey";
 import { passwordProblem, slugProblem } from "@ekra/core";
 import { generateId, schema } from "@ekra/db";
 import {
@@ -27,6 +28,7 @@ function assertSlug(slug: string) {
 export const signInMethods = [
 	"password",
 	"email-link",
+	"passkey",
 	...(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET ? ["google"] : []),
 ];
 
@@ -115,6 +117,12 @@ export const auth = betterAuth({
 				}
 			: {},
 	plugins: [
+		// passkeys belong to the app's domain (BETTER_AUTH_URL), so they work at that address
+		passkey({
+			rpName: "Ekra",
+			rpID: new URL(env.BETTER_AUTH_URL).hostname,
+			origin: env.BETTER_AUTH_URL,
+		}),
 		// "Email me a sign-in link": single use, stored hashed, valid for 10 minutes
 		magicLink({
 			expiresIn: MAGIC_LINK_MINUTES * 60,

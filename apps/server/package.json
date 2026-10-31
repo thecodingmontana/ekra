@@ -12,6 +12,7 @@
 		"test": "node --env-file-if-exists=../../.env --import ./src/test-env.ts --test 'src/**/*.test.ts'"
 	},
 	"dependencies": {
+		"@better-auth/passkey": "1.7.14",
 		"@ekra/core": "workspace:*",
 		"@ekra/db": "workspace:*",
 		"@ekra/email": "workspace:*",

@@ -4,6 +4,7 @@ export {
 	member,
 	organization,
 	organizationKind,
+	passkey,
 	rateLimit,
 	session,
 	team,
