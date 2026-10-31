@@ -9,7 +9,9 @@ import {
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { APIError, createAuthMiddleware } from "better-auth/api";
-import { magicLink, organization } from "better-auth/plugins";
+import { deleteSessionCookie } from "better-auth/cookies";
+import { generateRandomString } from "better-auth/crypto";
+import { magicLink, organization, twoFactor } from "better-auth/plugins";
 import { db } from "../db.ts";
 import { mailer, sendInBackground } from "../email.ts";
 import { env } from "../env.ts";
@@ -18,6 +20,8 @@ import { ac, roles } from "./permissions.ts";
 
 const MAGIC_LINK_MINUTES = 10;
 const RESET_PASSWORD_MINUTES = 60;
+/** how long the "enter your code" step stays open after the first step */
+const TWO_FACTOR_SECONDS = 600;
 
 function assertSlug(slug: string) {
 	const problem = slugProblem(slug);
@@ -106,6 +110,45 @@ export const auth = betterAuth({
 			const problem = passwordProblem(password);
 			if (problem) throw new APIError("BAD_REQUEST", { message: problem });
 		}),
+		// Better Auth asks for the second step only after password sign-in; do the same for
+		// Google and emailed links, so neither skips it (passkeys are already two factors)
+		after: createAuthMiddleware(async (ctx) => {
+			if (
+				!ctx.path.startsWith("/callback/") &&
+				ctx.path !== "/magic-link/verify"
+			)
+				return;
+			const data = ctx.context.newSession;
+			if (!data?.user.twoFactorEnabled) return;
+
+			deleteSessionCookie(ctx, true);
+			await ctx.context.internalAdapter.deleteSession(data.session.token);
+			ctx.context.setNewSession(null);
+
+			const cookie = ctx.context.createAuthCookie("two_factor", {
+				maxAge: TWO_FACTOR_SECONDS,
+			});
+			const identifier = `2fa-${generateRandomString(20)}`;
+			const expiresAt = new Date(Date.now() + TWO_FACTOR_SECONDS * 1000);
+			await ctx.context.internalAdapter.createVerificationValue({
+				value: data.user.id,
+				identifier,
+				expiresAt,
+			});
+			// verify-totp counts failed attempts against this record
+			await ctx.context.internalAdapter.createVerificationValue({
+				value: "0",
+				identifier: `2fa-attempts-${identifier}`,
+				expiresAt,
+			});
+			await ctx.setSignedCookie(
+				cookie.name,
+				identifier,
+				ctx.context.secret,
+				cookie.attributes,
+			);
+			throw ctx.redirect("/two-factor");
+		}),
 	},
 	socialProviders:
 		env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET
@@ -117,6 +160,13 @@ export const auth = betterAuth({
 				}
 			: {},
 	plugins: [
+		// two-step sign-in with an authenticator app, plus single-use backup codes
+		twoFactor({
+			issuer: "Ekra",
+			// Google-only and email-link accounts have no password to confirm with
+			allowPasswordless: true,
+			twoFactorCookieMaxAge: TWO_FACTOR_SECONDS,
+		}),
 		// passkeys belong to the app's domain (BETTER_AUTH_URL), so they work at that address
 		passkey({
 			rpName: "Ekra",

@@ -9,6 +9,7 @@ export {
 	session,
 	team,
 	teamMember,
+	twoFactor,
 	user,
 	verification,
 } from "./auth.ts";

@@ -20,6 +20,8 @@ export const user = pgTable("user", {
 	email: text("email").notNull().unique(),
 	emailVerified: boolean("email_verified").default(false).notNull(),
 	image: text("image"),
+	/** two-step sign-in (authenticator app) is switched on */
+	twoFactorEnabled: boolean("two_factor_enabled").default(false),
 	...timestamps,
 });
 
@@ -199,5 +201,25 @@ export const passkey = pgTable(
 	(table) => [
 		index("passkey_user_id_idx").on(table.userId),
 		index("passkey_credential_id_idx").on(table.credentialID),
+	],
+);
+
+/** Authenticator-app secrets and backup codes for two-step sign-in (both stored encrypted by Better Auth). */
+export const twoFactor = pgTable(
+	"two_factor",
+	{
+		id: id(),
+		secret: text("secret").notNull(),
+		backupCodes: text("backup_codes").notNull(),
+		userId: idRef("user_id")
+			.notNull()
+			.references(() => user.id, { onDelete: "cascade" }),
+		verified: boolean("verified").default(true),
+		failedVerificationCount: integer("failed_verification_count").default(0),
+		lockedUntil: moment("locked_until"),
+	},
+	(table) => [
+		index("two_factor_secret_idx").on(table.secret),
+		index("two_factor_user_id_idx").on(table.userId),
 	],
 );
