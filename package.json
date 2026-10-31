@@ -40,6 +40,10 @@
 		"email": "thecodingmontana@gmail.com",
 		"url": "https://github.com/thecodingmontana"
 	},
+	"funding": {
+		"type": "github",
+		"url": "https://github.com/sponsors/thecodingmontana"
+	},
 	"type": "module",
 	"packageManager": "pnpm@12.11.2",
 	"engines": {

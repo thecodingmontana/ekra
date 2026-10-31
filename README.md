@@ -68,4 +68,9 @@ Ekra's source is open for everyone to read, run, change and share, under the
 
 For a commercial license, email [thecodingmontana@gmail.com](mailto:thecodingmontana@gmail.com).
 
+## Support
+
+If Ekra helps you, you can support its development through
+[GitHub Sponsors](https://github.com/sponsors/thecodingmontana).
+
 Copyright © 2026 Christopher Odhiambo.
