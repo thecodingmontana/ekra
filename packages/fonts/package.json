@@ -1,0 +1,12 @@
+{
+	"name": "@ekra/fonts",
+	"version": "0.0.0",
+	"private": true,
+	"description": "Ekra's typefaces, self-hosted: Bricolage Grotesque (text) and IBM Plex Mono (code), both under the SIL Open Font License.",
+	"license": "OFL-1.1",
+	"type": "module",
+	"exports": {
+		"./fonts.css": "./fonts.css",
+		"./files/*": "./files/*"
+	}
+}
