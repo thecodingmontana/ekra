@@ -21,17 +21,13 @@ after(async () => {
 	await close();
 });
 
-test("creates an organization with a time-ordered id and default kind", async () => {
+test("creates an organization with a nanoid and default kind", async () => {
 	const [created] = await db
 		.insert(organization)
 		.values({ name: "Acme", slug })
 		.returning();
 	assert.ok(created);
-	assert.match(
-		created.id,
-		/^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-/,
-		"a version 7 UUID",
-	);
+	assert.match(created.id, /^[0-9A-Za-z]{16}$/, "a 16-character nanoid");
 	assert.equal(created.kind, "company");
 	assert.ok(created.createdAt instanceof Date);
 });

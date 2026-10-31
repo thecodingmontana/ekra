@@ -1,8 +1,27 @@
-import { sql } from "drizzle-orm";
-import { timestamp, uuid } from "drizzle-orm/pg-core";
+import { timestamp, varchar } from "drizzle-orm/pg-core";
+import { customAlphabet } from "nanoid";
 
-/** Primary key: a time-ordered UUID made by Postgres 18 (`uuidv7()`), so ids sort by creation time. */
-export const id = () => uuid("id").primaryKey().default(sql`uuidv7()`);
+export const ID_LENGTH = 16;
+
+const nanoid = customAlphabet(
+	"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
+	ID_LENGTH,
+);
+
+/** A short, URL-safe id (16 characters from 62, as in zadaci). Better Auth uses it too (advanced.database.generateId). */
+export function generateId(prefix?: string): string {
+	const id = nanoid();
+	return prefix ? `${prefix}_${id}` : id;
+}
+
+/** Primary key, filled in by the app with generateId(). */
+export const id = () =>
+	varchar("id", { length: ID_LENGTH })
+		.primaryKey()
+		.$defaultFn(() => generateId());
+
+/** A column holding another table's id. */
+export const idRef = (name: string) => varchar(name, { length: ID_LENGTH });
 
 /** A point in time, stored with its time zone, to the millisecond. */
 export const moment = (name: string) =>

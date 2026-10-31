@@ -4,7 +4,7 @@ import { member, organization, user } from "@ekra/db";
 import { eq } from "drizzle-orm";
 import { app } from "../app.ts";
 import { db } from "../db.ts";
-import { devOutbox } from "./index.ts";
+import { linkInLatestEmail } from "../test-helpers.ts";
 import { nameFromEmail } from "./name-from-email.ts";
 
 const ORIGIN = "http://localhost:3000";
@@ -56,10 +56,7 @@ test("signing in with an emailed link creates the account and a session", async 
 	});
 	assert.equal(sent.status, 200);
 
-	const link = devOutbox.get(email);
-	assert.ok(link, "a sign-in link was sent");
-	const { pathname, search } = new URL(link);
-	const opened = await call(`${pathname}${search}`);
+	const opened = await call(linkInLatestEmail(email));
 	assert.equal(opened.status, 302, "the link signs in and redirects");
 	cookie = opened.headers
 		.getSetCookie()
@@ -81,10 +78,9 @@ test("a used sign-in link can't be used again", async () => {
 		method: "POST",
 		body: JSON.stringify({ email, callbackURL: "/" }),
 	});
-	const link = devOutbox.get(email) ?? "";
-	const { pathname, search } = new URL(link);
-	await app.request(`${pathname}${search}`, { headers: { origin: ORIGIN } });
-	const again = await app.request(`${pathname}${search}`, {
+	const link = linkInLatestEmail(email);
+	await app.request(link, { headers: { origin: ORIGIN } });
+	const again = await app.request(link, {
 		headers: { origin: ORIGIN },
 	});
 	assert.match(

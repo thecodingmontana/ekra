@@ -1,3 +1,4 @@
+import { EMAIL_PROVIDERS } from "@ekra/email";
 import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
@@ -20,6 +21,11 @@ export const env = createEnv({
 		// optional: "Continue with Google" appears only when both are set
 		GOOGLE_CLIENT_ID: z.string().min(1).optional(),
 		GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
+		// email: which provider sends it (resend by default; console prints it, for development)
+		EMAIL_PROVIDER: z.enum(EMAIL_PROVIDERS).default("resend"),
+		// sender; with Resend, the domain must be verified there
+		EMAIL_FROM: z.string().min(3).default("Ekra <onboarding@resend.dev>"),
+		RESEND_API_KEY: z.string().min(1).optional(),
 	},
 	runtimeEnv: process.env,
 	// treat VAR= in .env as unset, so defaults apply

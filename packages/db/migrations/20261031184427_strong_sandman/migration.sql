@@ -1,9 +1,9 @@
 CREATE TYPE "organization_kind" AS ENUM('company', 'creator');--> statement-breakpoint
 CREATE TABLE "account" (
-	"id" uuid PRIMARY KEY DEFAULT uuidv7(),
+	"id" varchar(16) PRIMARY KEY,
 	"account_id" text NOT NULL,
 	"provider_id" text NOT NULL,
-	"user_id" uuid NOT NULL,
+	"user_id" varchar(16) NOT NULL,
 	"access_token" text,
 	"refresh_token" text,
 	"id_token" text,
@@ -16,27 +16,27 @@ CREATE TABLE "account" (
 );
 --> statement-breakpoint
 CREATE TABLE "invitation" (
-	"id" uuid PRIMARY KEY DEFAULT uuidv7(),
-	"organization_id" uuid NOT NULL,
+	"id" varchar(16) PRIMARY KEY,
+	"organization_id" varchar(16) NOT NULL,
 	"email" text NOT NULL,
 	"role" text,
 	"team_id" text,
 	"status" text DEFAULT 'pending' NOT NULL,
 	"expires_at" timestamp(3) with time zone NOT NULL,
-	"inviter_id" uuid NOT NULL,
+	"inviter_id" varchar(16) NOT NULL,
 	"created_at" timestamp(3) with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "member" (
-	"id" uuid PRIMARY KEY DEFAULT uuidv7(),
-	"organization_id" uuid NOT NULL,
-	"user_id" uuid NOT NULL,
+	"id" varchar(16) PRIMARY KEY,
+	"organization_id" varchar(16) NOT NULL,
+	"user_id" varchar(16) NOT NULL,
 	"role" text DEFAULT 'learner' NOT NULL,
 	"created_at" timestamp(3) with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "organization" (
-	"id" uuid PRIMARY KEY DEFAULT uuidv7(),
+	"id" varchar(16) PRIMARY KEY,
 	"name" text NOT NULL,
 	"slug" text NOT NULL UNIQUE,
 	"logo" text,
@@ -46,19 +46,19 @@ CREATE TABLE "organization" (
 );
 --> statement-breakpoint
 CREATE TABLE "rate_limit" (
-	"id" uuid PRIMARY KEY DEFAULT uuidv7(),
+	"id" varchar(16) PRIMARY KEY,
 	"key" text NOT NULL UNIQUE,
 	"count" integer NOT NULL,
 	"last_request" bigint NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "session" (
-	"id" uuid PRIMARY KEY DEFAULT uuidv7(),
+	"id" varchar(16) PRIMARY KEY,
 	"expires_at" timestamp(3) with time zone NOT NULL,
 	"token" text NOT NULL UNIQUE,
 	"ip_address" text,
 	"user_agent" text,
-	"user_id" uuid NOT NULL,
+	"user_id" varchar(16) NOT NULL,
 	"active_organization_id" text,
 	"active_team_id" text,
 	"created_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
@@ -66,24 +66,24 @@ CREATE TABLE "session" (
 );
 --> statement-breakpoint
 CREATE TABLE "team" (
-	"id" uuid PRIMARY KEY DEFAULT uuidv7(),
+	"id" varchar(16) PRIMARY KEY,
 	"name" text NOT NULL,
 	"member_count" integer DEFAULT 0 NOT NULL,
-	"organization_id" uuid NOT NULL,
+	"organization_id" varchar(16) NOT NULL,
 	"created_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp(3) with time zone
 );
 --> statement-breakpoint
 CREATE TABLE "team_member" (
-	"id" uuid PRIMARY KEY DEFAULT uuidv7(),
-	"team_id" uuid NOT NULL,
-	"user_id" uuid NOT NULL,
+	"id" varchar(16) PRIMARY KEY,
+	"team_id" varchar(16) NOT NULL,
+	"user_id" varchar(16) NOT NULL,
 	"membership_key" text UNIQUE,
 	"created_at" timestamp(3) with time zone DEFAULT now()
 );
 --> statement-breakpoint
 CREATE TABLE "user" (
-	"id" uuid PRIMARY KEY DEFAULT uuidv7(),
+	"id" varchar(16) PRIMARY KEY,
 	"name" text NOT NULL,
 	"email" text NOT NULL UNIQUE,
 	"email_verified" boolean DEFAULT false NOT NULL,
@@ -93,7 +93,7 @@ CREATE TABLE "user" (
 );
 --> statement-breakpoint
 CREATE TABLE "verification" (
-	"id" uuid PRIMARY KEY DEFAULT uuidv7(),
+	"id" varchar(16) PRIMARY KEY,
 	"identifier" text NOT NULL,
 	"value" text NOT NULL,
 	"expires_at" timestamp(3) with time zone NOT NULL,

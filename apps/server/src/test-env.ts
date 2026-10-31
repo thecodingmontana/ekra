@@ -12,6 +12,8 @@ process.env.NODE_ENV = "test";
 // test-only stand-in, never used outside tests
 process.env.BETTER_AUTH_SECRET ??=
 	"test-only-secret-0123456789-abcdefghijklmnop";
+// emails are kept in memory (src/test-helpers.ts reads links from them), never sent
+process.env.EMAIL_PROVIDER = "console";
 
 // imported after DATABASE_URL is set: @ekra/db checks its env when it loads
 const { migrateDatabase } = await import("@ekra/db");

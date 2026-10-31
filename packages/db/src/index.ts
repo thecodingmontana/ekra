@@ -5,6 +5,7 @@ import postgres from "postgres";
 import { env } from "./env.ts";
 import * as schema from "./schema/index.ts";
 
+export { generateId, ID_LENGTH } from "./schema/columns.ts";
 export * from "./schema/index.ts";
 /** Every table, as one object (Better Auth's Drizzle adapter looks tables up in it). */
 export { schema };

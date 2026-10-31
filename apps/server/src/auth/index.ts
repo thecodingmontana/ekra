@@ -1,21 +1,22 @@
 import { slugProblem } from "@ekra/core";
-import { schema } from "@ekra/db";
+import { generateId, schema } from "@ekra/db";
+import {
+	resetPasswordEmail,
+	signInLinkEmail,
+	verifyEmailEmail,
+} from "@ekra/email";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { APIError } from "better-auth/api";
 import { magicLink, organization } from "better-auth/plugins";
 import { db } from "../db.ts";
+import { mailer, sendInBackground } from "../email.ts";
 import { env } from "../env.ts";
 import { nameFromEmail } from "./name-from-email.ts";
 import { ac, roles } from "./permissions.ts";
 
 const MAGIC_LINK_MINUTES = 10;
-
-/**
- * Sign-in links sent while no email service is set up (development and tests only): the latest link per address.
- * shortcut: no email delivery yet; links are printed in the server terminal. Add a mail transport before production.
- */
-export const devOutbox = new Map<string, string>();
+const RESET_PASSWORD_MINUTES = 60;
 
 function assertSlug(slug: string) {
 	const problem = slugProblem(slug);
@@ -24,6 +25,7 @@ function assertSlug(slug: string) {
 
 /** Sign-in methods that are switched on, so the sign-in page only offers those. */
 export const signInMethods = [
+	"password",
 	"email-link",
 	...(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET ? ["google"] : []),
 ];
@@ -36,10 +38,43 @@ export const auth = betterAuth({
 	basePath: "/api/auth",
 	trustedOrigins: [env.BETTER_AUTH_URL],
 	database: drizzleAdapter(db, { provider: "pg", schema }),
-	// Postgres makes the ids (uuidv7() defaults in packages/db), so they sort by creation time
-	advanced: { database: { generateId: "uuid" } },
+	// the same 16-character nanoid ids as every other table (packages/db)
+	advanced: { database: { generateId: () => generateId() } },
 	// counted in Postgres rather than in memory, so limits hold across server restarts and instances
 	rateLimit: { storage: "database" },
+	emailAndPassword: {
+		enabled: true,
+		// password sign-in works once the address is confirmed (Google and email links prove it already)
+		requireEmailVerification: true,
+		minPasswordLength: 10,
+		maxPasswordLength: 128,
+		resetPasswordTokenExpiresIn: RESET_PASSWORD_MINUTES * 60,
+		// a reset signs out every other device, in case the password was stolen
+		revokeSessionsOnPasswordReset: true,
+		// not awaited, so the response time doesn't reveal whether an account exists
+		sendResetPassword: async ({ user, url }) => {
+			sendInBackground({
+				to: user.email,
+				...resetPasswordEmail({
+					name: user.name,
+					url,
+					minutes: RESET_PASSWORD_MINUTES,
+				}),
+			});
+		},
+	},
+	emailVerification: {
+		sendOnSignUp: true,
+		// trying to sign in before confirming sends a fresh link
+		sendOnSignIn: true,
+		autoSignInAfterVerification: true,
+		sendVerificationEmail: async ({ user, url }) => {
+			sendInBackground({
+				to: user.email,
+				...verifyEmailEmail({ name: user.name, url }),
+			});
+		},
+	},
 	databaseHooks: {
 		user: {
 			create: {
@@ -67,15 +102,12 @@ export const auth = betterAuth({
 		magicLink({
 			expiresIn: MAGIC_LINK_MINUTES * 60,
 			storeToken: "hashed",
+			// awaited: if the link can't be sent, the person sees it failed and can try again
 			sendMagicLink: async ({ email, url }) => {
-				if (env.NODE_ENV === "production") {
-					throw new Error(
-						"Email sending isn't set up yet, so sign-in links can't be sent.",
-					);
-				}
-				devOutbox.set(email.toLowerCase(), url);
-				if (env.NODE_ENV === "development")
-					console.info(`[auth] sign-in link for ${email}: ${url}`);
+				await mailer.send({
+					to: email,
+					...signInLinkEmail({ url, minutes: MAGIC_LINK_MINUTES }),
+				});
 			},
 		}),
 		organization({

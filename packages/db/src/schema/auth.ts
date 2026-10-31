@@ -11,9 +11,8 @@ import {
 	pgEnum,
 	pgTable,
 	text,
-	uuid,
 } from "drizzle-orm/pg-core";
-import { id, moment, timestamps } from "./columns.ts";
+import { id, idRef, moment, timestamps } from "./columns.ts";
 
 export const user = pgTable("user", {
 	id: id(),
@@ -32,7 +31,7 @@ export const session = pgTable(
 		token: text("token").notNull().unique(),
 		ipAddress: text("ip_address"),
 		userAgent: text("user_agent"),
-		userId: uuid("user_id")
+		userId: idRef("user_id")
 			.notNull()
 			.references(() => user.id, { onDelete: "cascade" }),
 		/** the organization (and team) this session is working in */
@@ -49,7 +48,7 @@ export const account = pgTable(
 		id: id(),
 		accountId: text("account_id").notNull(),
 		providerId: text("provider_id").notNull(),
-		userId: uuid("user_id")
+		userId: idRef("user_id")
 			.notNull()
 			.references(() => user.id, { onDelete: "cascade" }),
 		accessToken: text("access_token"),
@@ -98,10 +97,10 @@ export const member = pgTable(
 	"member",
 	{
 		id: id(),
-		organizationId: uuid("organization_id")
+		organizationId: idRef("organization_id")
 			.notNull()
 			.references(() => organization.id, { onDelete: "cascade" }),
-		userId: uuid("user_id")
+		userId: idRef("user_id")
 			.notNull()
 			.references(() => user.id, { onDelete: "cascade" }),
 		/** owner, admin, trainer, learner or guest (comma-separated when someone has several) */
@@ -118,7 +117,7 @@ export const invitation = pgTable(
 	"invitation",
 	{
 		id: id(),
-		organizationId: uuid("organization_id")
+		organizationId: idRef("organization_id")
 			.notNull()
 			.references(() => organization.id, { onDelete: "cascade" }),
 		email: text("email").notNull(),
@@ -126,7 +125,7 @@ export const invitation = pgTable(
 		teamId: text("team_id"),
 		status: text("status").default("pending").notNull(),
 		expiresAt: moment("expires_at").notNull(),
-		inviterId: uuid("inviter_id")
+		inviterId: idRef("inviter_id")
 			.notNull()
 			.references(() => user.id, { onDelete: "cascade" }),
 		createdAt: moment("created_at").defaultNow().notNull(),
@@ -143,7 +142,7 @@ export const team = pgTable(
 		id: id(),
 		name: text("name").notNull(),
 		memberCount: integer("member_count").default(0).notNull(),
-		organizationId: uuid("organization_id")
+		organizationId: idRef("organization_id")
 			.notNull()
 			.references(() => organization.id, { onDelete: "cascade" }),
 		createdAt: moment("created_at").defaultNow().notNull(),
@@ -156,10 +155,10 @@ export const teamMember = pgTable(
 	"team_member",
 	{
 		id: id(),
-		teamId: uuid("team_id")
+		teamId: idRef("team_id")
 			.notNull()
 			.references(() => team.id, { onDelete: "cascade" }),
-		userId: uuid("user_id")
+		userId: idRef("user_id")
 			.notNull()
 			.references(() => user.id, { onDelete: "cascade" }),
 		membershipKey: text("membership_key").unique(),

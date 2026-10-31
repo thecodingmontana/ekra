@@ -193,6 +193,8 @@ openssl rand -hex 24
 | `BETTER_AUTH_SECRET`                                | Signs sign-in sessions ([Better Auth](https://www.better-auth.com)). 32+ random characters: `openssl rand -base64 48`   |
 | `BETTER_AUTH_URL`                                   | The address people open the app at (default `http://localhost:3000`, the web app)                                       |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`          | Optional. "Continue with Google" appears only when both are set (callback `<BETTER_AUTH_URL>/api/auth/callback/google`) |
+| `EMAIL_PROVIDER`                                    | `resend` (default) or `console`. See [Email](#email-sign-in-links-confirmations-password-resets)                        |
+| `RESEND_API_KEY`, `EMAIL_FROM`                      | Resend API key and the sender address (`Ekra <noreply@your-domain.com>`)                                                |
 
 Each app checks its variables when it starts (with [`@t3-oss/env-core`](https://env.t3.gg) and zod, in the app's
 `src/env.ts`). A missing or invalid value stops it with a message naming the variable.
@@ -354,14 +356,33 @@ Node 24 runs the TypeScript directly, so the server has no build step.
 Sign-in, sessions, organizations, members, roles, invitations and teams are handled by
 [Better Auth](https://www.better-auth.com), served by the API server at `/api/auth/*`.
 
-- **Emailed sign-in links:** email sending isn't set up yet, so in development the server prints the link in its
-  terminal (`[auth] sign-in link for you@example.com: http://localhost:3000/api/auth/magic-link/verify?...`). Open it
-  to sign in. In production, sending a link fails until an email service is configured.
+- **Email and password:** sign up with a name, email and password (10–128 characters). A confirmation email is sent
+  and password sign-in works once the address is confirmed. "Forgot password?" emails a link (valid 60 minutes) to
+  choose a new password; that signs the account out everywhere else.
+- **Emailed sign-in links:** single use, valid 10 minutes.
 - **Google:** set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` (a Google OAuth client with the callback above).
 - **Roles in an organization:** owner, admin, trainer, learner, guest. Whoever creates an organization is its owner.
 - **Schema:** the auth tables live in `packages/db/src/schema/auth.ts`. They were generated with Better Auth's CLI
   (`npx auth generate`) and are kept by hand; after changing auth plugins, regenerate into a scratch file and copy
   over what changed, then `pnpm db:generate`.
+- **Ids** are 16-character nanoids (`generateId()` in `packages/db`), for Better Auth's tables too.
+
+### Email (sign-in links, confirmations, password resets)
+
+Email goes through one small interface in `packages/email`, so you can use any provider. Pick it with
+`EMAIL_PROVIDER`:
+
+| Provider  | Set                            | Notes                                                                                        |
+| --------- | ------------------------------ | -------------------------------------------------------------------------------------------- |
+| `resend`  | `RESEND_API_KEY`, `EMAIL_FROM` | Default. Get a key at [resend.com](https://resend.com) and verify your sending domain there. |
+| `console` | nothing                        | Prints each email (with its link) in the API server terminal. For development.               |
+
+- In development, if `EMAIL_PROVIDER=resend` but `RESEND_API_KEY` is empty, emails are printed in the terminal
+  instead (with a warning), so you can sign in locally without an account anywhere.
+- In production, a missing key stops the server at startup.
+- **Adding a provider** (Postmark, SES, SMTP, …): add a file in `packages/email/src/providers/` that implements
+  `EmailProvider` (`send(message)`), add its name to `EMAIL_PROVIDERS` and a case in `createMailer`, and document its
+  settings here and in `.env.example`.
 
 ### Web app (`apps/web`)
 
