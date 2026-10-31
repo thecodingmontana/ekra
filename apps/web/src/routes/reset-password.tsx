@@ -96,6 +96,7 @@ function ResetPassword() {
 						id="confirm"
 						type="password"
 						autoComplete="new-password"
+						placeholder="The same password again"
 						required
 						value={confirm}
 						onChange={(e) => setConfirm(e.target.value)}

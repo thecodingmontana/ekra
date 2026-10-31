@@ -1,3 +1,4 @@
+import { slugProblem } from "@ekra/core";
 import { member, organization } from "@ekra/db";
 import { costLimitPlugin } from "@escape.tech/graphql-armor-cost-limit";
 import { maxAliasesPlugin } from "@escape.tech/graphql-armor-max-aliases";
@@ -31,6 +32,8 @@ const schema = createSchema<GraphQLContext>({
 			viewer: Viewer
 			"Ways to sign in that are switched on: email-link, and google when configured."
 			signInMethods: [String!]!
+			"Whether an organization address is free to take (signed in only; false when it breaks the rules)."
+			slugAvailable(slug: String!): Boolean!
 		}
 
 		type Viewer {
@@ -63,6 +66,20 @@ const schema = createSchema<GraphQLContext>({
 		Query: {
 			health: () => "ok",
 			signInMethods: () => signInMethods,
+			slugAvailable: async (
+				_parent,
+				{ slug }: { slug: string },
+				{ session },
+			) => {
+				if (!session) throw new GraphQLError("Sign in first.");
+				if (slugProblem(slug)) return false;
+				const [taken] = await db
+					.select({ id: organization.id })
+					.from(organization)
+					.where(eq(organization.slug, slug))
+					.limit(1);
+				return !taken;
+			},
 			viewer: (_parent, _args, { session }) =>
 				session
 					? {

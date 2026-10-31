@@ -43,6 +43,7 @@ export function PasswordField({
 					id={id}
 					type={visible ? "text" : "password"}
 					autoComplete="new-password"
+					placeholder="At least 10 characters"
 					minLength={10}
 					maxLength={128}
 					required

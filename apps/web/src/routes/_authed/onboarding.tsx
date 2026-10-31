@@ -1,4 +1,4 @@
-import { useApolloClient } from "@apollo/client/react";
+import { useApolloClient, useQuery } from "@apollo/client/react";
 import { SLUG_MAX, slugify, slugProblem } from "@ekra/core";
 import { ArrowChip, Button, buttonVariants } from "@ekra/ui/components/button";
 import {
@@ -7,16 +7,16 @@ import {
 	FieldError,
 	FieldLabel,
 } from "@ekra/ui/components/field";
-import { InputWithIcon } from "@ekra/ui/components/input-with-icon";
+import { Input } from "@ekra/ui/components/input";
 import {
 	createFileRoute,
 	Link,
 	useHydrated,
 	useRouter,
 } from "@tanstack/react-router";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
-import type { OrganizationKind } from "@/graphql/viewer";
+import { type OrganizationKind, SLUG_AVAILABLE } from "@/graphql/viewer";
 import { authClient, authErrorMessage } from "@/lib/auth-client";
 
 export const Route = createFileRoute("/_authed/onboarding")({
@@ -62,6 +62,7 @@ function Onboarding() {
 
 	const url = slugEdited ? slug : slugify(name);
 	const urlProblem = url ? slugProblem(url) : null;
+	const slugStatus = useSlugStatus(urlProblem ? "" : url);
 
 	async function next(event: FormEvent) {
 		event.preventDefault();
@@ -70,7 +71,7 @@ function Onboarding() {
 			await router.invalidate();
 			return router.navigate({ to: "/" });
 		}
-		if (urlProblem) return;
+		if (urlProblem || slugStatus !== "available") return;
 		setBusy(true);
 		setProblem(null);
 		const result = await authClient.organization.create({
@@ -177,38 +178,59 @@ function Onboarding() {
 									description="Your courses, people and progress live here."
 								/>
 								<Field>
-									<FieldLabel htmlFor="org-name">Name</FieldLabel>
-									<InputWithIcon
-										icon="icon-[solar--buildings-2-linear]"
+									<FieldLabel htmlFor="org-name">Organization name</FieldLabel>
+									<Input
 										id="org-name"
+										className="h-10"
 										required
 										autoFocus
 										maxLength={120}
+										placeholder="e.g. Acme Academy"
 										value={name}
 										onChange={(e) => setName(e.target.value)}
 									/>
 								</Field>
 								<Field data-invalid={urlProblem ? true : undefined}>
-									<FieldLabel htmlFor="org-slug">Address</FieldLabel>
-									<InputWithIcon
-										icon="icon-[solar--link-linear]"
-										id="org-slug"
-										required
-										maxLength={SLUG_MAX}
-										value={url}
-										aria-invalid={urlProblem ? true : undefined}
-										onChange={(e) => {
-											setSlugEdited(true);
-											setSlug(e.target.value.toLowerCase());
-										}}
-									/>
-									{urlProblem ? (
-										<FieldError>{urlProblem}</FieldError>
-									) : (
-										<FieldDescription>
-											{url || "your-name"}.ekra.app
-										</FieldDescription>
-									)}
+									<FieldLabel htmlFor="org-slug">
+										Organization address
+									</FieldLabel>
+									<div className="flex">
+										<Input
+											id="org-slug"
+											className="h-10 rounded-r-none"
+											required
+											maxLength={SLUG_MAX}
+											placeholder="acme-academy"
+											value={url}
+											aria-invalid={urlProblem ? true : undefined}
+											aria-describedby="org-slug-hint"
+											onChange={(e) => {
+												setSlugEdited(true);
+												// only what a subdomain allows, as you type
+												setSlug(
+													e.target.value
+														.toLowerCase()
+														.replace(/[^a-z0-9-]+/g, "-")
+														.slice(0, SLUG_MAX),
+												);
+											}}
+										/>
+										<span className="flex items-center rounded-r-md border border-l-0 bg-muted px-3 text-muted-foreground text-sm">
+											{DOMAIN}
+										</span>
+									</div>
+									<div id="org-slug-hint">
+										{urlProblem ? (
+											<FieldError>{urlProblem}</FieldError>
+										) : url ? (
+											<SlugHint slug={url} status={slugStatus} />
+										) : (
+											<FieldDescription className="text-xs">
+												Your organization's web address. You can change it
+												later.
+											</FieldDescription>
+										)}
+									</div>
 								</Field>
 								{problem && <FieldError role="alert">{problem}</FieldError>}
 							</>
@@ -249,7 +271,8 @@ function Onboarding() {
 							disabled={
 								!hydrated ||
 								busy ||
-								(step === 1 && (!name.trim() || !!urlProblem))
+								(step === 1 &&
+									(!name.trim() || !!urlProblem || slugStatus !== "available"))
 							}
 						>
 							{busy && (
@@ -291,5 +314,66 @@ function Heading({
 			</h1>
 			<p className="text-sm text-pretty text-muted-foreground">{description}</p>
 		</div>
+	);
+}
+
+/** shortcut: the hosted domain isn't decided yet; read it from config once Phase 1d (subdomains) lands. */
+const DOMAIN = ".ekra.app";
+
+/** Whether the address is free, asked 300 ms after typing stops. */
+function useSlugStatus(slug: string) {
+	const [debounced, setDebounced] = useState(slug);
+	useEffect(() => {
+		const id = setTimeout(() => setDebounced(slug), 300);
+		return () => clearTimeout(id);
+	}, [slug]);
+	const { data, loading } = useQuery<{ slugAvailable: boolean }>(
+		SLUG_AVAILABLE,
+		{
+			variables: { slug: debounced },
+			skip: !debounced,
+			fetchPolicy: "network-only",
+		},
+	);
+	if (!slug) return "idle";
+	if (loading || debounced !== slug || !data) return "checking";
+	return data.slugAvailable ? "available" : "taken";
+}
+
+function SlugHint({
+	slug,
+	status,
+}: {
+	slug: string;
+	status: ReturnType<typeof useSlugStatus>;
+}) {
+	if (status === "available")
+		return (
+			<output className="flex items-center gap-1 text-emerald-600 text-xs dark:text-emerald-400">
+				<span className="icon-[hugeicons--tick-02] size-3" aria-hidden="true" />
+				{slug}
+				{DOMAIN} is available
+			</output>
+		);
+	if (status === "taken")
+		return (
+			<output className="flex items-center gap-1 text-destructive text-xs">
+				<span
+					className="icon-[solar--danger-circle-bold] size-3"
+					aria-hidden="true"
+				/>
+				{slug}
+				{DOMAIN} is taken. Try another one.
+			</output>
+		);
+	return (
+		<span className="flex items-center gap-1 text-muted-foreground text-xs">
+			<span
+				className="icon-[hugeicons--loading-03] size-3 motion-safe:animate-spin"
+				aria-hidden="true"
+			/>
+			Checking {slug}
+			{DOMAIN}…
+		</span>
 	);
 }

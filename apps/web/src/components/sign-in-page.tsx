@@ -126,6 +126,7 @@ export function SignInPage({
 				id="password"
 				type="password"
 				autoComplete={autoComplete}
+				placeholder="Your password"
 				minLength={10}
 				maxLength={128}
 				required
@@ -291,6 +292,7 @@ export function SignInPage({
 						icon="icon-[solar--user-linear]"
 						id="name"
 						autoComplete="name"
+						placeholder="e.g. Amina Kamau"
 						required
 						maxLength={120}
 						value={name}

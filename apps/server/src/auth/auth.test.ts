@@ -143,6 +143,23 @@ test("the server refuses slugs that can't be subdomains", async () => {
 	}
 });
 
+test("slugAvailable says whether an address is free", async () => {
+	const available = async (s: string) => {
+		const res = await call("/api/graphql", {
+			method: "POST",
+			body: JSON.stringify({
+				query: "query ($s: String!) { slugAvailable(slug: $s) }",
+				variables: { s },
+			}),
+		});
+		return ((await res.json()) as { data?: { slugAvailable: boolean } }).data
+			?.slugAvailable;
+	};
+	assert.equal(await available(slug), false, "taken by the test organization");
+	assert.equal(await available(`free-${Date.now()}`), true);
+	assert.equal(await available("www"), false, "reserved");
+});
+
 test("nameFromEmail turns an address into a readable name", () => {
 	assert.equal(nameFromEmail("amina.k@acme.com"), "Amina K");
 	assert.equal(nameFromEmail("john_doe+lms@x.io"), "John Doe Lms");

@@ -50,3 +50,10 @@ export const SIGN_IN_METHODS = gql`
 		signInMethods
 	}
 `;
+
+/** Whether an organization address is free (onboarding checks it as you type). */
+export const SLUG_AVAILABLE = gql`
+	query SlugAvailable($slug: String!) {
+		slugAvailable(slug: $slug)
+	}
+`;
