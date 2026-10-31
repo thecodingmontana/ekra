@@ -16,12 +16,6 @@ import {
 export const MODES = ["sign-in", "email", "sign-up", "forgot", "link"] as const;
 export type Mode = (typeof MODES)[number];
 
-/** Only same-site paths, so a sign-in link can't send people to another site. */
-export const safeNext = (value: unknown) =>
-	typeof value === "string" && value.startsWith("/") && !value.startsWith("//")
-		? value
-		: undefined;
-
 const COPY: Record<Mode, { title: string; description: string }> = {
 	"sign-in": {
 		title: "Welcome to Ekra",

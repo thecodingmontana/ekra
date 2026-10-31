@@ -1,10 +1,11 @@
+import { safeNextPath } from "@ekra/core";
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { SignInPage, safeNext } from "@/components/sign-in-page";
+import { SignInPage } from "@/components/sign-in-page";
 import { SIGN_IN_METHODS, VIEWER, type Viewer } from "@/graphql/viewer";
 
 export const Route = createFileRoute("/sign-up")({
 	validateSearch: (search: Record<string, unknown>) => ({
-		next: safeNext(search.next),
+		next: safeNextPath(search.next),
 		error: typeof search.error === "string" ? search.error : undefined,
 	}),
 	beforeLoad: async ({ context, search }) => {

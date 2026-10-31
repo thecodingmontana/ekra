@@ -1,3 +1,4 @@
+export { safeNextPath } from "./next-path.ts";
 export {
 	PASSWORD_RULES,
 	passwordChecks,
