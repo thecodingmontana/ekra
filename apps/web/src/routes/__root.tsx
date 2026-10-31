@@ -3,9 +3,11 @@ import appCss from "@ekra/ui/globals.css?url";
 import {
 	createRootRouteWithContext,
 	HeadContent,
+	ScriptOnce,
 	Scripts,
 } from "@tanstack/react-router";
 import type { ReactNode } from "react";
+import { THEME_SCRIPT } from "@/lib/theme";
 
 export const Route =
 	createRootRouteWithContext<ApolloClientIntegration.RouterContext>()({
@@ -34,8 +36,10 @@ export const Route =
 
 function RootDocument({ children }: { children: ReactNode }) {
 	return (
-		<html lang="en">
+		// the theme script sets class and colour-scheme on <html> before React hydrates
+		<html lang="en" suppressHydrationWarning>
 			<head>
+				<ScriptOnce>{THEME_SCRIPT}</ScriptOnce>
 				<HeadContent />
 			</head>
 			<body className="bg-background text-foreground antialiased">

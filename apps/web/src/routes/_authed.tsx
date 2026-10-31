@@ -4,9 +4,11 @@ import {
 	createFileRoute,
 	Outlet,
 	redirect,
+	useLocation,
 	useNavigate,
 	useRouter,
 } from "@tanstack/react-router";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { VIEWER, type Viewer } from "@/graphql/viewer";
 import { authClient } from "@/lib/auth-client";
 
@@ -35,6 +37,7 @@ function AuthedLayout() {
 	const router = useRouter();
 	const navigate = useNavigate();
 	const apollo = useApolloClient();
+	const pathname = useLocation({ select: (l) => l.pathname });
 	const hasOrganizations = viewer.memberships.length > 0;
 
 	async function switchTo(organizationId: string) {
@@ -51,9 +54,12 @@ function AuthedLayout() {
 		});
 	}
 
+	// onboarding draws its own header (Exit setup + theme), like zadaci
+	if (pathname === "/onboarding") return <Outlet />;
+
 	return (
 		<div className="flex min-h-svh flex-col">
-			<header className="flex items-center gap-4 border-b px-6 py-3">
+			<header className="flex items-center gap-4 px-6 py-4.5">
 				<span className="font-heading text-lg font-semibold">Ekra</span>
 				{hasOrganizations && (
 					<label className="flex items-center gap-2 text-sm">
@@ -77,12 +83,11 @@ function AuthedLayout() {
 						</select>
 					</label>
 				)}
-				<span className="ml-auto text-muted-foreground text-sm">
-					{viewer.email}
-				</span>
+				<span className="flex-1" />
 				<Button variant="ghost" size="sm" onClick={signOut}>
 					Sign out
 				</Button>
+				<ThemeToggle />
 			</header>
 			<Outlet />
 		</div>
