@@ -1,0 +1,17 @@
+pre-commit:
+  parallel: true
+  jobs:
+    - name: biome
+      glob: "*.{js,jsx,ts,tsx,json,jsonc,css}"
+      run: pnpm biome check --write --no-errors-on-unmatched --files-ignore-unknown=true {staged_files}
+      stage_fixed: true
+
+commit-msg:
+  jobs:
+    - name: commit message
+      run: sh scripts/check-commit-msg.sh {1}
+
+pre-push:
+  jobs:
+    - name: typecheck and test
+      run: pnpm turbo run typecheck test

@@ -1,0 +1,14 @@
+node_modules
+dist
+.output
+.turbo
+.nitro
+.tanstack
+coverage
+*.local
+.env
+.env.*
+!.env.example
+.DS_Store
+.claude/settings.local.json
+.mcp.json
