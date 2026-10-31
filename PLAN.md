@@ -10,12 +10,14 @@ Ekra (romanized اقرأ _Iqra'_, "Read!") is a self-hosted, multi-tenant LMS fo
 (B2B, like Trenning) and creators publishing courses (B2C, like Coursera / codewithantonio). Online-first, same
 data model as zadaci: Apollo Client over GraphQL, with WebSocket "changed" pings for live updates. It ships as
 Docker services on our own server — no Vercel, no Supabase, no Cloudinary. Web first; React Native and desktop later.
+A separate static marketing site (`apps/site`) tells people about Ekra and is the one thing hosted on Vercel.
 
 ## Decisions (locked)
 
 | Topic            | Decision                                                                                                                                                                                               |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Hosting          | Own server, Docker Compose. No Vercel/serverless.                                                                                                                                                      |
+| Hosting          | App: own server, Docker Compose, no Vercel/serverless. Exception: the static marketing site `apps/site` deploys to Vercel                                                                              |
+| Marketing site   | `apps/site`: TanStack Start, prerendered to static HTML, shares `packages/ui`. No database or API. Links to GitHub, SETUP.md, Sponsors and the commercial-license contact                              |
 | Repo             | pnpm workspaces + Turborepo monorepo                                                                                                                                                                   |
 | Web              | TanStack Start (React 19, Router), Tailwind 4, shadcn/ui components built on Base UI (no Radix)                                                                                                        |
 | API              | **Hono** server: Better Auth, GraphQL Yoga (+ graphql-armor), uploads, WebSockets                                                                                                                      |
@@ -57,6 +59,7 @@ We'll document a sample config then; custom-domain TLS (e.g. Caddy on-demand TLS
 ```
 apps/
   web/        TanStack Start
+  site/       marketing homepage (static, Vercel)
   server/     Hono: auth, graphql, ws (incl. WebRTC signaling), uploads
   worker/     pg-boss jobs
   mobile/     Expo (later)
@@ -124,6 +127,17 @@ Rule: `core`, `realtime`, `graphql-client` have no DOM/Node imports (reused by m
 - **Action**: monorepo, Turborepo, Biome, tsconfig; `infra/docker-compose.yml` (postgres, seaweedfs); `apps/server` Hono with health + Yoga; `apps/web` Start shell with Apollo and Vite proxy to `server`; `packages/db` with first migration.
 - **Mirror**: zadaci `package.json` scripts, `biome.json`, `drizzle.config.ts`.
 - **Validate**: `docker compose up`, `pnpm build`, `pnpm test` (one GraphQL test via `app.request`).
+
+### Phase 0.5 — Marketing site (S)
+
+- **Action**: `apps/site` (TanStack Start, static prerender, shared `packages/ui`). Pages: home (hero, what Ekra does for
+  trainers and learners, feature sections from the plan, screenshots or mock-ups, "self-host it" with a link to
+  SETUP.md, license in plain words, Sponsors, commercial-license contact, GitHub link), plus a short roadmap that
+  mirrors the phases. SEO basics: titles, Open Graph images, sitemap, robots. Vercel project with root `apps/site`.
+- **Depends on**: `packages/ui` from the `apps/web` shell (EKR-17).
+- **Validate**: `pnpm --filter site build` produces static HTML that runs with `pnpm --filter site preview`;
+  Lighthouse 95+ on performance, accessibility, best practices and SEO; Vercel preview deploy works.
+- **Open**: domain name (e.g. `ekra.app`), and whether "Ekra" clears a trademark check first.
 
 ### Phase 1 — Tenancy, auth, realtime (M)
 

@@ -16,7 +16,7 @@ No Vercel, Supabase or Cloudinary.
 ## Layout
 
 ```
-apps/       web, server, worker (mobile, desktop later)
+apps/       web, server, worker, site (marketing, the only thing on Vercel); mobile and desktop later
 packages/   db, api, core, realtime, graphql-client, storage, editor, ai, emails, ui, config
 infra/      docker-compose.yml for local services (postgres, seaweedfs), service configs
 scripts/    repo scripts (git hooks)
