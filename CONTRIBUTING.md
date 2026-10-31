@@ -45,3 +45,14 @@ The git hooks run most of these for you (see SETUP.md, section 11).
 - No `Co-Authored-By` lines or AI attribution in commits or pull requests; the commit hook rejects them.
 - Open the pull request against `main` and fill in the template. Add a screenshot or clip for anything visible.
 - Make sure CI passes. A maintainer will review it, and may ask for changes before merging.
+
+## License of contributions
+
+Ekra is released under the [PolyForm Noncommercial License 1.0.0](LICENSE) and is also offered under commercial
+licenses by its owner, Christopher Odhiambo. By opening a pull request, you agree that:
+
+- your contribution is your own work (or you have the right to submit it), and
+- it is licensed under the PolyForm Noncommercial License 1.0.0, **and** you grant the owner a perpetual, worldwide,
+  royalty-free right to use, change and license your contribution under other terms, including commercial ones.
+
+You keep the copyright in your contribution and are credited in the git history.

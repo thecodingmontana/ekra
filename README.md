@@ -54,3 +54,18 @@ scripts/    repo scripts (git hooks)
 - [PLAN.md](PLAN.md): product plan, decisions and phases
 - [AGENTS.md](AGENTS.md): conventions for contributors and AI coding agents
 - [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md), [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+
+## License
+
+Ekra's source is open for everyone to read, run, change and share, under the
+[PolyForm Noncommercial License 1.0.0](LICENSE).
+
+- **Free** for personal use, learning, research, schools, charities, government and other noncommercial uses.
+- **Not for sale.** You may not sell Ekra, host it for paying customers, or use it to run a business without a
+  commercial license.
+- **Keep the credit.** Any copy, fork or changed version must include the license and its `Required Notice` lines
+  naming Christopher Odhiambo ([@thecodingmontana](https://github.com/thecodingmontana)) as the owner.
+
+For a commercial license, email [thecodingmontana@gmail.com](mailto:thecodingmontana@gmail.com).
+
+Copyright © 2026 Christopher Odhiambo.

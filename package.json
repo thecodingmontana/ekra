@@ -2,11 +2,49 @@
 	"name": "ekra",
 	"version": "0.0.0",
 	"private": true,
-	"description": "Ekra: a self-hosted, multi-tenant learning platform for companies and course creators.",
+	"description": "Ekra is a self-hosted, multi-tenant learning platform for companies training their teams and creators publishing courses: video courses with transcripts, quizzes, learning paths, assignments, live classes and AI help.",
+	"keywords": [
+		"lms",
+		"learning-management-system",
+		"e-learning",
+		"courses",
+		"quizzes",
+		"learning-paths",
+		"video-courses",
+		"live-classes",
+		"webrtc",
+		"multi-tenant",
+		"self-hosted",
+		"tanstack-start",
+		"react",
+		"hono",
+		"graphql",
+		"drizzle",
+		"postgres",
+		"better-auth",
+		"seaweedfs",
+		"monorepo"
+	],
+	"homepage": "https://github.com/thecodingmontana/ekra#readme",
+	"bugs": {
+		"url": "https://github.com/thecodingmontana/ekra/issues",
+		"email": "thecodingmontana@gmail.com"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/thecodingmontana/ekra.git"
+	},
+	"license": "PolyForm-Noncommercial-1.0.0",
+	"author": {
+		"name": "Christopher Odhiambo",
+		"email": "thecodingmontana@gmail.com",
+		"url": "https://github.com/thecodingmontana"
+	},
 	"type": "module",
 	"packageManager": "pnpm@12.11.2",
 	"engines": {
-		"node": ">=22"
+		"node": ">=22",
+		"pnpm": ">=12"
 	},
 	"scripts": {
 		"dev": "turbo run dev",

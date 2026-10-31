@@ -21,3 +21,4 @@ For anything visible, before and after.
 - [ ] No new dependency without a reason (we prefer platform APIs); UI uses Base UI, not Radix
 - [ ] No secrets, personal data, `Co-Authored-By` or AI attribution in code, commits or this PR
 - [ ] The Zadaci task is updated
+- [ ] I agree to the [license of contributions](../CONTRIBUTING.md#license-of-contributions)
