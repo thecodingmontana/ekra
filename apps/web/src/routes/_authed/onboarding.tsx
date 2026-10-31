@@ -75,7 +75,7 @@ function Onboarding() {
 						{STEP_NAMES.map((name, i) => (
 							<span
 								key={name}
-								className={`h-0.75 w-7 rounded-full ${i <= step ? "bg-brand" : "bg-border"}`}
+								className={`h-0.75 w-7 rounded-full transition-colors duration-300 ${i <= step ? "bg-brand" : "bg-border"}`}
 							/>
 						))}
 					</div>
@@ -84,85 +84,90 @@ function Onboarding() {
 					</p>
 				</div>
 
-				{step === 0 && (
-					<>
-						<Heading
-							title="Who's Ekra for?"
-							description="This shapes what you see first. You can change it later."
-						/>
-						<fieldset className="grid grid-cols-2 gap-2">
-							<legend className="sr-only">This organization is</legend>
-							{KINDS.map((option) => (
-								<label
-									key={option.value}
-									className="flex cursor-pointer flex-col gap-1 rounded-lg border bg-card px-3 py-3.5 text-sm transition-[border-color,box-shadow] duration-150 hover:border-foreground/25 has-checked:border-brand has-checked:shadow-[0_0_0_3px_color-mix(in_srgb,var(--brand)_18%,transparent)] has-focus-visible:ring-2 has-focus-visible:ring-ring"
-								>
-									<input
-										type="radio"
-										name="kind"
-										value={option.value}
-										checked={kind === option.value}
-										onChange={() => setKind(option.value)}
-										className="sr-only"
-									/>
-									<span className="font-medium">{option.label}</span>
-									<span className="text-muted-foreground">{option.hint}</span>
-								</label>
-							))}
-						</fieldset>
-					</>
-				)}
-
-				{step === 1 && (
-					<>
-						<Heading
-							title="Name your organization"
-							description="Your courses, people and progress live here."
-						/>
-						<Field>
-							<FieldLabel htmlFor="org-name">Name</FieldLabel>
-							<InputWithIcon
-								icon="icon-[solar--buildings-2-linear]"
-								id="org-name"
-								required
-								autoFocus
-								maxLength={120}
-								value={name}
-								onChange={(e) => setName(e.target.value)}
+				<div
+					key={step}
+					className="flex flex-col gap-4 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-right-3 motion-safe:duration-300 motion-safe:ease-out"
+				>
+					{step === 0 && (
+						<>
+							<Heading
+								title="Who's Ekra for?"
+								description="This shapes what you see first. You can change it later."
 							/>
-						</Field>
-						<Field data-invalid={urlProblem ? true : undefined}>
-							<FieldLabel htmlFor="org-slug">Address</FieldLabel>
-							<InputWithIcon
-								icon="icon-[solar--link-linear]"
-								id="org-slug"
-								required
-								maxLength={SLUG_MAX}
-								value={url}
-								aria-invalid={urlProblem ? true : undefined}
-								onChange={(e) => {
-									setSlugEdited(true);
-									setSlug(e.target.value.toLowerCase());
-								}}
-							/>
-							{urlProblem ? (
-								<FieldError>{urlProblem}</FieldError>
-							) : (
-								<FieldDescription>
-									{url || "your-name"}.ekra.app
-								</FieldDescription>
-							)}
-						</Field>
-						{problem && <FieldError role="alert">{problem}</FieldError>}
-					</>
-				)}
+							<fieldset className="grid grid-cols-2 gap-2">
+								<legend className="sr-only">This organization is</legend>
+								{KINDS.map((option) => (
+									<label
+										key={option.value}
+										className="flex cursor-pointer flex-col gap-1 rounded-lg border bg-card px-3 py-3.5 text-sm transition-[border-color,box-shadow] duration-150 hover:border-foreground/25 has-checked:border-brand has-checked:shadow-[0_0_0_3px_color-mix(in_srgb,var(--brand)_18%,transparent)] has-focus-visible:ring-2 has-focus-visible:ring-ring"
+									>
+										<input
+											type="radio"
+											name="kind"
+											value={option.value}
+											checked={kind === option.value}
+											onChange={() => setKind(option.value)}
+											className="sr-only"
+										/>
+										<span className="font-medium">{option.label}</span>
+										<span className="text-muted-foreground">{option.hint}</span>
+									</label>
+								))}
+							</fieldset>
+						</>
+					)}
 
-				{step === 2 && (
-					<Heading
-						title={`${name.trim()} is ready`}
-						description="Next you'll add your first course. Invite your team when you're ready."
-					/>
-				)}
+					{step === 1 && (
+						<>
+							<Heading
+								title="Name your organization"
+								description="Your courses, people and progress live here."
+							/>
+							<Field>
+								<FieldLabel htmlFor="org-name">Name</FieldLabel>
+								<InputWithIcon
+									icon="icon-[solar--buildings-2-linear]"
+									id="org-name"
+									required
+									autoFocus
+									maxLength={120}
+									value={name}
+									onChange={(e) => setName(e.target.value)}
+								/>
+							</Field>
+							<Field data-invalid={urlProblem ? true : undefined}>
+								<FieldLabel htmlFor="org-slug">Address</FieldLabel>
+								<InputWithIcon
+									icon="icon-[solar--link-linear]"
+									id="org-slug"
+									required
+									maxLength={SLUG_MAX}
+									value={url}
+									aria-invalid={urlProblem ? true : undefined}
+									onChange={(e) => {
+										setSlugEdited(true);
+										setSlug(e.target.value.toLowerCase());
+									}}
+								/>
+								{urlProblem ? (
+									<FieldError>{urlProblem}</FieldError>
+								) : (
+									<FieldDescription>
+										{url || "your-name"}.ekra.app
+									</FieldDescription>
+								)}
+							</Field>
+							{problem && <FieldError role="alert">{problem}</FieldError>}
+						</>
+					)}
+
+					{step === 2 && (
+						<Heading
+							title={`${name.trim()} is ready`}
+							description="Next you'll add your first course. Invite your team when you're ready."
+						/>
+					)}
+				</div>
 
 				<div className="mt-1.5 flex items-center gap-2">
 					{step === 1 && (

@@ -10,7 +10,7 @@ const variants = cva(
 		variants: {
 			variant: {
 				default:
-					"bg-brand text-brand-foreground shadow-[0_-1px_0_1px_rgba(0,160,94,0.9)_inset,0_0_0_1px_#00c473_inset,0_0.5px_0_1.5px_rgba(255,255,255,0.35)_inset] hover:shadow-[0_-1px_0_1px_rgba(0,140,82,0.9)_inset,0_0_0_1px_#00c473_inset,0_0.5px_0_1.5px_rgba(255,255,255,0.55)_inset] hover:brightness-[1.03] focus-visible:ring-brand/40",
+					"bg-brand text-brand-foreground shadow-[0_-1px_0_1px_rgba(0,160,94,0.9)_inset,0_0_0_1px_#00c473_inset,0_0.5px_0_1.5px_rgba(255,255,255,0.35)_inset] hover:shadow-[0_-1px_0_1px_rgba(0,140,82,0.9)_inset,0_0_0_1px_#00c473_inset,0_0.5px_0_1.5px_rgba(255,255,255,0.55)_inset] focus-visible:ring-brand/40",
 				destructive:
 					"bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40",
 				outline:

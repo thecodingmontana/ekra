@@ -73,8 +73,8 @@ export function PasswordField({
 				className="h-1 w-full overflow-hidden rounded-full bg-border"
 			>
 				<div
-					className={`h-full transition-all duration-500 ease-out ${BAR[score]}`}
-					style={{ width: `${(score / 4) * 100}%` }}
+					className={`h-full w-full origin-left transition-[transform,background-color] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] ${BAR[score]}`}
+					style={{ transform: `scaleX(${score / 4})` }}
 				/>
 			</div>
 			<p id={`${id}-strength`} className="text-xs font-medium">
