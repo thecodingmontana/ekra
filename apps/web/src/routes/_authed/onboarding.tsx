@@ -1,4 +1,4 @@
-import { useApolloClient, useQuery } from "@apollo/client/react";
+import { useQuery } from "@apollo/client/react";
 import { SLUG_MAX, slugify, slugProblem } from "@ekra/core";
 import { ArrowChip, Button, buttonVariants } from "@ekra/ui/components/button";
 import {
@@ -20,6 +20,7 @@ import { type FormEvent, useEffect, useState } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { type OrganizationKind, SLUG_AVAILABLE } from "@/graphql/viewer";
 import { authClient, authErrorMessage } from "@/lib/auth-client";
+import { useSignOut } from "@/lib/use-sign-out";
 
 export const Route = createFileRoute("/_authed/onboarding")({
 	head: () => ({ meta: [{ title: "Set up Ekra" }] }),
@@ -51,7 +52,8 @@ const STEPS = STEP_NAMES.length;
 /** zadaci's onboarding, cut to what Ekra uses today: what you are, your organization's name and address, done. */
 function Onboarding() {
 	const router = useRouter();
-	const apollo = useApolloClient();
+	// no organization to go back to yet, so leaving setup signs out
+	const exitBySigningOut = useSignOut();
 	const { viewer } = Route.useRouteContext();
 	const hydrated = useHydrated();
 	const [step, setStep] = useState(0);
@@ -82,16 +84,6 @@ function Onboarding() {
 		setBusy(false);
 		if (result.error) return void toast.error(authErrorMessage(result.error));
 		setStep(2);
-	}
-
-	// no organization to go back to yet, so leaving setup signs out
-	async function exitBySigningOut() {
-		await authClient.signOut();
-		await apollo.clearStore();
-		await router.navigate({
-			to: "/sign-in",
-			search: { next: undefined, error: undefined, mode: undefined },
-		});
 	}
 
 	return (

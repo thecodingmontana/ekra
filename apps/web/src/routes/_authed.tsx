@@ -1,16 +1,15 @@
-import { useApolloClient } from "@apollo/client/react";
 import { Button } from "@ekra/ui/components/button";
 import {
 	createFileRoute,
 	Outlet,
 	redirect,
 	useLocation,
-	useNavigate,
 	useRouter,
 } from "@tanstack/react-router";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { VIEWER, type Viewer } from "@/graphql/viewer";
 import { authClient } from "@/lib/auth-client";
+import { useSignOut } from "@/lib/use-sign-out";
 
 /** Everything behind sign-in. Signed-out visitors go to /sign-in and come back here afterwards. */
 export const Route = createFileRoute("/_authed")({
@@ -35,23 +34,13 @@ export const Route = createFileRoute("/_authed")({
 function AuthedLayout() {
 	const { viewer } = Route.useRouteContext();
 	const router = useRouter();
-	const navigate = useNavigate();
-	const apollo = useApolloClient();
+	const signOut = useSignOut();
 	const pathname = useLocation({ select: (l) => l.pathname });
 	const hasOrganizations = viewer.memberships.length > 0;
 
 	async function switchTo(organizationId: string) {
 		await authClient.organization.setActive({ organizationId });
 		await router.invalidate();
-	}
-
-	async function signOut() {
-		await authClient.signOut();
-		await apollo.clearStore();
-		await navigate({
-			to: "/sign-in",
-			search: { next: undefined, error: undefined, mode: undefined },
-		});
 	}
 
 	// onboarding draws its own header (Exit setup + theme), like zadaci
