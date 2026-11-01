@@ -11,6 +11,7 @@ import { createSchema, createYoga, useErrorHandler } from "graphql-yoga";
 import { auth, signInMethods } from "../auth/index.ts";
 import { db } from "../db.ts";
 import { env } from "../env.ts";
+import { libraryResolvers, libraryTypeDefs } from "./library.ts";
 import { type ActiveOrg, activeOrg, requireOrg } from "./tenant.ts";
 
 /**
@@ -30,7 +31,8 @@ export type GraphQLContext = {
 export const LIMITS = { aliases: 15, depth: 12, cost: 5000 };
 
 const schema = createSchema<GraphQLContext>({
-	typeDefs: /* GraphQL */ `
+	typeDefs: [
+		/* GraphQL */ `
 		type Query {
 			"Answers ok while the API is up."
 			health: String!
@@ -80,54 +82,59 @@ const schema = createSchema<GraphQLContext>({
 			color: String
 		}
 	`,
-	resolvers: {
-		Query: {
-			health: () => "ok",
-			signInMethods: () => signInMethods,
-			organization: async (_parent, _args, ctx) => {
-				const { id, role } = requireOrg(ctx);
-				const [row] = await db
-					.select()
-					.from(organization)
-					.where(eq(organization.id, id));
-				return { organization: row, role };
+		libraryTypeDefs,
+	],
+	resolvers: [
+		libraryResolvers,
+		{
+			Query: {
+				health: () => "ok",
+				signInMethods: () => signInMethods,
+				organization: async (_parent, _args, ctx) => {
+					const { id, role } = requireOrg(ctx);
+					const [row] = await db
+						.select()
+						.from(organization)
+						.where(eq(organization.id, id));
+					return { organization: row, role };
+				},
+				slugAvailable: async (
+					_parent,
+					{ slug }: { slug: string },
+					{ session },
+				) => {
+					if (!session) throw new GraphQLError("Sign in first.");
+					if (slugProblem(slug)) return false;
+					const [taken] = await db
+						.select({ id: organization.id })
+						.from(organization)
+						.where(eq(organization.slug, slug))
+						.limit(1);
+					return !taken;
+				},
+				viewer: (_parent, _args, { session }) =>
+					session
+						? {
+								...session.user,
+								activeOrganizationId:
+									session.session.activeOrganizationId ?? null,
+								twoFactorEnabled: session.user.twoFactorEnabled ?? false,
+							}
+						: null,
 			},
-			slugAvailable: async (
-				_parent,
-				{ slug }: { slug: string },
-				{ session },
-			) => {
-				if (!session) throw new GraphQLError("Sign in first.");
-				if (slugProblem(slug)) return false;
-				const [taken] = await db
-					.select({ id: organization.id })
-					.from(organization)
-					.where(eq(organization.slug, slug))
-					.limit(1);
-				return !taken;
+			Viewer: {
+				memberships: async ({ id }: { id: string }) => {
+					const rows = await db
+						.select({ role: member.role, organization })
+						.from(member)
+						.innerJoin(organization, eq(member.organizationId, organization.id))
+						.where(eq(member.userId, id))
+						.orderBy(asc(organization.name));
+					return rows;
+				},
 			},
-			viewer: (_parent, _args, { session }) =>
-				session
-					? {
-							...session.user,
-							activeOrganizationId:
-								session.session.activeOrganizationId ?? null,
-							twoFactorEnabled: session.user.twoFactorEnabled ?? false,
-						}
-					: null,
 		},
-		Viewer: {
-			memberships: async ({ id }: { id: string }) => {
-				const rows = await db
-					.select({ role: member.role, organization })
-					.from(member)
-					.innerJoin(organization, eq(member.organizationId, organization.id))
-					.where(eq(member.userId, id))
-					.orderBy(asc(organization.name));
-				return rows;
-			},
-		},
-	},
+	],
 });
 
 /** A bug rather than an expected refusal: anything not thrown on purpose as a GraphQLError. */

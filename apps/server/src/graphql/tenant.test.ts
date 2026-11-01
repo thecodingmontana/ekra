@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
-import { organization, session, user } from "@ekra/db";
-import { eq, inArray } from "drizzle-orm";
+import { member, organization, session, user } from "@ekra/db";
+import { and, eq, inArray } from "drizzle-orm";
 import { db } from "../db.ts";
 import { env } from "../env.ts";
 import { call, cookieFrom, linkInLatestEmail, post } from "../test-helpers.ts";
@@ -62,6 +62,58 @@ test("each person sees their own organization and role", async () => {
 	const { data } = await activeOrganization(cookies.brian ?? "");
 	assert.equal(data?.organization.organization.id, orgIds.brian);
 	assert.equal(data?.organization.role, "owner");
+});
+
+const gql = async (cookie: string, query: string, variables?: object) =>
+	(await (await post("/api/graphql", { query, variables }, cookie)).json()) as {
+		data?: Record<string, unknown> | null;
+		errors?: { message: string; extensions?: { code?: string } }[];
+	};
+
+const CREATE = `mutation ($input: CreateContentInput!) { createContent(input: $input) { id title status } }`;
+const LIBRARY = "{ library { id title } }";
+
+test("content stays in its organization's library", async () => {
+	const made = await gql(cookies.amina ?? "", CREATE, {
+		input: { kind: "course", title: `Amina's course ${stamp}` },
+	});
+	const course = made.data?.createContent as { id: string; status: string };
+	assert.equal(course.status, "draft");
+
+	const mine = await gql(cookies.amina ?? "", LIBRARY);
+	assert.ok(
+		((mine.data?.library ?? []) as { id: string }[]).some(
+			(c) => c.id === course.id,
+		),
+	);
+
+	const theirs = await gql(cookies.brian ?? "", LIBRARY);
+	assert.deepEqual(theirs.data?.library, []);
+	assert.doesNotMatch(JSON.stringify(theirs), /amina/i);
+});
+
+test("content needs a title, and learners can't create it", async () => {
+	const empty = await gql(cookies.brian ?? "", CREATE, {
+		input: { kind: "page", title: "  " },
+	});
+	assert.equal(empty.errors?.[0]?.extensions?.code, "BAD_USER_INPUT");
+
+	const brianInHisOrg = and(
+		eq(member.organizationId, orgIds.brian ?? ""),
+		eq(member.role, "owner"),
+	);
+	await db.update(member).set({ role: "learner" }).where(brianInHisOrg);
+	try {
+		const refused = await gql(cookies.brian ?? "", CREATE, {
+			input: { kind: "page", title: "Not allowed" },
+		});
+		assert.equal(refused.errors?.[0]?.extensions?.code, "FORBIDDEN");
+	} finally {
+		await db
+			.update(member)
+			.set({ role: "owner" })
+			.where(eq(member.organizationId, orgIds.brian ?? ""));
+	}
 });
 
 test("switching to someone else's organization is refused", async () => {
