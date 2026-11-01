@@ -1,4 +1,5 @@
 import { fileURLToPath } from "node:url";
+import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import postgres from "postgres";
@@ -37,4 +38,23 @@ export async function migrateDatabase(url: string) {
 	} finally {
 		await close();
 	}
+}
+
+export type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];
+
+/**
+ * Runs `run` in a transaction that can only see and change the organization's rows: it switches to the ekra_app
+ * role and sets app.org_id, so every tenant table's row-level policy applies, even to a query that forgets its
+ * org_id filter. Every read or write of tenant data goes through here.
+ */
+export function withOrg<T>(
+	db: Db,
+	orgId: string,
+	run: (tx: Tx) => Promise<T>,
+): Promise<T> {
+	return db.transaction(async (tx) => {
+		await tx.execute(sql`set local role ekra_app`);
+		await tx.execute(sql`select set_config('app.org_id', ${orgId}, true)`);
+		return run(tx);
+	});
 }
