@@ -5,7 +5,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@ekra/ui/components/card";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authed/o/$slug/")({
 	head: ({ match }) => ({
@@ -42,8 +42,15 @@ function Home() {
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="text-muted-foreground text-sm">
-					Welcome, {viewer.name}. Your learning library arrives in the next
-					phase.
+					Welcome, {viewer.name}.{" "}
+					<Link
+						to="/o/$slug/library"
+						params={{ slug: organization.slug }}
+						className="text-foreground underline underline-offset-2"
+					>
+						Open the library
+					</Link>{" "}
+					to find courses, pages and quizzes.
 				</CardContent>
 			</Card>
 		</main>

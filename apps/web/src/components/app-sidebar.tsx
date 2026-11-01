@@ -22,7 +22,18 @@ import { useSignOut } from "@/lib/use-sign-out";
 
 /** One entry per page that exists. Add a line when a phase ships a page (Courses, Members, Quizzes…). */
 const NAV = [
-	{ to: "/o/$slug", label: "Home", icon: "icon-[solar--home-2-linear]" },
+	{
+		to: "/o/$slug",
+		label: "Home",
+		icon: "icon-[solar--home-2-linear]",
+		exact: true,
+	},
+	{
+		to: "/o/$slug/library",
+		label: "Library",
+		icon: "icon-[solar--library-linear]",
+		exact: false,
+	},
 ] as const;
 
 const ROLE_LABEL: Record<string, string> = {
@@ -263,7 +274,8 @@ export function AppSidebar({
 						<Link
 							to={n.to}
 							params={{ slug }}
-							activeOptions={{ exact: true }}
+							activeOptions={{ exact: n.exact, includeSearch: false }}
+							data-testid={`nav-${n.label.toLowerCase()}`}
 							className={cn(item, ACTIVE)}
 						>
 							<span aria-hidden className={cn(n.icon, "size-4 shrink-0")} />

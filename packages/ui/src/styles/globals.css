@@ -55,6 +55,14 @@
 	--color-primary-foreground: var(--primary-foreground);
 	--color-primary: var(--primary);
 	--color-brand: var(--brand);
+	/* tints for kinds, statuses and warnings (readable as text on light and dark) */
+	--color-tint-green: var(--tint-green);
+	--color-tint-amber: var(--tint-amber);
+	--color-tint-red: var(--tint-red);
+	--color-tint-blue: var(--tint-blue);
+	--color-tint-violet: var(--tint-violet);
+	--color-tint-teal: var(--tint-teal);
+	--color-tint-orange: var(--tint-orange);
 	--color-brand-foreground: var(--brand-foreground);
 	--color-popover-foreground: var(--popover-foreground);
 	--color-popover: var(--popover);
@@ -92,6 +100,13 @@
 	--border: oklch(0.922 0 0);
 	--input: oklch(0.922 0 0);
 	/* Ekra green. Text on it is near-black: white on this green reads at about 1.9:1, this at about 11:1 */
+	--tint-green: #25754b;
+	--tint-amber: #8f5e0e;
+	--tint-red: #b23c30;
+	--tint-blue: #3570c4;
+	--tint-violet: #7652c2;
+	--tint-teal: #1e8580;
+	--tint-orange: #c0612b;
 	--brand: #00df82;
 	--brand-foreground: #03241a;
 	--ring: color-mix(in srgb, var(--brand) 70%, black);
@@ -112,6 +127,13 @@
 }
 
 .dark {
+	--tint-green: #5cba86;
+	--tint-amber: #d8a443;
+	--tint-red: #e57d70;
+	--tint-blue: #72a5ea;
+	--tint-violet: #a98deb;
+	--tint-teal: #58c0b6;
+	--tint-orange: #e3925f;
 	--background: oklch(0.145 0 0);
 	--foreground: oklch(0.985 0 0);
 	--card: oklch(0.205 0 0);

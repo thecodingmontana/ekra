@@ -149,13 +149,14 @@ const canManage = (role: string) =>
 				roles[r.trim() as Role]?.authorize({ content: ["update"] }).success,
 		);
 
-/** what someone who can't manage content may see: published, not a template */
+/** what someone who can't manage content may see: published, not a template, not archived */
 const visibleTo = (org: ActiveOrg) =>
 	canManage(org.role)
 		? undefined
 		: and(
 				eq(contentItem.status, "published"),
 				eq(contentItem.isTemplate, false),
+				isNull(contentItem.archivedAt),
 			);
 
 function parse<T extends z.ZodType>(schema: T, input: unknown): z.infer<T> {

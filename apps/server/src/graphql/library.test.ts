@@ -244,6 +244,13 @@ test("learners only see published content, and can't change it", async () => {
 	);
 	assert.equal(again?.isFavorite, true);
 	assert.ok(again?.viewedAt);
+	// archived content is gone for learners, even by its address
+	await run("amina", "archive", slugs.amina, live.id);
+	assert.equal(
+		(await run("carol", "content", slugs.amina, live.id)).data?.r,
+		null,
+	);
+	await run("amina", "restore", slugs.amina, live.id);
 	// favorites are per person
 	const forAmina = (await library("amina", slugs.amina))?.items.find(
 		(i) => i.id === live.id,
