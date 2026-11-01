@@ -1,5 +1,5 @@
 /*
- * Ekra's typefaces, self-hosted (no requests to font services). Same files as zadaci, copied from Fontsource.
+ * Ekra's typefaces, self-hosted (no requests to font services). Files from Fontsource.
  * Licences: files/OFL-*.txt. Web and desktop (Tauri) import this file; React Native will add .ttf copies here.
  * Font file urls are relative, so the bundler copies them next to the CSS that imports this.
  */

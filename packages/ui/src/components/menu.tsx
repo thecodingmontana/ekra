@@ -2,7 +2,7 @@ import { Menu as MenuPrimitive } from "@base-ui/react/menu";
 import type { ReactElement, ReactNode } from "react";
 import { cn } from "../lib/utils";
 
-// Ported from zadaci (components/q/menu.tsx + .pop/.mi/.mh/.msep in ui.css), on Base UI's Menu instead of Radix.
+// Dropdown menus on Base UI's Menu: a popover of rows with an icon, a label, and an optional right-side hint or tick.
 
 export const Menu = MenuPrimitive.Root;
 

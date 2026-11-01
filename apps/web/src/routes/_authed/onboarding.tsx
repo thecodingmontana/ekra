@@ -49,7 +49,7 @@ const KINDS: {
 const STEP_NAMES = ["kind", "name", "done"] as const;
 const STEPS = STEP_NAMES.length;
 
-/** zadaci's onboarding, cut to what Ekra uses today: what you are, your organization's name and address, done. */
+/** Setting up an organization in three steps: what you are, your organization's name and address, done. */
 function Onboarding() {
 	const router = useRouter();
 	// no organization to go back to yet, so leaving setup signs out

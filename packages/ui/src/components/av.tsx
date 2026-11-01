@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 import { cn } from "../lib/utils";
 
-// Ported from zadaci (components/q/av.tsx + .av in ui.css): a person's photo, or their initials on a colour of their own.
+// A person's avatar: their photo, or their initials on a colour of their own.
 
 const COLORS = [
 	"#5A67D8",
@@ -19,7 +19,7 @@ export function avatarColor(seed: string) {
 	return COLORS[Math.abs(h) % COLORS.length];
 }
 
-/** zadaci's sizes: sm 20, default 22, md 26, lg 36, xl 64. */
+/** Sizes in px: sm 20, default 22, md 26, lg 36, xl 64. */
 const SIZE = { sm: 20, default: 22, md: 26, lg: 36, xl: 64 } as const;
 
 export function Av({

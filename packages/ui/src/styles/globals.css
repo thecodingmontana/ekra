@@ -11,7 +11,7 @@
 @source "../**/*.{ts,tsx}";
 
 @theme inline {
-	/* zadaci's type scale (13.5px base), smaller than Tailwind's 14/16px defaults */
+	/* the type scale (13.5px base), smaller than Tailwind's 14/16px defaults */
 	--text-2xs: 11px;
 	--text-2xs--line-height: 1.4;
 	--text-xs: 12px;

@@ -1,4 +1,4 @@
-/** Password rules (from zadaci-old's strength check, at Ekra's 10-character minimum). Web shows them; the server enforces them. */
+/** Password rules (10-character minimum, a number, lower and upper case). Web shows them; the server enforces them. */
 export const PASSWORD_RULES = [
 	{
 		id: "length",

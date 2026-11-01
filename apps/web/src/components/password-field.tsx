@@ -18,7 +18,7 @@ const LABEL = [
 	"Strong password",
 ];
 
-/** A new password with a show/hide toggle and zadaci-old's strength meter. The server checks the same rules. */
+/** A new password with a show/hide toggle and a strength meter. The server checks the same rules. */
 export function PasswordField({
 	id,
 	label,

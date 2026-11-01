@@ -2,7 +2,7 @@ import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { cn } from "@ekra/ui/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
 
-// zadaci's button, on Base UI, in Ekra green: a solid brand fill with inset highlights, a small press-scale, and
+// Buttons on Base UI, in Ekra green: a solid brand fill with inset highlights, a small press-scale, and
 // compact sizes (default 30px, lg 36px).
 const variants = cva(
 	"group/button inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-md border border-transparent text-sm font-medium whitespace-nowrap transition-[scale,box-shadow,background-color,color,border-color] duration-150 ease-out outline-none select-none focus-visible:ring-4 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 motion-safe:not-disabled:active:scale-[0.96] aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",

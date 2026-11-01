@@ -62,7 +62,7 @@ function AuthedLayout() {
 		});
 	}
 
-	// "[" collapses and expands the sidebar, like zadaci (not while typing)
+	// "[" collapses and expands the sidebar (not while typing)
 	// biome-ignore lint/correctness/useExhaustiveDependencies: toggle only uses state setters
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
@@ -77,14 +77,14 @@ function AuthedLayout() {
 		return () => window.removeEventListener("keydown", onKey);
 	}, []);
 
-	// onboarding draws its own header (Exit setup + theme), like zadaci
+	// onboarding draws its own header (Exit setup + theme)
 	if (pathname === "/onboarding") return <Outlet />;
 
 	return (
 		<TooltipProvider>
 			<div
 				className={cn(
-					// the column width animates, like zadaci's .shell (drawer curve, 220ms)
+					// the column width animates (drawer curve, 220ms)
 					"grid h-dvh transition-[grid-template-columns] duration-[220ms] ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none md:grid-cols-[var(--side-w)_minmax(0,1fr)]",
 					collapsed ? "[--side-w:52px]" : "[--side-w:248px]",
 				)}

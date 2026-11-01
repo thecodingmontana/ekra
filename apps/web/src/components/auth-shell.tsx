@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-/** zadaci's auth layout: one centred column with the logo, a title, a line of help, then the form. */
+/** The auth layout: one centred column with the logo, a title, a line of help, then the form. */
 export function AuthShell({
 	title,
 	description,

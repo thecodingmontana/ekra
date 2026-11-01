@@ -8,7 +8,7 @@ const nanoid = customAlphabet(
 	ID_LENGTH,
 );
 
-/** A short, URL-safe id (16 characters from 62, as in zadaci). Better Auth uses it too (advanced.database.generateId). */
+/** A short, URL-safe id (16 characters from 62). Better Auth uses it too (advanced.database.generateId). */
 export function generateId(prefix?: string): string {
 	const id = nanoid();
 	return prefix ? `${prefix}_${id}` : id;

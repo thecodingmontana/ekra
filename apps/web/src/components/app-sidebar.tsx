@@ -26,8 +26,6 @@ import { authClient } from "@/lib/auth-client";
 import { getTheme, setTheme, type Theme } from "@/lib/theme";
 import { useSignOut } from "@/lib/use-sign-out";
 
-// Mirrors zadaci's components/shell/app-sidebar.tsx (sidebar, workspace menu, UserMenuContent), q/menu.tsx and ui.css.
-
 /** One entry per page that exists. Add a line when a phase ships a page (Courses, Members, Quizzes…). */
 const NAV = [
 	{ to: "/", label: "Home", icon: "icon-[solar--home-2-linear]" },
@@ -43,7 +41,7 @@ const ROLE_LABEL: Record<string, string> = {
 
 const REPO = "https://github.com/thecodingmontana/ekra";
 
-// the page you're on (TanStack Router marks active links with data-status="active"); zadaci's .sitem.on
+// the page you're on (TanStack Router marks active links with data-status="active")
 const ACTIVE =
 	"data-[status=active]:bg-background data-[status=active]:font-medium data-[status=active]:text-foreground data-[status=active]:shadow-[0_1px_2px_rgba(0,0,0,0.05),0_0_0_1px_var(--border)] dark:data-[status=active]:bg-muted dark:data-[status=active]:shadow-none";
 
@@ -53,7 +51,7 @@ const THEMES = [
 	["system", "icon-[solar--monitor-linear]", "System"],
 ] as const;
 
-/** zadaci's kbd */
+/** A keyboard key, as shown in tooltips and menus. */
 function Kbd({ children }: { children: ReactNode }) {
 	return (
 		<kbd className="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-[4px] border border-b-[1.5px] bg-background px-[5px] font-mono text-[11px] text-muted-foreground leading-none">
@@ -62,7 +60,7 @@ function Kbd({ children }: { children: ReactNode }) {
 	);
 }
 
-/** zadaci's SideTip: a tooltip to the right of a sidebar item while the sidebar is collapsed to icons. */
+/** A tooltip to the right of a sidebar item while the sidebar is collapsed to icons. */
 function SideTip({
 	label,
 	collapsed,
@@ -90,7 +88,7 @@ function SideTip({
 	);
 }
 
-/** zadaci's WsLogo: the organization's logo, or its first letter (Ekra's brand colour). */
+/** The organization's logo, or its first letter (Ekra's brand colour). */
 function OrgLogo({
 	organization,
 	px = 22,
@@ -129,7 +127,7 @@ const arrow = (
 	/>
 );
 
-/** zadaci's sidebar with Frappe Learning's layout: organization on top, pages, then you at the bottom. */
+/** The app sidebar: organization on top, pages, then you at the bottom. */
 export function AppSidebar({
 	viewer,
 	collapsed,
@@ -154,7 +152,7 @@ export function AppSidebar({
 		await router.invalidate();
 	}
 
-	// zadaci's .sitem; collapsed (desktop only, the phone drawer is always full): centred, no padding, labels hidden
+	// a sidebar row; collapsed (desktop only, the phone drawer is always full): centred, no padding, labels hidden
 	const item = cn(
 		"flex h-[30px] shrink-0 items-center gap-[9px] whitespace-nowrap rounded-md px-2 text-left font-[450] text-base text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground",
 		collapsed && "md:justify-center md:px-0",
@@ -369,7 +367,7 @@ export function AppSidebar({
 								<button
 									type="button"
 									aria-label="Your account"
-									// zadaci: 36px row, 22px avatar; collapsed it gets 7px padding to sit on the icons' line
+									// a 36px row with a 22px avatar; collapsed it gets 7px padding to sit on the icons' line
 									className={cn(item, "h-9", collapsed && "md:px-[7px]")}
 								/>
 							}
@@ -392,7 +390,7 @@ export function AppSidebar({
 							/>
 						</MenuTrigger>
 					</SideTip>
-					{/* zadaci's UserMenuContent */}
+					{/* you, your settings, the theme and sign out */}
 					<MenuContent width={260} align="start" side="top">
 						<div className="flex items-center gap-2.5 px-2 pt-2 pb-2.5">
 							<Av name={viewer.name} image={viewer.image} size="lg" />
@@ -413,7 +411,7 @@ export function AppSidebar({
 						<MenuSeparator />
 						<MenuLabel>Theme</MenuLabel>
 						<div className="px-1.5 pt-0.5 pb-1.5">
-							{/* zadaci's .seg */}
+							{/* segmented control: the chosen theme is raised */}
 							<fieldset className="flex w-full gap-0.5 rounded-[6px] bg-muted p-0.5">
 								<legend className="sr-only">Theme</legend>
 								{THEMES.map(([choice, icon, label]) => (
