@@ -10,10 +10,11 @@ import {
 	useNavigate,
 	useRouter,
 } from "@tanstack/react-router";
-import { type CSSProperties, type FormEvent, useState } from "react";
+import { type CSSProperties, type FormEvent, useRef, useState } from "react";
 import { OrgLogo } from "@/components/org-logo";
 import { SettingsHeader } from "@/components/settings-ui";
 import { authClient, authErrorMessage } from "@/lib/auth-client";
+import { PICTURE_TYPES, smallest, uploadPicture } from "@/lib/upload";
 
 export const Route = createFileRoute("/_authed/o/$slug/settings/organization")({
 	head: () => ({ meta: [{ title: "Organization · Ekra" }] }),
@@ -32,6 +33,8 @@ function Organization() {
 	const [name, setName] = useState(org.name);
 	const [slug, setSlug] = useState(org.slug);
 	const [busy, setBusy] = useState(false);
+	const [uploading, setUploading] = useState(false);
+	const fileRef = useRef<HTMLInputElement>(null);
 
 	const problem = slug ? slugProblem(slug) : "Choose an address";
 	const changed = name.trim() !== org.name || slug !== org.slug;
@@ -45,6 +48,31 @@ function Organization() {
 		if (error) return void toast.error(authErrorMessage(error));
 		toast.success("Colour updated");
 		await router.invalidate();
+	}
+
+	async function setLogo(logo: string) {
+		const { error } = await authClient.organization.update({
+			organizationId: org.id,
+			data: { logo },
+		});
+		if (error) throw new Error(authErrorMessage(error));
+		await router.invalidate();
+	}
+
+	async function upload(file: File) {
+		setUploading(true);
+		try {
+			const picture = await uploadPicture(org.slug, file);
+			await setLogo(smallest(picture));
+			toast.success("Logo updated");
+		} catch (error) {
+			toast.error("Couldn't upload that logo", {
+				desc: (error as Error).message,
+			});
+		} finally {
+			setUploading(false);
+			if (fileRef.current) fileRef.current.value = "";
+		}
 	}
 
 	async function save(event: FormEvent) {
@@ -79,9 +107,35 @@ function Organization() {
 				}
 			/>
 			<div className="mb-5 flex items-center gap-3.5">
-				<OrgLogo organization={org} px={52} />
+				<div className="relative flex-none">
+					<OrgLogo organization={org} px={52} />
+					{canEdit && org.logo && (
+						<button
+							type="button"
+							aria-label="Remove logo"
+							data-testid="remove-logo"
+							className="absolute -top-1 -right-1 grid size-5 place-items-center rounded-full bg-[#f43f5e] text-white transition-[background-color,scale] duration-150 hover:scale-[1.08] hover:bg-[#e11d48] focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
+							onClick={() =>
+								void toast
+									.promise(setLogo(""), {
+										loading: "Removing the logo…",
+										success: "Logo removed",
+										error: "Couldn't remove the logo",
+									})
+									.catch(() => {})
+							}
+						>
+							<span
+								className="icon-[hugeicons--cancel-01] size-3"
+								aria-hidden="true"
+							/>
+						</button>
+					)}
+				</div>
 				<div>
-					<div className="mb-1.5 font-medium text-sm">Colour</div>
+					<div className="mb-1.5 font-medium text-sm">
+						{org.logo ? "Logo" : "Colour"}
+					</div>
 					{/* the chosen colour gets a ring; Ekra's green means none */}
 					<fieldset className="flex flex-wrap gap-2.5" disabled={!canEdit}>
 						<legend className="sr-only">Organization colour</legend>
@@ -111,6 +165,40 @@ function Organization() {
 								/>
 							</label>
 						))}
+						{canEdit && (
+							<>
+								<input
+									ref={fileRef}
+									type="file"
+									accept={PICTURE_TYPES}
+									className="sr-only"
+									aria-label="Upload a logo"
+									data-testid="logo-file"
+									onChange={(e) => {
+										const file = e.target.files?.[0];
+										if (file) void upload(file);
+									}}
+								/>
+								<Button
+									type="button"
+									variant="outline"
+									size="sm"
+									className="ml-1"
+									disabled={uploading}
+									onClick={() => fileRef.current?.click()}
+								>
+									{uploading ? (
+										<Spinner className="size-3.5" />
+									) : (
+										<span
+											className="icon-[solar--gallery-add-linear] size-[13px]"
+											aria-hidden="true"
+										/>
+									)}
+									{org.logo ? "Change logo" : "Upload logo"}
+								</Button>
+							</>
+						)}
 					</fieldset>
 				</div>
 			</div>

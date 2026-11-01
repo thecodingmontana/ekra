@@ -5,7 +5,7 @@ import { inArray } from "drizzle-orm";
 import { parse } from "graphql";
 import { app } from "./app.ts";
 import { closeDb, db } from "./db.ts";
-import { mutationSlugs } from "./realtime.ts";
+import { closeStreams, mutationSlugs } from "./realtime.ts";
 import {
 	call,
 	cookieFrom,
@@ -148,4 +148,11 @@ test("a change reaches the people viewing that organization, and only them", asy
 		await amina.cancel();
 		await brian.cancel();
 	}
+});
+
+test("shutting down ends open streams, so the server can stop", async () => {
+	const amina = reader(await events(people.amina.slug, cookies.amina));
+	assert.equal((await amina.next()).event, "ready");
+	closeStreams();
+	await assert.rejects(amina.next(2000), /stream ended/);
 });

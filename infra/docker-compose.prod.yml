@@ -6,6 +6,8 @@ x-app-env: &app-env
   env_file: ../.env
   environment:
     DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-ekra}
+    # file storage inside this network (the .env value is for development on the host)
+    S3_ENDPOINT: http://seaweedfs:8333
     NODE_ENV: production
 
 services:
@@ -50,6 +52,7 @@ services:
     restart: unless-stopped
     depends_on:
       migrate: { condition: service_completed_successfully }
+      seaweedfs: { condition: service_started }
 
   web:
     build:

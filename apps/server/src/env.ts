@@ -40,6 +40,12 @@ export const env = createEnv({
 		// sender; with Resend, the domain must be verified there
 		EMAIL_FROM: z.string().min(3).default("Ekra <onboarding@resend.dev>"),
 		RESEND_API_KEY: z.string().min(1).optional(),
+		// file storage (S3 API): SeaweedFS from infra/docker-compose.yml in development, any S3 in production
+		S3_ENDPOINT: z.url().default("http://localhost:8334"),
+		S3_REGION: z.string().min(1).default("us-east-1"),
+		S3_BUCKET: z.string().min(3).default("ekra"),
+		S3_ACCESS_KEY: z.string().min(1),
+		S3_SECRET_KEY: z.string().min(1),
 	},
 	runtimeEnv: process.env,
 	// treat VAR= in .env as unset, so defaults apply

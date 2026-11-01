@@ -20,7 +20,7 @@ import {
 } from "drizzle-orm";
 import { GraphQLError } from "graphql";
 import { z } from "zod";
-import { type Role, roles } from "../auth/permissions.ts";
+import { canManageContent } from "../auth/permissions.ts";
 import { db } from "../db.ts";
 import { type ActiveOrg, orgBySlug } from "./tenant.ts";
 
@@ -176,18 +176,9 @@ const refuse = (message: string, code = "FORBIDDEN"): never => {
 	throw new GraphQLError(message, { extensions: { code } });
 };
 
-/** someone has several roles as "admin,trainer": any one of them may grant it */
-const canManage = (role: string) =>
-	role
-		.split(",")
-		.some(
-			(r) =>
-				roles[r.trim() as Role]?.authorize({ content: ["update"] }).success,
-		);
-
 /** what someone who can't manage content may see: published, not a template, not archived */
 const visibleTo = (org: ActiveOrg) =>
-	canManage(org.role)
+	canManageContent(org.role)
 		? undefined
 		: and(
 				eq(contentItem.status, "published"),
@@ -294,7 +285,7 @@ async function manage<T>(
 	work: (tx: Tx, org: ActiveOrg, userId: string) => Promise<T>,
 ) {
 	const org = await orgBySlug(ctx, slug);
-	if (!canManage(org.role))
+	if (!canManageContent(org.role))
 		refuse("Only owners, admins and trainers can change content.");
 	return withOrg(db, org.id, (tx) => work(tx, org, ctx.session?.user.id ?? ""));
 }
@@ -387,7 +378,7 @@ export const libraryResolvers = {
 			ctx: Ctx,
 		) =>
 			asMember(ctx, slug, async (tx, org, userId) => {
-				if (archived && !canManage(org.role))
+				if (archived && !canManageContent(org.role))
 					return { canManage: false, items: [] };
 				// shortcut: the newest 1000 items in one list, filtered in the browser; page it when a library grows past that
 				const rows = await select(tx, userId)
@@ -401,7 +392,10 @@ export const libraryResolvers = {
 					)
 					.orderBy(desc(contentItem.updatedAt))
 					.limit(1000);
-				return { canManage: canManage(org.role), items: rows.map(toGraphQL) };
+				return {
+					canManage: canManageContent(org.role),
+					items: rows.map(toGraphQL),
+				};
 			}),
 		content: (_parent: unknown, { slug, id }: SlugId, ctx: Ctx) =>
 			asMember(ctx, slug, async (tx, org, userId) => {

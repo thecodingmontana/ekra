@@ -43,6 +43,20 @@ export async function onChange(orgId: string, listener: Listener) {
 	};
 }
 
+const openStreams = new Set<() => void>();
+
+/** Keeps track of an open live-updates stream so shutdown can end it; returns the function that forgets it. */
+export function trackStream(close: () => void) {
+	openStreams.add(close);
+	return () => openStreams.delete(close);
+}
+
+/** Ends every open stream (on shutdown: they'd otherwise keep the server waiting; browsers reconnect). */
+export function closeStreams() {
+	for (const close of openStreams) close();
+	openStreams.clear();
+}
+
 /** Tell everyone viewing these organizations (by address) to refresh. Never slows down or fails the change. */
 export function announceChange(slugs: string[], from: string | null) {
 	if (!slugs.length) return;

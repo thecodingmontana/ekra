@@ -17,7 +17,7 @@ test("a normal page is kept, with its plain text", () => {
 			content: [{ type: "text", text: "Welcome" }],
 		},
 		p("Read this", [{ type: "link", attrs: { href: "https://ekra.app" } }]),
-		{ type: "image", attrs: { src: "/api/media/org1/abc/1280.webp" } },
+		{ type: "image", attrs: { src: "/api/media/org1/abc/1280-webp" } },
 		{
 			type: "youtube",
 			attrs: { src: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
@@ -58,6 +58,14 @@ test("anything the editor can't make is refused", () => {
 	for (let i = 0; i < 50; i++) deep = { type: "blockquote", content: [deep] };
 	refused(doc(deep), /nested too deeply/);
 	refused(doc(p("x".repeat(600_000))), /too long/);
+});
+
+test("a callout ends its line in the plain text", () => {
+	const page = doc(
+		{ type: "callout", content: [{ type: "text", text: "Mind the step." }] },
+		p("Then go on."),
+	);
+	assert.equal(checkDoc(page).text, "Mind the step.\nThen go on.");
 });
 
 test("table column widths (lists of numbers) are allowed", () => {

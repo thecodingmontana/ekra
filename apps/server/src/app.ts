@@ -12,7 +12,8 @@ import { env } from "./env.ts";
 import { orgBySlug } from "./graphql/tenant.ts";
 import { yoga } from "./graphql/yoga.ts";
 import { requestLogs } from "./log.ts";
-import { onChange } from "./realtime.ts";
+import { media } from "./media.ts";
+import { onChange, trackStream } from "./realtime.ts";
 
 /** Every API route lives under /api, so a proxy (or the web app's server) can send /api/* here. */
 export const app = new Hono<EvlogVariables>().basePath("/api");
@@ -71,6 +72,8 @@ app.on(["GET", "POST"], "/auth/*", (c) => auth.handler(c.req.raw));
 
 app.on(["GET", "POST"], "/graphql", (c) => yoga.fetch(c.req.raw));
 
+app.route("/media", media);
+
 /** a comment line now and then keeps proxies from closing a quiet stream */
 const KEEPALIVE_MS = 25_000;
 
@@ -93,12 +96,18 @@ app.get("/events", async (c) => {
 				data: JSON.stringify({ from }),
 			});
 		});
+		let open = true;
+		const untrack = trackStream(() => {
+			open = false;
+			void stream.close();
+		});
 		stream.onAbort(stop);
 		await stream.writeSSE({ event: "ready", data: "{}" });
-		while (!stream.aborted) {
+		while (open && !stream.aborted) {
 			await stream.sleep(KEEPALIVE_MS);
-			if (!stream.aborted) await stream.write(": keepalive\n\n");
+			if (open && !stream.aborted) await stream.write(": keepalive\n\n");
 		}
+		untrack();
 		stop();
 	});
 });

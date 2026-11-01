@@ -8,6 +8,7 @@ import {
 	type AnyPgColumn,
 	boolean,
 	index,
+	integer,
 	jsonb,
 	pgEnum,
 	pgPolicy,
@@ -147,5 +148,35 @@ export const contentVersion = pgTable(
 	(table) => [
 		index("content_version_content_idx").on(table.contentId, table.updatedAt),
 		tenantPolicy("content_version"),
+	],
+).enableRLS();
+
+/**
+ * A picture uploaded to an organization, stored as the sizes the image pipeline made (@ekra/media) under
+ * media/<org_id>/<id>/ in storage. The original upload is never kept or served.
+ */
+export const mediaAsset = pgTable(
+	"media_asset",
+	{
+		id: id(),
+		orgId: idRef("org_id")
+			.notNull()
+			.references(() => organization.id, { onDelete: "cascade" }),
+		width: integer("width").notNull(),
+		height: integer("height").notNull(),
+		/** a tiny blurred picture (data URL) shown while the real one loads */
+		placeholder: text("placeholder").notNull(),
+		/** the stored files: name ("640.avif"), MIME type, width */
+		files: jsonb("files")
+			.$type<{ name: string; type: string; width: number }[]>()
+			.notNull(),
+		createdBy: idRef("created_by").references(() => user.id, {
+			onDelete: "set null",
+		}),
+		createdAt: moment("created_at").defaultNow().notNull(),
+	},
+	(table) => [
+		index("media_asset_org_idx").on(table.orgId),
+		tenantPolicy("media_asset"),
 	],
 ).enableRLS();

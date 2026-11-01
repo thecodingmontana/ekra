@@ -21,5 +21,6 @@ export {
 	contentStatus,
 	contentVersion,
 	contentView,
+	mediaAsset,
 	tenantPolicy,
 } from "./content.ts";

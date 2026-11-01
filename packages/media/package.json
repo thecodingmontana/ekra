@@ -1,0 +1,21 @@
+{
+	"name": "@ekra/media",
+	"version": "0.0.0",
+	"private": true,
+	"description": "Ekra's media pipeline: uploaded images become metadata-free AVIF and WebP sizes (sharp); videos come with Phase 4.",
+	"license": "PolyForm-Noncommercial-1.0.0",
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"scripts": {
+		"typecheck": "tsc --noEmit",
+		"test": "node --test 'src/**/*.test.ts'"
+	},
+	"dependencies": {
+		"sharp": "^0.35.5"
+	},
+	"devDependencies": {
+		"@types/node": "^26.6.6"
+	}
+}

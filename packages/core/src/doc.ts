@@ -41,7 +41,13 @@ const MARKS = new Set([
 	"textStyle",
 ]);
 // blocks that end a line in the plain-text copy
-const LINES = new Set(["paragraph", "heading", "codeBlock", "hardBreak"]);
+const LINES = new Set([
+	"paragraph",
+	"heading",
+	"codeBlock",
+	"hardBreak",
+	"callout",
+]);
 const SAFE_LINK = /^(https?:|mailto:)/i;
 
 /** Pictures come only from Ekra's own image pipeline (never a raw upload or another site). */

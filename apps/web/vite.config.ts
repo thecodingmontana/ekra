@@ -24,6 +24,16 @@ export default defineConfig(async ({ mode }) => {
 			),
 		},
 		resolve: { tsconfigPaths: true },
+		// pictures straight to the API in development: Vite answers image requests itself (as missing static
+		// files) before the app's /api forwarder sees them. Everything else under /api uses that forwarder.
+		server: {
+			proxy: {
+				"/api/media": {
+					target: process.env.API_URL ?? "http://127.0.0.1:4000",
+					xfwd: true,
+				},
+			},
+		},
 		// packages used inside @ekra/ui: bundled up front, so Vite doesn't find them mid-session, re-bundle and
 		// leave the open page with two copies of React ("Invalid hook call")
 		optimizeDeps: {

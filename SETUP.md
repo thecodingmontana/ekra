@@ -186,7 +186,7 @@ openssl rand -hex 24
 | `S3_PORT`                                           | Port on your machine for SeaweedFS's S3 API (default `8334`)                                                                           |
 | `S3_ENDPOINT`                                       | S3 address the apps use                                                                                                                |
 | `S3_REGION`                                         | Any value; SeaweedFS ignores it but S3 clients need one                                                                                |
-| `S3_BUCKET`                                         | Bucket for uploads and videos                                                                                                          |
+| `S3_BUCKET`                                         | Bucket for uploads and videos (the API creates it on the first upload)                                                                 |
 | `S3_ACCESS_KEY`, `S3_SECRET_KEY`                    | S3 credentials. SeaweedFS creates an admin user with them on start                                                                     |
 | `SERVER_HOST`, `SERVER_PORT`                        | Where the API server listens (default `127.0.0.1:4000`)                                                                                |
 | `NODE_ENV`                                          | `development` (default), `test` or `production`. GraphiQL is off in production                                                         |

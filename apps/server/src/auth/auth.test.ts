@@ -231,3 +231,27 @@ test("an organization's colour is one of the picker's, or refused", async () => 
 	for (const bad of ["red; background:url(x)", "#000000", 7])
 		assert.equal((await setColor(bad)).status, 400, String(bad));
 });
+
+test("an organization's logo is a picture from Ekra's own pipeline, or refused", async () => {
+	const [org] = await db
+		.select({ id: organization.id })
+		.from(organization)
+		.where(eq(organization.slug, slug));
+	const setLogo = (logo: unknown) =>
+		call("/api/auth/organization/update", {
+			method: "POST",
+			body: JSON.stringify({ organizationId: org?.id, data: { logo } }),
+		});
+	assert.equal(
+		(await setLogo("/api/media/AAAAAAAAAAAAAAAA/BBBBBBBBBBBBBBBB/320.webp"))
+			.status,
+		200,
+	);
+	assert.equal((await setLogo("")).status, 200, "removing it");
+	for (const bad of [
+		"https://tracker.example/pixel.gif",
+		"javascript:alert(1)",
+		"/api/media/../auth/session",
+	])
+		assert.equal((await setLogo(bad)).status, 400, bad);
+});

@@ -1,0 +1,17 @@
+{
+	"name": "@ekra/storage",
+	"version": "0.0.0",
+	"private": true,
+	"description": "Ekra's file storage: a small S3 client (SeaweedFS in development and self-hosting, any S3 in production).",
+	"license": "PolyForm-Noncommercial-1.0.0",
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"scripts": {
+		"typecheck": "tsc --noEmit"
+	},
+	"devDependencies": {
+		"@types/node": "^26.6.6"
+	}
+}

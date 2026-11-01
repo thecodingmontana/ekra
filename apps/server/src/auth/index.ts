@@ -1,5 +1,10 @@
 import { passkey } from "@better-auth/passkey";
-import { isOrgColor, passwordProblem, slugProblem } from "@ekra/core";
+import {
+	isImageSrc,
+	isOrgColor,
+	passwordProblem,
+	slugProblem,
+} from "@ekra/core";
 import { generateId, schema } from "@ekra/db";
 import {
 	resetPasswordEmail,
@@ -41,6 +46,15 @@ function assertColor(color: unknown) {
 	)
 		return;
 	throw new APIError("BAD_REQUEST", { message: "Pick one of the colours." });
+}
+
+/** Only a picture from Ekra's own image pipeline (or none): it's shown wherever the organization appears. */
+function assertLogo(logo: unknown) {
+	if (logo === undefined || logo === null || logo === "" || isImageSrc(logo))
+		return;
+	throw new APIError("BAD_REQUEST", {
+		message: "Upload the logo here instead of linking to it.",
+	});
 }
 
 function assertSlug(slug: string) {
@@ -230,10 +244,12 @@ export const auth = betterAuth({
 				beforeCreateOrganization: async ({ organization }) => {
 					assertSlug(organization.slug ?? "");
 					assertColor(organization.color);
+					assertLogo(organization.logo);
 				},
 				beforeUpdateOrganization: async ({ organization }) => {
 					if (organization.slug !== undefined) assertSlug(organization.slug);
 					assertColor(organization.color);
+					assertLogo(organization.logo);
 				},
 			},
 			schema: {

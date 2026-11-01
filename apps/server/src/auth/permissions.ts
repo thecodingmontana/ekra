@@ -40,3 +40,12 @@ export const roles = {
 };
 
 export type Role = keyof typeof roles;
+
+/** Owners, admins and trainers manage content; someone with several roles ("admin,trainer") needs only one. */
+export const canManageContent = (role: string) =>
+	role
+		.split(",")
+		.some(
+			(r) =>
+				roles[r.trim() as Role]?.authorize({ content: ["update"] }).success,
+		);
