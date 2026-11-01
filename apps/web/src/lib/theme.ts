@@ -8,10 +8,28 @@ export const isDark = () =>
 	typeof document !== "undefined" &&
 	document.documentElement.classList.contains("dark");
 
-export function setTheme(theme: "light" | "dark") {
+export type Theme = "light" | "dark" | "system";
+
+/** The saved choice; "system" when none (follow the device). */
+export function getTheme(): Theme {
 	try {
-		localStorage.setItem(KEY, theme);
+		const saved = localStorage.getItem(KEY);
+		if (saved === "light" || saved === "dark") return saved;
 	} catch {}
+	return "system";
+}
+
+export function setTheme(choice: Theme) {
+	try {
+		if (choice === "system") localStorage.removeItem(KEY);
+		else localStorage.setItem(KEY, choice);
+	} catch {}
+	const theme =
+		choice === "system"
+			? matchMedia("(prefers-color-scheme: dark)").matches
+				? "dark"
+				: "light"
+			: choice;
 	const root = document.documentElement;
 	// switch off every colour transition for the swap, so the change doesn't smear
 	const style = document.createElement("style");

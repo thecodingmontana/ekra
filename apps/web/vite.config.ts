@@ -18,6 +18,19 @@ export default defineConfig(async ({ mode }) => {
 	return {
 		envDir: ROOT,
 		resolve: { tsconfigPaths: true },
+		// packages used inside @ekra/ui: bundled up front, so Vite doesn't find them mid-session, re-bundle and
+		// leave the open page with two copies of React ("Invalid hook call")
+		optimizeDeps: {
+			include: [
+				"@ekra/ui > @base-ui/react/button",
+				"@ekra/ui > @base-ui/react/input",
+				"@ekra/ui > @base-ui/react/menu",
+				"@ekra/ui > @base-ui/react/separator",
+				"@ekra/ui > @base-ui/react/tooltip",
+				"@ekra/ui > motion/react",
+				"qrcode.react",
+			],
+		},
 		plugins: [devtools(), nitro(), tailwindcss(), tanstackStart(), viteReact()],
 	};
 });
