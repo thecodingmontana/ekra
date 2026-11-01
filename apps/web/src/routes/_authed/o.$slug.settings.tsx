@@ -24,7 +24,7 @@ const readCollapsed = createIsomorphicFn()
 	})
 	.client(async () => document.cookie.includes(`${COOKIE}=1`));
 
-export const Route = createFileRoute("/_authed/settings")({
+export const Route = createFileRoute("/_authed/o/$slug/settings")({
 	beforeLoad: async () => ({ settingsCollapsed: await readCollapsed() }),
 	component: SettingsLayout,
 });
@@ -59,7 +59,8 @@ function Tip({
  * on this device); on phones it slides over the page and closes with ×.
  */
 function SettingsLayout() {
-	const { viewer, settingsCollapsed } = Route.useRouteContext();
+	const { settingsCollapsed, membership } = Route.useRouteContext();
+	const slug = membership.organization.slug;
 	const pathname = useLocation({ select: (l) => l.pathname });
 	const [collapsed, setCollapsed] = useState(settingsCollapsed);
 	const [drawer, setDrawer] = useState(false);
@@ -75,12 +76,10 @@ function SettingsLayout() {
 		document.cookie = `${COOKIE}=${next ? 1 : 0}; path=/; max-age=31536000; samesite=lax`;
 	}
 
-	const groups = SETTINGS_GROUPS.filter(
-		(g) => !g.org || viewer.activeOrganizationId,
-	);
+	const groups = SETTINGS_GROUPS;
 	const current = groups
 		.flatMap((g) => g.items)
-		.find((i) => pathname.startsWith(i.to));
+		.find((i) => pathname.endsWith(i.to.replace("/o/$slug", "")));
 	const hide = collapsed ? "md:hidden" : "";
 	const row = cn(
 		"flex h-[30px] shrink-0 items-center gap-[9px] whitespace-nowrap rounded-md px-2 text-left font-[450] text-base text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground",
@@ -143,7 +142,11 @@ function SettingsLayout() {
 						</div>
 						{group.items.map((item) => (
 							<Tip key={item.to} label={item.label} show={collapsed}>
-								<Link to={item.to} className={cn(row, ACTIVE)}>
+								<Link
+									to={item.to}
+									params={{ slug }}
+									className={cn(row, ACTIVE)}
+								>
 									<span
 										aria-hidden
 										className={cn(item.icon, "size-[15px] shrink-0")}

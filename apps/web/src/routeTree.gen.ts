@@ -18,14 +18,16 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TwoFactorRouteImport } from './routes/two-factor'
 import { Route as AuthedIndexRouteImport } from './routes/_authed/index'
 import { Route as AuthedOnboardingRouteImport } from './routes/_authed/onboarding'
-import { Route as AuthedSettingsRouteImport } from './routes/_authed/settings'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
-import { Route as AuthedSettingsIndexRouteImport } from './routes/_authed/settings.index'
-import { Route as AuthedSettingsAppearanceRouteImport } from './routes/_authed/settings.appearance'
-import { Route as AuthedSettingsOrganizationRouteImport } from './routes/_authed/settings.organization'
-import { Route as AuthedSettingsProfileRouteImport } from './routes/_authed/settings.profile'
-import { Route as AuthedSettingsSecurityRouteImport } from './routes/_authed/settings.security'
-import { Route as AuthedSettingsSessionsRouteImport } from './routes/_authed/settings.sessions'
+import { Route as AuthedOSlugRouteImport } from './routes/_authed/o.$slug'
+import { Route as AuthedOSlugIndexRouteImport } from './routes/_authed/o.$slug.index'
+import { Route as AuthedOSlugSettingsRouteImport } from './routes/_authed/o.$slug.settings'
+import { Route as AuthedOSlugSettingsIndexRouteImport } from './routes/_authed/o.$slug.settings.index'
+import { Route as AuthedOSlugSettingsAppearanceRouteImport } from './routes/_authed/o.$slug.settings.appearance'
+import { Route as AuthedOSlugSettingsOrganizationRouteImport } from './routes/_authed/o.$slug.settings.organization'
+import { Route as AuthedOSlugSettingsProfileRouteImport } from './routes/_authed/o.$slug.settings.profile'
+import { Route as AuthedOSlugSettingsSecurityRouteImport } from './routes/_authed/o.$slug.settings.security'
+import { Route as AuthedOSlugSettingsSessionsRouteImport } from './routes/_authed/o.$slug.settings.sessions'
 
 const AuthedRoute = AuthedRouteImport.update({
   id: '/_authed',
@@ -71,48 +73,62 @@ const AuthedOnboardingRoute = AuthedOnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => AuthedRoute,
 } as any)
-const AuthedSettingsRoute = AuthedSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => AuthedRoute,
-} as any)
 const ApiSplatRoute = ApiSplatRouteImport.update({
   id: '/api/$',
   path: '/api/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthedSettingsIndexRoute = AuthedSettingsIndexRouteImport.update({
+const AuthedOSlugRoute = AuthedOSlugRouteImport.update({
+  id: '/o/$slug',
+  path: '/o/$slug',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedOSlugIndexRoute = AuthedOSlugIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => AuthedSettingsRoute,
+  getParentRoute: () => AuthedOSlugRoute,
 } as any)
-const AuthedSettingsAppearanceRoute =
-  AuthedSettingsAppearanceRouteImport.update({
+const AuthedOSlugSettingsRoute = AuthedOSlugSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthedOSlugRoute,
+} as any)
+const AuthedOSlugSettingsIndexRoute =
+  AuthedOSlugSettingsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthedOSlugSettingsRoute,
+  } as any)
+const AuthedOSlugSettingsAppearanceRoute =
+  AuthedOSlugSettingsAppearanceRouteImport.update({
     id: '/appearance',
     path: '/appearance',
-    getParentRoute: () => AuthedSettingsRoute,
+    getParentRoute: () => AuthedOSlugSettingsRoute,
   } as any)
-const AuthedSettingsOrganizationRoute =
-  AuthedSettingsOrganizationRouteImport.update({
+const AuthedOSlugSettingsOrganizationRoute =
+  AuthedOSlugSettingsOrganizationRouteImport.update({
     id: '/organization',
     path: '/organization',
-    getParentRoute: () => AuthedSettingsRoute,
+    getParentRoute: () => AuthedOSlugSettingsRoute,
   } as any)
-const AuthedSettingsProfileRoute = AuthedSettingsProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
-  getParentRoute: () => AuthedSettingsRoute,
-} as any)
-const AuthedSettingsSecurityRoute = AuthedSettingsSecurityRouteImport.update({
-  id: '/security',
-  path: '/security',
-  getParentRoute: () => AuthedSettingsRoute,
-} as any)
-const AuthedSettingsSessionsRoute = AuthedSettingsSessionsRouteImport.update({
-  id: '/sessions',
-  path: '/sessions',
-  getParentRoute: () => AuthedSettingsRoute,
-} as any)
+const AuthedOSlugSettingsProfileRoute =
+  AuthedOSlugSettingsProfileRouteImport.update({
+    id: '/profile',
+    path: '/profile',
+    getParentRoute: () => AuthedOSlugSettingsRoute,
+  } as any)
+const AuthedOSlugSettingsSecurityRoute =
+  AuthedOSlugSettingsSecurityRouteImport.update({
+    id: '/security',
+    path: '/security',
+    getParentRoute: () => AuthedOSlugSettingsRoute,
+  } as any)
+const AuthedOSlugSettingsSessionsRoute =
+  AuthedOSlugSettingsSessionsRouteImport.update({
+    id: '/sessions',
+    path: '/sessions',
+    getParentRoute: () => AuthedOSlugSettingsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthedIndexRoute
@@ -123,14 +139,16 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/two-factor': typeof TwoFactorRoute
   '/onboarding': typeof AuthedOnboardingRoute
-  '/settings': typeof AuthedSettingsRouteWithChildren
   '/api/$': typeof ApiSplatRoute
-  '/settings/appearance': typeof AuthedSettingsAppearanceRoute
-  '/settings/organization': typeof AuthedSettingsOrganizationRoute
-  '/settings/profile': typeof AuthedSettingsProfileRoute
-  '/settings/security': typeof AuthedSettingsSecurityRoute
-  '/settings/sessions': typeof AuthedSettingsSessionsRoute
-  '/settings/': typeof AuthedSettingsIndexRoute
+  '/o/$slug': typeof AuthedOSlugRouteWithChildren
+  '/o/$slug/settings': typeof AuthedOSlugSettingsRouteWithChildren
+  '/o/$slug/': typeof AuthedOSlugIndexRoute
+  '/o/$slug/settings/appearance': typeof AuthedOSlugSettingsAppearanceRoute
+  '/o/$slug/settings/organization': typeof AuthedOSlugSettingsOrganizationRoute
+  '/o/$slug/settings/profile': typeof AuthedOSlugSettingsProfileRoute
+  '/o/$slug/settings/security': typeof AuthedOSlugSettingsSecurityRoute
+  '/o/$slug/settings/sessions': typeof AuthedOSlugSettingsSessionsRoute
+  '/o/$slug/settings/': typeof AuthedOSlugSettingsIndexRoute
 }
 export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
@@ -142,12 +160,13 @@ export interface FileRoutesByTo {
   '/onboarding': typeof AuthedOnboardingRoute
   '/api/$': typeof ApiSplatRoute
   '/': typeof AuthedIndexRoute
-  '/settings/appearance': typeof AuthedSettingsAppearanceRoute
-  '/settings/organization': typeof AuthedSettingsOrganizationRoute
-  '/settings/profile': typeof AuthedSettingsProfileRoute
-  '/settings/security': typeof AuthedSettingsSecurityRoute
-  '/settings/sessions': typeof AuthedSettingsSessionsRoute
-  '/settings': typeof AuthedSettingsIndexRoute
+  '/o/$slug': typeof AuthedOSlugIndexRoute
+  '/o/$slug/settings/appearance': typeof AuthedOSlugSettingsAppearanceRoute
+  '/o/$slug/settings/organization': typeof AuthedOSlugSettingsOrganizationRoute
+  '/o/$slug/settings/profile': typeof AuthedOSlugSettingsProfileRoute
+  '/o/$slug/settings/security': typeof AuthedOSlugSettingsSecurityRoute
+  '/o/$slug/settings/sessions': typeof AuthedOSlugSettingsSessionsRoute
+  '/o/$slug/settings': typeof AuthedOSlugSettingsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -159,15 +178,17 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/two-factor': typeof TwoFactorRoute
   '/_authed/onboarding': typeof AuthedOnboardingRoute
-  '/_authed/settings': typeof AuthedSettingsRouteWithChildren
   '/api/$': typeof ApiSplatRoute
   '/_authed/': typeof AuthedIndexRoute
-  '/_authed/settings/appearance': typeof AuthedSettingsAppearanceRoute
-  '/_authed/settings/organization': typeof AuthedSettingsOrganizationRoute
-  '/_authed/settings/profile': typeof AuthedSettingsProfileRoute
-  '/_authed/settings/security': typeof AuthedSettingsSecurityRoute
-  '/_authed/settings/sessions': typeof AuthedSettingsSessionsRoute
-  '/_authed/settings/': typeof AuthedSettingsIndexRoute
+  '/_authed/o/$slug': typeof AuthedOSlugRouteWithChildren
+  '/_authed/o/$slug/settings': typeof AuthedOSlugSettingsRouteWithChildren
+  '/_authed/o/$slug/': typeof AuthedOSlugIndexRoute
+  '/_authed/o/$slug/settings/appearance': typeof AuthedOSlugSettingsAppearanceRoute
+  '/_authed/o/$slug/settings/organization': typeof AuthedOSlugSettingsOrganizationRoute
+  '/_authed/o/$slug/settings/profile': typeof AuthedOSlugSettingsProfileRoute
+  '/_authed/o/$slug/settings/security': typeof AuthedOSlugSettingsSecurityRoute
+  '/_authed/o/$slug/settings/sessions': typeof AuthedOSlugSettingsSessionsRoute
+  '/_authed/o/$slug/settings/': typeof AuthedOSlugSettingsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -180,14 +201,16 @@ export interface FileRouteTypes {
     | '/terms'
     | '/two-factor'
     | '/onboarding'
-    | '/settings'
     | '/api/$'
-    | '/settings/appearance'
-    | '/settings/organization'
-    | '/settings/profile'
-    | '/settings/security'
-    | '/settings/sessions'
-    | '/settings/'
+    | '/o/$slug'
+    | '/o/$slug/settings'
+    | '/o/$slug/'
+    | '/o/$slug/settings/appearance'
+    | '/o/$slug/settings/organization'
+    | '/o/$slug/settings/profile'
+    | '/o/$slug/settings/security'
+    | '/o/$slug/settings/sessions'
+    | '/o/$slug/settings/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/privacy'
@@ -199,12 +222,13 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/api/$'
     | '/'
-    | '/settings/appearance'
-    | '/settings/organization'
-    | '/settings/profile'
-    | '/settings/security'
-    | '/settings/sessions'
-    | '/settings'
+    | '/o/$slug'
+    | '/o/$slug/settings/appearance'
+    | '/o/$slug/settings/organization'
+    | '/o/$slug/settings/profile'
+    | '/o/$slug/settings/security'
+    | '/o/$slug/settings/sessions'
+    | '/o/$slug/settings'
   id:
     | '__root__'
     | '/_authed'
@@ -215,15 +239,17 @@ export interface FileRouteTypes {
     | '/terms'
     | '/two-factor'
     | '/_authed/onboarding'
-    | '/_authed/settings'
     | '/api/$'
     | '/_authed/'
-    | '/_authed/settings/appearance'
-    | '/_authed/settings/organization'
-    | '/_authed/settings/profile'
-    | '/_authed/settings/security'
-    | '/_authed/settings/sessions'
-    | '/_authed/settings/'
+    | '/_authed/o/$slug'
+    | '/_authed/o/$slug/settings'
+    | '/_authed/o/$slug/'
+    | '/_authed/o/$slug/settings/appearance'
+    | '/_authed/o/$slug/settings/organization'
+    | '/_authed/o/$slug/settings/profile'
+    | '/_authed/o/$slug/settings/security'
+    | '/_authed/o/$slug/settings/sessions'
+    | '/_authed/o/$slug/settings/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -302,13 +328,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedOnboardingRouteImport
       parentRoute: typeof AuthedRoute
     }
-    '/_authed/settings': {
-      id: '/_authed/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof AuthedSettingsRouteImport
-      parentRoute: typeof AuthedRoute
-    }
     '/api/$': {
       id: '/api/$'
       path: '/api/$'
@@ -316,83 +335,117 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authed/settings/': {
-      id: '/_authed/settings/'
+    '/_authed/o/$slug': {
+      id: '/_authed/o/$slug'
+      path: '/o/$slug'
+      fullPath: '/o/$slug'
+      preLoaderRoute: typeof AuthedOSlugRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/o/$slug/': {
+      id: '/_authed/o/$slug/'
       path: '/'
-      fullPath: '/settings/'
-      preLoaderRoute: typeof AuthedSettingsIndexRouteImport
-      parentRoute: typeof AuthedSettingsRoute
+      fullPath: '/o/$slug/'
+      preLoaderRoute: typeof AuthedOSlugIndexRouteImport
+      parentRoute: typeof AuthedOSlugRoute
     }
-    '/_authed/settings/appearance': {
-      id: '/_authed/settings/appearance'
+    '/_authed/o/$slug/settings': {
+      id: '/_authed/o/$slug/settings'
+      path: '/settings'
+      fullPath: '/o/$slug/settings'
+      preLoaderRoute: typeof AuthedOSlugSettingsRouteImport
+      parentRoute: typeof AuthedOSlugRoute
+    }
+    '/_authed/o/$slug/settings/': {
+      id: '/_authed/o/$slug/settings/'
+      path: '/'
+      fullPath: '/o/$slug/settings/'
+      preLoaderRoute: typeof AuthedOSlugSettingsIndexRouteImport
+      parentRoute: typeof AuthedOSlugSettingsRoute
+    }
+    '/_authed/o/$slug/settings/appearance': {
+      id: '/_authed/o/$slug/settings/appearance'
       path: '/appearance'
-      fullPath: '/settings/appearance'
-      preLoaderRoute: typeof AuthedSettingsAppearanceRouteImport
-      parentRoute: typeof AuthedSettingsRoute
+      fullPath: '/o/$slug/settings/appearance'
+      preLoaderRoute: typeof AuthedOSlugSettingsAppearanceRouteImport
+      parentRoute: typeof AuthedOSlugSettingsRoute
     }
-    '/_authed/settings/organization': {
-      id: '/_authed/settings/organization'
+    '/_authed/o/$slug/settings/organization': {
+      id: '/_authed/o/$slug/settings/organization'
       path: '/organization'
-      fullPath: '/settings/organization'
-      preLoaderRoute: typeof AuthedSettingsOrganizationRouteImport
-      parentRoute: typeof AuthedSettingsRoute
+      fullPath: '/o/$slug/settings/organization'
+      preLoaderRoute: typeof AuthedOSlugSettingsOrganizationRouteImport
+      parentRoute: typeof AuthedOSlugSettingsRoute
     }
-    '/_authed/settings/profile': {
-      id: '/_authed/settings/profile'
+    '/_authed/o/$slug/settings/profile': {
+      id: '/_authed/o/$slug/settings/profile'
       path: '/profile'
-      fullPath: '/settings/profile'
-      preLoaderRoute: typeof AuthedSettingsProfileRouteImport
-      parentRoute: typeof AuthedSettingsRoute
+      fullPath: '/o/$slug/settings/profile'
+      preLoaderRoute: typeof AuthedOSlugSettingsProfileRouteImport
+      parentRoute: typeof AuthedOSlugSettingsRoute
     }
-    '/_authed/settings/security': {
-      id: '/_authed/settings/security'
+    '/_authed/o/$slug/settings/security': {
+      id: '/_authed/o/$slug/settings/security'
       path: '/security'
-      fullPath: '/settings/security'
-      preLoaderRoute: typeof AuthedSettingsSecurityRouteImport
-      parentRoute: typeof AuthedSettingsRoute
+      fullPath: '/o/$slug/settings/security'
+      preLoaderRoute: typeof AuthedOSlugSettingsSecurityRouteImport
+      parentRoute: typeof AuthedOSlugSettingsRoute
     }
-    '/_authed/settings/sessions': {
-      id: '/_authed/settings/sessions'
+    '/_authed/o/$slug/settings/sessions': {
+      id: '/_authed/o/$slug/settings/sessions'
       path: '/sessions'
-      fullPath: '/settings/sessions'
-      preLoaderRoute: typeof AuthedSettingsSessionsRouteImport
-      parentRoute: typeof AuthedSettingsRoute
+      fullPath: '/o/$slug/settings/sessions'
+      preLoaderRoute: typeof AuthedOSlugSettingsSessionsRouteImport
+      parentRoute: typeof AuthedOSlugSettingsRoute
     }
   }
 }
 
-interface AuthedSettingsRouteChildren {
-  AuthedSettingsAppearanceRoute: typeof AuthedSettingsAppearanceRoute
-  AuthedSettingsOrganizationRoute: typeof AuthedSettingsOrganizationRoute
-  AuthedSettingsProfileRoute: typeof AuthedSettingsProfileRoute
-  AuthedSettingsSecurityRoute: typeof AuthedSettingsSecurityRoute
-  AuthedSettingsSessionsRoute: typeof AuthedSettingsSessionsRoute
-  AuthedSettingsIndexRoute: typeof AuthedSettingsIndexRoute
+interface AuthedOSlugSettingsRouteChildren {
+  AuthedOSlugSettingsAppearanceRoute: typeof AuthedOSlugSettingsAppearanceRoute
+  AuthedOSlugSettingsOrganizationRoute: typeof AuthedOSlugSettingsOrganizationRoute
+  AuthedOSlugSettingsProfileRoute: typeof AuthedOSlugSettingsProfileRoute
+  AuthedOSlugSettingsSecurityRoute: typeof AuthedOSlugSettingsSecurityRoute
+  AuthedOSlugSettingsSessionsRoute: typeof AuthedOSlugSettingsSessionsRoute
+  AuthedOSlugSettingsIndexRoute: typeof AuthedOSlugSettingsIndexRoute
 }
 
-const AuthedSettingsRouteChildren: AuthedSettingsRouteChildren = {
-  AuthedSettingsAppearanceRoute: AuthedSettingsAppearanceRoute,
-  AuthedSettingsOrganizationRoute: AuthedSettingsOrganizationRoute,
-  AuthedSettingsProfileRoute: AuthedSettingsProfileRoute,
-  AuthedSettingsSecurityRoute: AuthedSettingsSecurityRoute,
-  AuthedSettingsSessionsRoute: AuthedSettingsSessionsRoute,
-  AuthedSettingsIndexRoute: AuthedSettingsIndexRoute,
+const AuthedOSlugSettingsRouteChildren: AuthedOSlugSettingsRouteChildren = {
+  AuthedOSlugSettingsAppearanceRoute: AuthedOSlugSettingsAppearanceRoute,
+  AuthedOSlugSettingsOrganizationRoute: AuthedOSlugSettingsOrganizationRoute,
+  AuthedOSlugSettingsProfileRoute: AuthedOSlugSettingsProfileRoute,
+  AuthedOSlugSettingsSecurityRoute: AuthedOSlugSettingsSecurityRoute,
+  AuthedOSlugSettingsSessionsRoute: AuthedOSlugSettingsSessionsRoute,
+  AuthedOSlugSettingsIndexRoute: AuthedOSlugSettingsIndexRoute,
 }
 
-const AuthedSettingsRouteWithChildren = AuthedSettingsRoute._addFileChildren(
-  AuthedSettingsRouteChildren,
+const AuthedOSlugSettingsRouteWithChildren =
+  AuthedOSlugSettingsRoute._addFileChildren(AuthedOSlugSettingsRouteChildren)
+
+interface AuthedOSlugRouteChildren {
+  AuthedOSlugSettingsRoute: typeof AuthedOSlugSettingsRouteWithChildren
+  AuthedOSlugIndexRoute: typeof AuthedOSlugIndexRoute
+}
+
+const AuthedOSlugRouteChildren: AuthedOSlugRouteChildren = {
+  AuthedOSlugSettingsRoute: AuthedOSlugSettingsRouteWithChildren,
+  AuthedOSlugIndexRoute: AuthedOSlugIndexRoute,
+}
+
+const AuthedOSlugRouteWithChildren = AuthedOSlugRoute._addFileChildren(
+  AuthedOSlugRouteChildren,
 )
 
 interface AuthedRouteChildren {
   AuthedOnboardingRoute: typeof AuthedOnboardingRoute
-  AuthedSettingsRoute: typeof AuthedSettingsRouteWithChildren
   AuthedIndexRoute: typeof AuthedIndexRoute
+  AuthedOSlugRoute: typeof AuthedOSlugRouteWithChildren
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedOnboardingRoute: AuthedOnboardingRoute,
-  AuthedSettingsRoute: AuthedSettingsRouteWithChildren,
   AuthedIndexRoute: AuthedIndexRoute,
+  AuthedOSlugRoute: AuthedOSlugRouteWithChildren,
 }
 
 const AuthedRouteWithChildren =

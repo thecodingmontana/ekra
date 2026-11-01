@@ -9,7 +9,7 @@ import { type ReactNode, useEffect, useState } from "react";
 import { SBlock, SettingsHeader } from "@/components/settings-ui";
 import { authClient, authErrorMessage } from "@/lib/auth-client";
 
-export const Route = createFileRoute("/_authed/settings/security")({
+export const Route = createFileRoute("/_authed/o/$slug/settings/security")({
 	head: () => ({ meta: [{ title: "Security · Ekra" }] }),
 	component: Security,
 });

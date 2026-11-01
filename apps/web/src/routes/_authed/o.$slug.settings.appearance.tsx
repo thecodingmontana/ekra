@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { SBlock, SettingsHeader } from "@/components/settings-ui";
 import { getTheme, setTheme, type Theme } from "@/lib/theme";
 
-export const Route = createFileRoute("/_authed/settings/appearance")({
+export const Route = createFileRoute("/_authed/o/$slug/settings/appearance")({
 	head: () => ({ meta: [{ title: "Appearance · Ekra" }] }),
 	component: Appearance,
 });

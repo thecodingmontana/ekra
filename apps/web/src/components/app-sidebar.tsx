@@ -13,7 +13,7 @@ import {
 	TooltipTrigger,
 } from "@ekra/ui/components/tooltip";
 import { cn } from "@ekra/ui/lib/utils";
-import { Link, useNavigate, useRouter } from "@tanstack/react-router";
+import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import {
 	type CSSProperties,
 	type ReactElement,
@@ -22,13 +22,12 @@ import {
 	useState,
 } from "react";
 import type { Viewer } from "@/graphql/viewer";
-import { authClient } from "@/lib/auth-client";
 import { getTheme, setTheme, type Theme } from "@/lib/theme";
 import { useSignOut } from "@/lib/use-sign-out";
 
 /** One entry per page that exists. Add a line when a phase ships a page (Courses, Members, Quizzes…). */
 const NAV = [
-	{ to: "/", label: "Home", icon: "icon-[solar--home-2-linear]" },
+	{ to: "/o/$slug", label: "Home", icon: "icon-[solar--home-2-linear]" },
 ] as const;
 
 const ROLE_LABEL: Record<string, string> = {
@@ -137,20 +136,19 @@ export function AppSidebar({
 	collapsed: boolean;
 	onToggle: () => void;
 }) {
-	const router = useRouter();
 	const navigate = useNavigate();
 	const signOut = useSignOut();
-	const active = viewer.memberships.find(
-		(m) => m.organization.id === viewer.activeOrganizationId,
-	);
+	// the organization in the address (/o/acme/…), or the session's one elsewhere
+	const { slug: urlSlug } = useParams({ strict: false });
+	const active =
+		viewer.memberships.find((m) => m.organization.slug === urlSlug) ??
+		viewer.memberships.find(
+			(m) => m.organization.id === viewer.activeOrganizationId,
+		);
+	const slug = active?.organization.slug ?? "";
 	// the server can't know the theme, so read it after mount
 	const [theme, setThemeChoice] = useState<Theme>("system");
 	useEffect(() => setThemeChoice(getTheme()), []);
-
-	async function switchTo(organizationId: string) {
-		await authClient.organization.setActive({ organizationId });
-		await router.invalidate();
-	}
 
 	// a sidebar row; collapsed (desktop only, the phone drawer is always full): centred, no padding, labels hidden
 	const item = cn(
@@ -212,7 +210,12 @@ export function AppSidebar({
 							<MenuItem
 								key={organization.id}
 								checked={organization.id === viewer.activeOrganizationId}
-								onSelect={() => switchTo(organization.id)}
+								onSelect={() =>
+									navigate({
+										to: "/o/$slug",
+										params: { slug: organization.slug },
+									})
+								}
 							>
 								<OrgLogo organization={organization} px={20} />
 								<span className="min-w-0 flex-1 truncate">
@@ -289,6 +292,7 @@ export function AppSidebar({
 					<SideTip key={n.to} label={n.label} collapsed={collapsed}>
 						<Link
 							to={n.to}
+							params={{ slug }}
 							activeOptions={{ exact: true }}
 							className={cn(item, ACTIVE)}
 						>
@@ -352,7 +356,11 @@ export function AppSidebar({
 					</a>
 				</SideTip>
 				<SideTip label="Settings" collapsed={collapsed}>
-					<Link to="/settings" className={cn(item, ACTIVE)}>
+					<Link
+						to="/o/$slug/settings"
+						params={{ slug }}
+						className={cn(item, ACTIVE)}
+					>
 						<span
 							aria-hidden
 							className="icon-[solar--settings-linear] size-4 shrink-0"
@@ -404,7 +412,9 @@ export function AppSidebar({
 						<MenuSeparator />
 						<MenuItem
 							icon="icon-[solar--settings-linear]"
-							onSelect={() => navigate({ to: "/settings/profile" })}
+							onSelect={() =>
+								navigate({ to: "/o/$slug/settings/profile", params: { slug } })
+							}
 						>
 							Account settings
 						</MenuItem>

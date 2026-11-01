@@ -4,17 +4,16 @@ import { Field, FieldError, FieldLabel } from "@ekra/ui/components/field";
 import { Input } from "@ekra/ui/components/input";
 import { Spinner } from "@ekra/ui/components/spinner";
 import { toast } from "@ekra/ui/lib/toast";
-import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
+import {
+	createFileRoute,
+	useNavigate,
+	useRouter,
+} from "@tanstack/react-router";
 import { type FormEvent, useState } from "react";
 import { SettingsHeader } from "@/components/settings-ui";
 import { authClient, authErrorMessage } from "@/lib/auth-client";
 
-export const Route = createFileRoute("/_authed/settings/organization")({
-	// there's nothing to show without an organization to be in
-	beforeLoad: ({ context }) => {
-		if (!context.viewer.activeOrganizationId)
-			throw redirect({ to: "/settings/profile" });
-	},
+export const Route = createFileRoute("/_authed/o/$slug/settings/organization")({
 	head: () => ({ meta: [{ title: "Organization · Ekra" }] }),
 	component: Organization,
 });
@@ -23,24 +22,21 @@ export const Route = createFileRoute("/_authed/settings/organization")({
 const DOMAIN = ".ekra.app";
 
 function Organization() {
-	const { viewer } = Route.useRouteContext();
+	const { membership } = Route.useRouteContext();
 	const router = useRouter();
-	const membership = viewer.memberships.find(
-		(m) => m.organization.id === viewer.activeOrganizationId,
-	);
-	const org = membership?.organization;
-	const canEdit = membership?.role === "owner" || membership?.role === "admin";
-	const [name, setName] = useState(org?.name ?? "");
-	const [slug, setSlug] = useState(org?.slug ?? "");
+	const navigate = useNavigate();
+	const org = membership.organization;
+	const canEdit = membership.role === "owner" || membership.role === "admin";
+	const [name, setName] = useState(org.name);
+	const [slug, setSlug] = useState(org.slug);
 	const [busy, setBusy] = useState(false);
-	if (!org) return null;
 
 	const problem = slug ? slugProblem(slug) : "Choose an address";
 	const changed = name.trim() !== org.name || slug !== org.slug;
 
 	async function save(event: FormEvent) {
 		event.preventDefault();
-		if (!org || !name.trim() || problem) return;
+		if (!name.trim() || problem) return;
 		setBusy(true);
 		const { error } = await authClient.organization.update({
 			organizationId: org.id,
@@ -50,6 +46,13 @@ function Organization() {
 		if (error) return void toast.error(authErrorMessage(error));
 		toast.success("Organization saved");
 		await router.invalidate();
+		// a new address moves the page to it
+		if (slug !== org.slug)
+			await navigate({
+				to: "/o/$slug/settings/organization",
+				params: { slug },
+				replace: true,
+			});
 	}
 
 	return (

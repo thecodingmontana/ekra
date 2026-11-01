@@ -7,7 +7,7 @@ import { useCallback, useEffect, useState } from "react";
 import { SettingsHeader, SRow } from "@/components/settings-ui";
 import { authClient, authErrorMessage } from "@/lib/auth-client";
 
-export const Route = createFileRoute("/_authed/settings/sessions")({
+export const Route = createFileRoute("/_authed/o/$slug/settings/sessions")({
 	head: () => ({ meta: [{ title: "Sessions · Ekra" }] }),
 	component: Sessions,
 });

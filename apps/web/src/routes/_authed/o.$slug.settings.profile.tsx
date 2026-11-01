@@ -9,7 +9,7 @@ import { type FormEvent, useState } from "react";
 import { SBlock, SettingsHeader, SRow } from "@/components/settings-ui";
 import { authClient, authErrorMessage } from "@/lib/auth-client";
 
-export const Route = createFileRoute("/_authed/settings/profile")({
+export const Route = createFileRoute("/_authed/o/$slug/settings/profile")({
 	head: () => ({ meta: [{ title: "Profile · Ekra" }] }),
 	component: Profile,
 });
