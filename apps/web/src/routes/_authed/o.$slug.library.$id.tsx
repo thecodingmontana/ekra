@@ -11,6 +11,9 @@ import {
 	useNavigate,
 } from "@tanstack/react-router";
 import { type ReactNode, useEffect, useState } from "react";
+import { BodyEditor } from "@/components/editor/body-editor";
+import { ReadOnlyBody } from "@/components/editor/read-only-body";
+import { VersionHistory } from "@/components/editor/version-history";
 import { KindIcon, StatusPill } from "@/components/library/bits";
 import { ContentFormModal } from "@/components/library/content-form-modal";
 import {
@@ -71,6 +74,8 @@ function ContentPage() {
 	const [view] = useMutation(VIEW_CONTENT);
 	const act = useContentActions(slug);
 	const [editing, setEditing] = useState(false);
+	const [history, setHistory] = useState(false);
+	const [bodyKey, setBodyKey] = useState(0);
 
 	// opening it puts it on top of your Recent list
 	// biome-ignore lint/correctness/useExhaustiveDependencies: once per content
@@ -204,6 +209,19 @@ function ContentPage() {
 					</Button>
 					{canManage && !archived && (
 						<>
+							{item.kind !== "folder" && (
+								<Button
+									variant="outline"
+									onClick={() => setHistory(true)}
+									data-testid="history"
+								>
+									<span
+										className="icon-[solar--history-linear] size-3.5"
+										aria-hidden="true"
+									/>
+									History
+								</Button>
+							)}
 							<Button variant="outline" onClick={() => setEditing(true)}>
 								<span
 									className="icon-[solar--pen-linear] size-3.5"
@@ -261,25 +279,27 @@ function ContentPage() {
 							</p>
 						)
 					)}
-					<div className="flex flex-col items-center gap-1.5 rounded-[10px] border border-dashed px-6 py-14 text-center">
-						<span className="mb-1 text-muted-foreground/70">
-							<span className={cn(k.icon, "size-[22px]")} aria-hidden="true" />
-						</span>
-						<h2 className="m-0 font-semibold text-md">
-							{item.kind === "folder"
-								? "Restore this folder to see what's inside"
-								: canManage
-									? `Building ${k.plural.toLowerCase()} comes next`
-									: "Nothing to read here yet"}
-						</h2>
-						<p className="m-0 max-w-[380px] text-muted-foreground text-sm">
-							{item.kind === "folder"
-								? "Archived folders can't be opened. Restoring it puts it and its content back in the library."
-								: canManage
-									? `The editor for ${k.plural.toLowerCase()} (writing, video and uploads) arrives in the next update. Name it, describe it and file it in a folder now.`
-									: "Its trainers are still putting it together. Check back soon."}
-						</p>
-					</div>
+					{item.kind === "folder" ? (
+						<Empty
+							icon={k.icon}
+							title="Restore this folder to see what's inside"
+							body="Archived folders can't be opened. Restoring it puts it and its content back in the library."
+						/>
+					) : canManage && !archived ? (
+						<BodyEditor key={bodyKey} slug={slug} item={item} />
+					) : item.doc ? (
+						<ReadOnlyBody key={item.bodyUpdatedAt} doc={item.doc} />
+					) : (
+						<Empty
+							icon={k.icon}
+							title="Nothing to read here yet"
+							body={
+								canManage
+									? "Restore it to write its page."
+									: "Its trainers are still putting it together. Check back soon."
+							}
+						/>
+					)}
 				</section>
 
 				<aside className="h-fit rounded-[10px] border bg-card">
@@ -330,6 +350,17 @@ function ContentPage() {
 				</aside>
 			</div>
 
+			{canManage && !archived && item.kind !== "folder" && (
+				<VersionHistory
+					slug={slug}
+					id={item.id}
+					doc={item.doc}
+					open={history}
+					onOpenChange={setHistory}
+					// the editor starts again from the restored body
+					onRestored={() => setBodyKey((n) => n + 1)}
+				/>
+			)}
 			{canManage && (
 				<ContentFormModal
 					open={editing}
@@ -347,6 +378,26 @@ function Detail({ label, children }: { label: string; children: ReactNode }) {
 		<div className="flex items-center gap-3 border-border/60 border-b py-2.5 last:border-b-0">
 			<dt className="w-[72px] shrink-0 text-muted-foreground">{label}</dt>
 			<dd className="m-0 min-w-0 flex-1">{children}</dd>
+		</div>
+	);
+}
+
+function Empty({
+	icon,
+	title,
+	body,
+}: {
+	icon: string;
+	title: string;
+	body: string;
+}) {
+	return (
+		<div className="flex flex-col items-center gap-1.5 rounded-[10px] border border-dashed px-6 py-14 text-center">
+			<span className="mb-1 text-muted-foreground/70">
+				<span className={cn(icon, "size-[22px]")} aria-hidden="true" />
+			</span>
+			<h2 className="m-0 font-semibold text-md">{title}</h2>
+			<p className="m-0 max-w-[380px] text-muted-foreground text-sm">{body}</p>
 		</div>
 	);
 }

@@ -63,15 +63,84 @@ export type LibraryData = {
 	library: { canManage: boolean; items: ContentItem[] };
 };
 
+/** One item with its body; only this query loads bodies, never the library list. */
 export const CONTENT = gql`
 	query Content($slug: String!, $id: ID!) {
 		content(slug: $slug, id: $id) {
 			...ContentItemFields
+			doc
+			bodyUpdatedAt
 		}
 	}
 	${ITEM}
 `;
-export type ContentData = { content: ContentItem | null };
+export type ContentDetail = ContentItem & {
+	/** Tiptap JSON as text, null until something is written */
+	doc: string | null;
+	bodyUpdatedAt: string | null;
+};
+export type ContentData = { content: ContentDetail | null };
+
+export const SAVE_CONTENT_BODY = gql`
+	mutation SaveContentBody(
+		$slug: String!
+		$id: ID!
+		$doc: String!
+		$baseBodyUpdatedAt: String
+	) {
+		saveContentBody(
+			slug: $slug
+			id: $id
+			doc: $doc
+			baseBodyUpdatedAt: $baseBodyUpdatedAt
+		) {
+			...ContentItemFields
+			bodyUpdatedAt
+		}
+	}
+	${ITEM}
+`;
+export type SaveContentBodyData = {
+	saveContentBody: ContentItem & { bodyUpdatedAt: string | null };
+};
+
+export type ContentVersion = {
+	id: string;
+	title: string;
+	bodyText: string;
+	author: { id: string; name: string; image: string | null } | null;
+	createdAt: string;
+	updatedAt: string;
+};
+
+export const CONTENT_VERSIONS = gql`
+	query ContentVersions($slug: String!, $id: ID!) {
+		contentVersions(slug: $slug, id: $id) {
+			id
+			title
+			bodyText
+			author {
+				id
+				name
+				image
+			}
+			createdAt
+			updatedAt
+		}
+	}
+`;
+export type ContentVersionsData = { contentVersions: ContentVersion[] };
+
+export const RESTORE_CONTENT_VERSION = gql`
+	mutation RestoreContentVersion($slug: String!, $id: ID!, $versionId: ID!) {
+		restoreContentVersion(slug: $slug, id: $id, versionId: $versionId) {
+			...ContentItemFields
+			doc
+			bodyUpdatedAt
+		}
+	}
+	${ITEM}
+`;
 
 export const CREATE_CONTENT = gql`
 	mutation CreateContent($slug: String!, $input: CreateContentInput!) {
