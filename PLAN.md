@@ -176,6 +176,10 @@ predictable latency and memory. It doesn't where the code is mostly glue around 
 
 - **Action**: organization/member/team, Better Auth in Hono, session middleware resolving host → org → role, Postgres RLS (`set_config('app.org_id')` per transaction), subdomain routing, branding. WebSocket server with session auth on upgrade, org-scoped channels, LISTEN/NOTIFY fan-out, "changed" ping → Apollo refetch.
 - **Validate**: cross-tenant read test on every resolver fails closed; WS rejects other-tenant channels.
+- **Done (1d, 2026-11-01)**: each organization on its own subdomain of the app (acme.ekra.localhost:3000 in
+  development), mapped onto the /o/$slug routes by the router's URL rewrite (`tenantUrls` in packages/core); one
+  sign-in for all (session cookie for the app's domain and subdomains); sign-in/setup on the app's address. Branding
+  (logo, colour) is still to do.
 - **Done (1c, 2026-11-01)**: GraphQL context carries the active organization and role, re-checked against `member`
   on every request; `requireOrg` refuses tenant resolvers without one; leak tests. RLS moved to Phase 2, where the
   first tenant table is (decided 2026-11-01: there was no tenant data to protect yet).

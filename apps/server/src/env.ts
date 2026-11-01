@@ -17,7 +17,7 @@ export const env = createEnv({
 		// Better Auth: signs sessions; at least 32 random characters (openssl rand -base64 48)
 		BETTER_AUTH_SECRET: z.string().min(32),
 		// the address people open the app at (the web app, which forwards /api here)
-		BETTER_AUTH_URL: z.url().default("http://localhost:3000"),
+		BETTER_AUTH_URL: z.url().default("http://ekra.localhost:3000"),
 		// proxies in front of the web app (Caddy, Nginx, a load balancer): their addresses are skipped when finding
 		// a visitor's IP for rate limits. Comma-separated IPs or CIDRs; this machine (loopback) is always trusted.
 		TRUSTED_PROXIES: z

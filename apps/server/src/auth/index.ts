@@ -20,6 +20,12 @@ import { ac, roles } from "./permissions.ts";
 import { isTrustedDevice } from "./trusted-device.ts";
 
 const MAGIC_LINK_MINUTES = 10;
+
+/** Every organization's subdomain of the app: http://*.ekra.localhost:3000 */
+const APP_SUBDOMAINS = (() => {
+	const { protocol, host } = new URL(env.BETTER_AUTH_URL);
+	return `${protocol}//*.${host}`;
+})();
 const RESET_PASSWORD_MINUTES = 60;
 /** how long the "enter your code" step stays open after the first step */
 const TWO_FACTOR_SECONDS = 600;
@@ -43,11 +49,20 @@ export const auth = betterAuth({
 	secret: env.BETTER_AUTH_SECRET,
 	baseURL: env.BETTER_AUTH_URL,
 	basePath: "/api/auth",
-	trustedOrigins: [env.BETTER_AUTH_URL],
+	// the app, and every organization on its own subdomain (acme.ekra.localhost)
+	trustedOrigins: [env.BETTER_AUTH_URL, APP_SUBDOMAINS],
 	database: drizzleAdapter(db, { provider: "pg", schema }),
 	// the same 16-character nanoid ids as every other table (packages/db)
 	advanced: {
 		database: { generateId: () => generateId() },
+		// checked in tests too (Better Auth turns it off when NODE_ENV=test), so they cover what production does
+		disableOriginCheck: false,
+		// one sign-in for the app and all its organization subdomains
+		// (not on bare "localhost": browsers refuse a cookie for it, so sign-in would break)
+		crossSubDomainCookies: {
+			enabled: new URL(env.BETTER_AUTH_URL).hostname.includes("."),
+			domain: new URL(env.BETTER_AUTH_URL).hostname,
+		},
 		// a visitor's IP is the last address in X-Forwarded-For that isn't one of our proxies (the web app adds it)
 		ipAddress: { trustedProxies: env.TRUSTED_PROXIES },
 	},
@@ -177,8 +192,8 @@ export const auth = betterAuth({
 		// passkeys belong to the app's domain (BETTER_AUTH_URL), so they work at that address
 		passkey({
 			rpName: "Ekra",
+			// valid on the app and its subdomains; each request's origin is already limited to trustedOrigins
 			rpID: new URL(env.BETTER_AUTH_URL).hostname,
-			origin: env.BETTER_AUTH_URL,
 		}),
 		// "Email me a sign-in link": single use, stored hashed, valid for 10 minutes
 		magicLink({

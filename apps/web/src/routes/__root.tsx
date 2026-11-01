@@ -4,14 +4,32 @@ import appCss from "@ekra/ui/globals.css?url";
 import {
 	createRootRouteWithContext,
 	HeadContent,
+	redirect,
 	ScriptOnce,
 	Scripts,
 } from "@tanstack/react-router";
+import { createIsomorphicFn } from "@tanstack/react-start";
 import type { ReactNode } from "react";
 import { THEME_SCRIPT } from "@/lib/theme";
 
+const currentUrl = createIsomorphicFn()
+	.server(async () => {
+		const { getRequestUrl } = await import("@tanstack/react-start/server");
+		return getRequestUrl().href;
+	})
+	.client(async () => window.location.href);
+
 export const Route =
 	createRootRouteWithContext<ApolloClientIntegration.RouterContext>()({
+		// sign-in only works on the app's address and its subdomains (the cookie is theirs): send other hosts
+		// (e.g. localhost:3000) there.
+		// shortcut: custom organization domains (Phase 8) will need to pass this check too.
+		beforeLoad: async () => {
+			const url = new URL(await currentUrl());
+			const app = new URL(__APP_URL__);
+			if (url.host === app.host || url.host.endsWith(`.${app.host}`)) return;
+			throw redirect({ href: `${app.origin}${url.pathname}${url.search}` });
+		},
 		head: () => ({
 			meta: [
 				{ charSet: "utf-8" },

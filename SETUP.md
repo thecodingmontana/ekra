@@ -191,7 +191,7 @@ openssl rand -hex 24
 | `NODE_ENV`                                          | `development` (default), `test` or `production`. GraphiQL is off in production                                                         |
 | `API_URL`                                           | Where the web app reaches the API server (default `http://127.0.0.1:4000`)                                                             |
 | `BETTER_AUTH_SECRET`                                | Signs sign-in sessions ([Better Auth](https://www.better-auth.com)). 32+ random characters: `openssl rand -base64 48`                  |
-| `BETTER_AUTH_URL`                                   | The address people open the app at (default `http://localhost:3000`, the web app)                                                      |
+| `BETTER_AUTH_URL`                                   | The address people open the app at (default `http://ekra.localhost:3000`, the web app; organizations get subdomains of it)             |
 | `TRUSTED_PROXIES`                                   | Production: your reverse proxy's IPs or CIDRs (comma-separated), so rate limits see each visitor's real IP. Loopback is always trusted |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`          | Optional. "Continue with Google" appears only when both are set (callback `<BETTER_AUTH_URL>/api/auth/callback/google`)                |
 | `EMAIL_PROVIDER`                                    | `resend` (default) or `console`. See [Email](#email-sign-in-links-confirmations-password-resets)                                       |
@@ -396,8 +396,23 @@ Email goes through one small interface in `packages/email`, so you can use any p
 Start the API server first, then:
 
 ```bash
-pnpm --filter @ekra/web dev       # http://localhost:3000
+pnpm --filter @ekra/web dev       # open http://ekra.localhost:3000
 ```
+
+**Organizations live on subdomains.** With `BETTER_AUTH_URL=http://ekra.localhost:3000`, signing in and setting up
+happen on `ekra.localhost:3000`, and each organization opens at its own address, e.g.
+`acme.ekra.localhost:3000` (settings at `acme.ekra.localhost:3000/settings/security`). One sign-in covers them
+all (the session cookie is set for `ekra.localhost` and its subdomains).
+
+- `*.localhost` names point at your own machine in Chrome, Edge and Firefox; nothing to install. In Safari, or
+  for another name, add lines to your hosts file (e.g. `127.0.0.1 ekra.localhost acme.ekra.localhost`).
+- Use a name with a dot (`ekra.localhost`, not `localhost`): browsers refuse a cookie shared across bare
+  `localhost`. On bare `localhost` the app still works, with organizations at `/o/acme` instead of subdomains.
+- Opening `localhost:3000` redirects to the app's address.
+- Google sign-in: the OAuth client's redirect URI must be `<BETTER_AUTH_URL>/api/auth/callback/google`, e.g.
+  `http://ekra.localhost:3000/api/auth/callback/google`.
+- Production: `BETTER_AUTH_URL=https://ekra.example.com`; point `ekra.example.com` and `*.ekra.example.com` (a
+  wildcard DNS record and certificate) at your proxy.
 
 - The page shows **API: ok** when the web app can reach the API.
 - The browser only talks to `/api` on port 3000. The web server forwards `/api/*` to `API_URL`, in development and in
@@ -419,7 +434,7 @@ agent-browser install --with-deps   # downloads Chrome and, on Linux, its system
 Then, with the apps running:
 
 ```bash
-agent-browser open http://localhost:3000
+agent-browser open http://ekra.localhost:3000
 agent-browser snapshot -i                      # the page's interactive elements
 agent-browser get text "[data-testid=api-status]"
 agent-browser screenshot home.png

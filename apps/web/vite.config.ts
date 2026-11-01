@@ -17,6 +17,12 @@ export default defineConfig(async ({ mode }) => {
 
 	return {
 		envDir: ROOT,
+		// where the app runs (organizations get subdomains of it); one setting shared with the API
+		define: {
+			__APP_URL__: JSON.stringify(
+				process.env.BETTER_AUTH_URL ?? "http://ekra.localhost:3000",
+			),
+		},
 		resolve: { tsconfigPaths: true },
 		// packages used inside @ekra/ui: bundled up front, so Vite doesn't find them mid-session, re-bundle and
 		// leave the open page with two copies of React ("Invalid hook call")

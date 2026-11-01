@@ -2,8 +2,10 @@
 import type { ConsoleProvider } from "@ekra/email";
 import { app } from "./app.ts";
 import { mailer } from "./email.ts";
+import { env } from "./env.ts";
 
-export const ORIGIN = "http://localhost:3000";
+/** Where the app runs (BETTER_AUTH_URL): requests come from here, like the browser's. */
+export const ORIGIN = env.BETTER_AUTH_URL;
 
 /** Tests run with EMAIL_PROVIDER=console (src/test-env.ts), so sent emails are kept in memory. */
 const outbox = mailer as ConsoleProvider;

@@ -3,6 +3,7 @@ import { after, test } from "node:test";
 import { member, organization, session, user } from "@ekra/db";
 import { eq } from "drizzle-orm";
 import { db } from "../db.ts";
+import { env } from "../env.ts";
 import {
 	cookieFrom,
 	linkInLatestEmail,
@@ -178,4 +179,27 @@ test("nameFromEmail turns an address into a readable name", () => {
 	assert.equal(nameFromEmail("amina.k@acme.com"), "Amina K");
 	assert.equal(nameFromEmail("john_doe+lms@x.io"), "John Doe Lms");
 	assert.equal(nameFromEmail("@x.io"), "New member");
+});
+
+test("organization subdomains share the sign-in; other sites are refused", async () => {
+	const { host, protocol } = new URL(env.BETTER_AUTH_URL);
+	// signed in (with the cookie), as a forged cross-site request would be
+	const askLink = (origin: string) =>
+		call("/api/auth/sign-in/magic-link", {
+			method: "POST",
+			headers: { origin },
+			body: JSON.stringify({ email, callbackURL: "/" }),
+		});
+	assert.equal((await askLink(`${protocol}//acme.${host}`)).status, 200);
+	assert.equal((await askLink("http://evil.example")).status, 403);
+
+	const opened = await send(linkInLatestEmail(email));
+	const cookie = opened.headers
+		.getSetCookie()
+		.find((c) => c.includes("session_token="));
+	assert.match(
+		cookie ?? "",
+		new RegExp(`Domain=${new URL(env.BETTER_AUTH_URL).hostname}`, "i"),
+		"the session cookie is for the app and all its subdomains",
+	);
 });

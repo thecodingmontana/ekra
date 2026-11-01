@@ -4,6 +4,7 @@ import {
 	InMemoryCache,
 	routerWithApolloClient,
 } from "@apollo/client-integration-tanstack-start";
+import { tenantUrls } from "@ekra/core";
 import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 import { createIsomorphicFn } from "@tanstack/react-start";
 import { PageFailed, PageNotFound } from "./components/states";
@@ -36,8 +37,15 @@ export function getRouter() {
 		},
 	});
 
+	// acme.ekra.localhost/settings is the route /o/acme/settings, and back
+	const tenant = tenantUrls(__APP_URL__);
+
 	const router = createTanStackRouter({
 		routeTree,
+		rewrite: {
+			input: ({ url }) => tenant.input(url),
+			output: ({ url }) => tenant.output(url),
+		},
 		context: { ...routerWithApolloClient.defaultContext },
 		scrollRestoration: true,
 		defaultPreload: "intent",

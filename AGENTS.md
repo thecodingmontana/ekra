@@ -312,7 +312,7 @@ SETUP.md). Don't write ad-hoc Playwright scripts for quick checks. A UI change i
 agent-browser and works there.
 
 ```bash
-agent-browser --session ekra open http://localhost:3000
+agent-browser --session ekra open http://ekra.localhost:3000
 agent-browser --session ekra snapshot -i     # refs like @e1 for click/fill
 agent-browser --session ekra screenshot shot.png
 agent-browser --session ekra errors          # page errors must be empty
