@@ -20,8 +20,8 @@ export const Route = createFileRoute("/_authed/o/$slug/settings/organization")({
 	component: Organization,
 });
 
-/** shortcut: the hosted domain isn't decided yet; read it from config once subdomains land (Phase 1d). */
-const DOMAIN = ".ekra.app";
+/** The organization's address is a subdomain of wherever this install runs (its BETTER_AUTH_URL). */
+const DOMAIN = `.${new URL(__APP_URL__).host}`;
 
 function Organization() {
 	const { membership } = Route.useRouteContext();

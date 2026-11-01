@@ -88,7 +88,7 @@ export const organizationKind = pgEnum("organization_kind", [
 export const organization = pgTable("organization", {
 	id: id(),
 	name: text("name").notNull(),
-	/** subdomain and URL name, e.g. "acme" for acme.ekra.app */
+	/** subdomain and URL name, e.g. "acme" for acme.<your domain> */
 	slug: text("slug").notNull().unique(),
 	logo: text("logo"),
 	/** the logo letter's colour (ORG_COLORS in @ekra/core); null is Ekra's green */

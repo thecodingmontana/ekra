@@ -1,9 +1,13 @@
+import { organization } from "@ekra/db";
+import { eq } from "drizzle-orm";
 import { EvlogError, parseError } from "evlog";
 import type { EvlogVariables } from "evlog/hono";
 import { Hono } from "hono";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { z } from "zod";
 import { auth } from "./auth/index.ts";
+import { db } from "./db.ts";
+import { env } from "./env.ts";
 import { yoga } from "./graphql/yoga.ts";
 import { requestLogs } from "./log.ts";
 
@@ -28,6 +32,22 @@ app.onError((error, c) => {
 });
 
 app.get("/health", (c) => c.json({ status: "ok" }));
+
+// Caddy asks this before getting a certificate for a host (on-demand TLS): only the app's own address and the
+// subdomains of organizations that exist, so nobody can make the server request certificates for random names
+app.get("/domains/allowed", async (c) => {
+	const domain = (c.req.query("domain") ?? "").toLowerCase();
+	const appHost = new URL(env.BETTER_AUTH_URL).hostname;
+	if (domain === appHost) return c.body(null, 200);
+	if (!domain.endsWith(`.${appHost}`)) return c.body(null, 404);
+	const slug = domain.slice(0, -appHost.length - 1);
+	const [org] = await db
+		.select({ id: organization.id })
+		.from(organization)
+		.where(eq(organization.slug, slug))
+		.limit(1);
+	return c.body(null, org ? 200 : 404);
+});
 
 // a page that crashed in someone's browser (the web app's error page sends it); size-capped, logged, nothing stored
 const clientError = z.object({

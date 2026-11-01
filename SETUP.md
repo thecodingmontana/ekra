@@ -21,6 +21,7 @@ nothing here needs a server, a domain or a cloud account.
 11. [Git hooks and commits](#11-git-hooks-and-commits)
 12. [Task tracking with Zadaci (optional)](#12-task-tracking-with-zadaci-optional)
 13. [Troubleshooting](#13-troubleshooting)
+14. [Install on a server](#14-install-on-a-server)
 
 ## 1. What you need
 
@@ -487,3 +488,46 @@ with `true` or `false`.
 
 **Docker is slow or files don't update on WSL**
 Keep the repo in the Linux file system (`~/…`), not under `/mnt/c`.
+
+## 14. Install on a server
+
+One command sets up Ekra on an **Ubuntu or Debian** server (a fresh VPS is fine):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/thecodingmontana/ekra/main/scripts/setup.sh | sudo bash
+```
+
+What it does, in order (safe to run again; it keeps your `.env` and proxy config):
+
+1. Installs git, curl and **Docker** (if missing).
+2. Clones Ekra into `/opt/ekra` (`EKRA_DIR` to change it), or updates an existing copy.
+3. Writes `/opt/ekra/.env`: asks for your **domain**, the email sender, and optional Resend and Google keys;
+   generates every password and secret. Keep this file private and back it up.
+4. Connects your **proxy**, whichever answers on ports 80/443:
+   - **Caddy** (or none, then Caddy is installed): `domain, *.domain` with a certificate per organization
+     subdomain, issued on demand only for organizations that exist (Caddy asks
+     `/api/domains/allowed`). Nothing else to set up.
+   - **Nginx**: writes `/etc/nginx/sites-available/ekra.conf`, tests and reloads. Organization subdomains need a
+     **wildcard certificate** for `*.domain` (certbot with your DNS provider); the script asks for its path.
+   - **Traefik**: writes a file-provider config (`ekra.yml`) with a certificate resolver you name (it needs a
+     DNS challenge for the wildcard).
+5. Builds and starts everything with Docker Compose (`infra/docker-compose.prod.yml`): Postgres, SeaweedFS,
+   database migrations, the API and the web app (on `127.0.0.1:EKRA_PORT`, for the proxy only). Setup picks the
+   first free port from 3000 and saves it in `.env` as `EKRA_PORT`; change it there, then `ekra up`.
+6. Adds the **`ekra`** command and a **nightly update** (systemd timer, around 03:30).
+
+Then point **DNS** at the server: an A record for `domain` and one for `*.domain`.
+
+| Command           | What it does                                                                        |
+| ----------------- | ----------------------------------------------------------------------------------- |
+| `ekra status`     | What's running                                                                      |
+| `ekra logs [web]` | Follow the logs (all services, or one: `web`, `server`, `postgres`, `migrate`)      |
+| `ekra update`     | Newer version in the repo? Back up the database, pull, rebuild, migrate and restart |
+| `ekra backup`     | Dump the database to `/var/backups/ekra` (the last 14 are kept)                     |
+| `ekra restart`    | Restart everything (after editing `.env`)                                           |
+
+**Updates and rollback.** Every night (and on `ekra update`) the server checks the repo's `main` branch. When there's
+something new it backs up the database first, then pulls, rebuilds, runs migrations and restarts. If the new version
+doesn't answer its health check within three minutes, it goes back to the previous code **and restores that backup**,
+so a bad release never leaves the site down. Turn nightly updates off with
+`systemctl disable --now ekra-update.timer`.

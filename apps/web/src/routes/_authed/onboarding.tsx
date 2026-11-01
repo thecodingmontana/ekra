@@ -301,8 +301,8 @@ function Heading({
 	);
 }
 
-/** shortcut: the hosted domain isn't decided yet; read it from config once Phase 1d (subdomains) lands. */
-const DOMAIN = ".ekra.app";
+/** The organization's address is a subdomain of wherever this install runs (its BETTER_AUTH_URL). */
+const DOMAIN = `.${new URL(__APP_URL__).host}`;
 
 /** Whether the address is free, asked 300 ms after typing stops. */
 function useSlugStatus(slug: string) {

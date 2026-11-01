@@ -3,6 +3,7 @@ import { after, before, test } from "node:test";
 import { organization, session, user } from "@ekra/db";
 import { eq, inArray } from "drizzle-orm";
 import { db } from "../db.ts";
+import { env } from "../env.ts";
 import { call, cookieFrom, linkInLatestEmail, post } from "../test-helpers.ts";
 
 const stamp = Date.now();
@@ -105,4 +106,16 @@ test("a session pointing at another organization gets nothing from it", async ()
 test("signed out, there is no organization", async () => {
 	const body = await activeOrganization("");
 	assert.equal(body.errors?.[0]?.extensions?.code, "FORBIDDEN");
+});
+
+test("certificates are only allowed for the app and existing organizations", async () => {
+	const host = new URL(env.BETTER_AUTH_URL).hostname;
+	const allowed = async (domain: string) =>
+		(await call(`/api/domains/allowed?domain=${encodeURIComponent(domain)}`))
+			.status;
+	assert.equal(await allowed(host), 200);
+	assert.equal(await allowed(`${people.amina.slug}.${host}`), 200);
+	assert.equal(await allowed(`nobody-${stamp}.${host}`), 404);
+	assert.equal(await allowed("evil.example"), 404);
+	assert.equal(await allowed(`x.${people.amina.slug}.${host}`), 404);
 });

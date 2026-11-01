@@ -1,4 +1,4 @@
-/** An organization's URL name: also its subdomain (acme → acme.ekra.app), so it follows hostname rules. */
+/** An organization's URL name: also its subdomain (acme → acme.<your domain>), so it follows hostname rules. */
 
 export const SLUG_MIN = 3;
 export const SLUG_MAX = 48;
