@@ -15,8 +15,10 @@ export {
 } from "./auth.ts";
 export {
 	APP_ROLE,
+	contentFavorite,
 	contentItem,
 	contentKind,
 	contentStatus,
+	contentView,
 	tenantPolicy,
 } from "./content.ts";

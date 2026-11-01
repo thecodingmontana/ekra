@@ -4,7 +4,16 @@
  * see and write rows of the organization that transaction is for.
  */
 import { sql } from "drizzle-orm";
-import { index, pgEnum, pgPolicy, pgTable, text } from "drizzle-orm/pg-core";
+import {
+	type AnyPgColumn,
+	boolean,
+	index,
+	pgEnum,
+	pgPolicy,
+	pgTable,
+	primaryKey,
+	text,
+} from "drizzle-orm/pg-core";
 import { organization, user } from "./auth.ts";
 import { id, idRef, moment, timestamps } from "./columns.ts";
 
@@ -21,11 +30,13 @@ export const tenantPolicy = (table: string) =>
 	});
 
 export const contentKind = pgEnum("content_kind", [
-	"course",
+	"folder",
 	"page",
+	"course",
 	"quiz",
 	"assignment",
 	"path",
+	"wiki",
 ]);
 
 export const contentStatus = pgEnum("content_status", ["draft", "published"]);
@@ -41,6 +52,12 @@ export const contentItem = pgTable(
 		title: text("title").notNull(),
 		description: text("description"),
 		status: contentStatus("status").notNull().default("draft"),
+		/** the folder it sits in; null at the top of the library */
+		parentId: idRef("parent_id").references((): AnyPgColumn => contentItem.id, {
+			onDelete: "set null",
+		}),
+		/** a starting point others copy ("Use template"); learners never see templates */
+		isTemplate: boolean("is_template").notNull().default(false),
 		createdBy: idRef("created_by").references(() => user.id, {
 			onDelete: "set null",
 		}),
@@ -50,6 +67,50 @@ export const contentItem = pgTable(
 	},
 	(table) => [
 		index("content_item_org_idx").on(table.orgId, table.updatedAt),
+		index("content_item_parent_idx").on(table.parentId),
 		tenantPolicy("content_item"),
+	],
+).enableRLS();
+
+/** Someone's starred content. */
+export const contentFavorite = pgTable(
+	"content_favorite",
+	{
+		orgId: idRef("org_id")
+			.notNull()
+			.references(() => organization.id, { onDelete: "cascade" }),
+		userId: idRef("user_id")
+			.notNull()
+			.references(() => user.id, { onDelete: "cascade" }),
+		contentId: idRef("content_id")
+			.notNull()
+			.references(() => contentItem.id, { onDelete: "cascade" }),
+		createdAt: moment("created_at").defaultNow().notNull(),
+	},
+	(table) => [
+		primaryKey({ columns: [table.userId, table.contentId] }),
+		tenantPolicy("content_favorite"),
+	],
+).enableRLS();
+
+/** When someone last opened a piece of content (the library's Recent view). */
+export const contentView = pgTable(
+	"content_view",
+	{
+		orgId: idRef("org_id")
+			.notNull()
+			.references(() => organization.id, { onDelete: "cascade" }),
+		userId: idRef("user_id")
+			.notNull()
+			.references(() => user.id, { onDelete: "cascade" }),
+		contentId: idRef("content_id")
+			.notNull()
+			.references(() => contentItem.id, { onDelete: "cascade" }),
+		viewedAt: moment("viewed_at").defaultNow().notNull(),
+	},
+	(table) => [
+		primaryKey({ columns: [table.userId, table.contentId] }),
+		index("content_view_user_idx").on(table.userId, table.viewedAt),
+		tenantPolicy("content_view"),
 	],
 ).enableRLS();

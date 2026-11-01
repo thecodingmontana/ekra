@@ -1,0 +1,798 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "e3c95967-91ff-4857-8169-6d2c419d394c",
+  "prevIds": [
+    "0f3d5533-1d5f-40f8-a25d-9807893858d9"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "content_favorite"
+      ],
+      "writes": [
+        "s|tbl|public.content_favorite",
+        "n|tbl|public.content_favorite",
+        "e|tbl|public.content_favorite",
+        "n|rel|public.content_favorite",
+        "n|type|public.content_favorite",
+        "n|rel|public.content_favorite_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "content_view"
+      ],
+      "writes": [
+        "s|tbl|public.content_view",
+        "n|tbl|public.content_view",
+        "e|tbl|public.content_view",
+        "n|rel|public.content_view",
+        "n|type|public.content_view",
+        "n|rel|public.content_view_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "content_item",
+        "parent_id"
+      ],
+      "writes": [
+        "s|col|public.content_item.parent_id",
+        "n|col|public.content_item.parent_id",
+        "e|col|public.content_item.parent_id"
+      ],
+      "reads": [
+        "n|tbl|public.content_item",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "content_item",
+        "is_template"
+      ],
+      "writes": [
+        "s|col|public.content_item.is_template",
+        "n|col|public.content_item.is_template",
+        "e|col|public.content_item.is_template"
+      ],
+      "reads": [
+        "n|tbl|public.content_item",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "recreate_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "content_kind"
+      ],
+      "writes": [
+        "s|enum|public.content_kind",
+        "n|enum|public.content_kind",
+        "e|enum|public.content_kind",
+        "n|type|public.content_kind",
+        "s|colprop|public.content_item.kind.type",
+        "s|colprop|public.content_item.kind.default"
+      ],
+      "reads": [
+        "n|sch|public",
+        "n|tbl|public.content_item",
+        "n|sch|public",
+        "n|col|public.content_item.kind"
+      ],
+      "sqlHash": "58a4d6b1500804bd"
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "content_item",
+        "content_item_parent_idx"
+      ],
+      "writes": [
+        "s|idx|public.content_item_parent_idx",
+        "n|idx|public.content_item_parent_idx",
+        "e|idx|public.content_item_parent_idx",
+        "n|rel|public.content_item_parent_idx"
+      ],
+      "reads": [
+        "n|tbl|public.content_item",
+        "n|sch|public",
+        "n|col|public.content_item.parent_id"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "content_view",
+        "content_view_user_idx"
+      ],
+      "writes": [
+        "s|idx|public.content_view_user_idx",
+        "n|idx|public.content_view_user_idx",
+        "e|idx|public.content_view_user_idx",
+        "n|rel|public.content_view_user_idx"
+      ],
+      "reads": [
+        "n|tbl|public.content_view",
+        "n|sch|public",
+        "n|col|public.content_view.user_id",
+        "n|col|public.content_view.viewed_at"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "content_favorite"
+      ],
+      "writes": [
+        "s|fk|public.content_favorite.content_favorite_org_id_organization_id_fkey",
+        "n|fk|public.content_favorite.content_favorite_org_id_organization_id_fkey",
+        "e|fk|public.content_favorite.content_favorite_org_id_organization_id_fkey",
+        "n|con|public.content_favorite.content_favorite_org_id_organization_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.content_favorite",
+        "n|sch|public",
+        "n|tbl|public.organization",
+        "n|sch|public",
+        "n|col|public.content_favorite.org_id",
+        "n|col|public.organization.id",
+        "e|uniqueness|public.organization.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "content_favorite"
+      ],
+      "writes": [
+        "s|fk|public.content_favorite.content_favorite_user_id_user_id_fkey",
+        "n|fk|public.content_favorite.content_favorite_user_id_user_id_fkey",
+        "e|fk|public.content_favorite.content_favorite_user_id_user_id_fkey",
+        "n|con|public.content_favorite.content_favorite_user_id_user_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.content_favorite",
+        "n|sch|public",
+        "n|tbl|public.user",
+        "n|sch|public",
+        "n|col|public.content_favorite.user_id",
+        "n|col|public.user.id",
+        "e|uniqueness|public.user.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "content_favorite"
+      ],
+      "writes": [
+        "s|fk|public.content_favorite.content_favorite_content_id_content_item_id_fkey",
+        "n|fk|public.content_favorite.content_favorite_content_id_content_item_id_fkey",
+        "e|fk|public.content_favorite.content_favorite_content_id_content_item_id_fkey",
+        "n|con|public.content_favorite.content_favorite_content_id_content_item_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.content_favorite",
+        "n|sch|public",
+        "n|tbl|public.content_item",
+        "n|sch|public",
+        "n|col|public.content_favorite.content_id",
+        "n|col|public.content_item.id",
+        "e|uniqueness|public.content_item.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "content_item"
+      ],
+      "writes": [
+        "s|fk|public.content_item.content_item_parent_id_content_item_id_fkey",
+        "n|fk|public.content_item.content_item_parent_id_content_item_id_fkey",
+        "e|fk|public.content_item.content_item_parent_id_content_item_id_fkey",
+        "n|con|public.content_item.content_item_parent_id_content_item_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.content_item",
+        "n|sch|public",
+        "n|tbl|public.content_item",
+        "n|sch|public",
+        "n|col|public.content_item.parent_id",
+        "n|col|public.content_item.id",
+        "e|uniqueness|public.content_item.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "content_view"
+      ],
+      "writes": [
+        "s|fk|public.content_view.content_view_org_id_organization_id_fkey",
+        "n|fk|public.content_view.content_view_org_id_organization_id_fkey",
+        "e|fk|public.content_view.content_view_org_id_organization_id_fkey",
+        "n|con|public.content_view.content_view_org_id_organization_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.content_view",
+        "n|sch|public",
+        "n|tbl|public.organization",
+        "n|sch|public",
+        "n|col|public.content_view.org_id",
+        "n|col|public.organization.id",
+        "e|uniqueness|public.organization.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "content_view"
+      ],
+      "writes": [
+        "s|fk|public.content_view.content_view_user_id_user_id_fkey",
+        "n|fk|public.content_view.content_view_user_id_user_id_fkey",
+        "e|fk|public.content_view.content_view_user_id_user_id_fkey",
+        "n|con|public.content_view.content_view_user_id_user_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.content_view",
+        "n|sch|public",
+        "n|tbl|public.user",
+        "n|sch|public",
+        "n|col|public.content_view.user_id",
+        "n|col|public.user.id",
+        "e|uniqueness|public.user.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "content_view"
+      ],
+      "writes": [
+        "s|fk|public.content_view.content_view_content_id_content_item_id_fkey",
+        "n|fk|public.content_view.content_view_content_id_content_item_id_fkey",
+        "e|fk|public.content_view.content_view_content_id_content_item_id_fkey",
+        "n|con|public.content_view.content_view_content_id_content_item_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.content_view",
+        "n|sch|public",
+        "n|tbl|public.content_item",
+        "n|sch|public",
+        "n|col|public.content_view.content_id",
+        "n|col|public.content_item.id",
+        "e|uniqueness|public.content_item.id"
+      ]
+    },
+    {
+      "statementType": "create_policy",
+      "statementTarget": [
+        "table",
+        "public",
+        "content_favorite"
+      ],
+      "writes": [
+        "s|pol|public.content_favorite.content_favorite_tenant",
+        "n|pol|public.content_favorite.content_favorite_tenant",
+        "e|pol|public.content_favorite.content_favorite_tenant"
+      ],
+      "reads": [
+        "n|tbl|public.content_favorite",
+        "n|sch|public",
+        "n|role|ekra_app",
+        "e|rls|public.content_favorite"
+      ]
+    },
+    {
+      "statementType": "create_policy",
+      "statementTarget": [
+        "table",
+        "public",
+        "content_view"
+      ],
+      "writes": [
+        "s|pol|public.content_view.content_view_tenant",
+        "n|pol|public.content_view.content_view_tenant",
+        "e|pol|public.content_view.content_view_tenant"
+      ],
+      "reads": [
+        "n|tbl|public.content_view",
+        "n|sch|public",
+        "n|role|ekra_app",
+        "e|rls|public.content_view"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "content_favorite",
+        "isRlsEnabled": true,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "content_view",
+        "isRlsEnabled": true,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "content_favorite",
+        "name": "org_id",
+        "type": "varchar(16)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "content_favorite",
+        "name": "user_id",
+        "type": "varchar(16)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "content_favorite",
+        "name": "content_id",
+        "type": "varchar(16)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "content_favorite",
+        "name": "created_at",
+        "type": "timestamp(3) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "content_item",
+        "name": "parent_id",
+        "type": "varchar(16)",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "content_item",
+        "name": "is_template",
+        "type": "boolean",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "false",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "content_view",
+        "name": "org_id",
+        "type": "varchar(16)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "content_view",
+        "name": "user_id",
+        "type": "varchar(16)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "content_view",
+        "name": "content_id",
+        "type": "varchar(16)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "content_view",
+        "name": "viewed_at",
+        "type": "timestamp(3) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "content_item",
+        "name": "content_item_parent_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "parent_id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "content_view",
+        "name": "content_view_user_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "user_id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "viewed_at",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "content_favorite",
+        "name": "content_favorite_org_id_organization_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "org_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "organization",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "content_favorite",
+        "name": "content_favorite_user_id_user_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "user_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "user",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "content_favorite",
+        "name": "content_favorite_content_id_content_item_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "content_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "content_item",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "content_item",
+        "name": "content_item_parent_id_content_item_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "parent_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "content_item",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "SET NULL",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "content_view",
+        "name": "content_view_org_id_organization_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "org_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "organization",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "content_view",
+        "name": "content_view_user_id_user_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "user_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "user",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "content_view",
+        "name": "content_view_content_id_content_item_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "content_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "content_item",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "content_favorite",
+        "name": "content_favorite_pkey",
+        "columns": [
+          "user_id",
+          "content_id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "content_view",
+        "name": "content_view_pkey",
+        "columns": [
+          "user_id",
+          "content_id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "content_favorite",
+        "name": "content_favorite_tenant",
+        "as": "PERMISSIVE",
+        "for": "ALL",
+        "roles": [
+          "ekra_app"
+        ],
+        "using": "org_id = current_setting('app.org_id', true)",
+        "withCheck": "org_id = current_setting('app.org_id', true)",
+        "entityType": "policies"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "content_view",
+        "name": "content_view_tenant",
+        "as": "PERMISSIVE",
+        "for": "ALL",
+        "roles": [
+          "ekra_app"
+        ],
+        "using": "org_id = current_setting('app.org_id', true)",
+        "withCheck": "org_id = current_setting('app.org_id', true)",
+        "entityType": "policies"
+      }
+    },
+    {
+      "op": "alter",
+      "key": "enums\u0000[\"public\",\"content_kind\"]",
+      "set": {
+        "values": [
+          "folder",
+          "page",
+          "course",
+          "quiz",
+          "assignment",
+          "path",
+          "wiki"
+        ]
+      }
+    }
+  ]
+}
