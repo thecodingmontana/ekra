@@ -352,7 +352,7 @@ export function AppSidebar({
 					</a>
 				</SideTip>
 				<SideTip label="Settings" collapsed={collapsed}>
-					<Link to="/settings/security" className={cn(item, ACTIVE)}>
+					<Link to="/settings" className={cn(item, ACTIVE)}>
 						<span
 							aria-hidden
 							className="icon-[solar--settings-linear] size-4 shrink-0"
@@ -404,7 +404,7 @@ export function AppSidebar({
 						<MenuSeparator />
 						<MenuItem
 							icon="icon-[solar--settings-linear]"
-							onSelect={() => navigate({ to: "/settings/security" })}
+							onSelect={() => navigate({ to: "/settings/profile" })}
 						>
 							Account settings
 						</MenuItem>

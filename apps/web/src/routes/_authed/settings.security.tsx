@@ -6,6 +6,7 @@ import { toast } from "@ekra/ui/lib/toast";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { QRCodeSVG } from "qrcode.react";
 import { type ReactNode, useEffect, useState } from "react";
+import { SBlock, SettingsHeader } from "@/components/settings-ui";
 import { authClient, authErrorMessage } from "@/lib/auth-client";
 
 export const Route = createFileRoute("/_authed/settings/security")({
@@ -15,36 +16,33 @@ export const Route = createFileRoute("/_authed/settings/security")({
 
 function Security() {
 	return (
-		<main className="mx-auto flex w-full max-w-xl flex-col gap-8 px-6 py-8">
-			<div className="space-y-1">
-				<h1 className="font-semibold text-2xl tracking-[-0.022em]">Security</h1>
-				<p className="text-muted-foreground text-sm">
-					Ways to keep your account yours.
-				</p>
-			</div>
+		<>
+			<SettingsHeader
+				title="Security"
+				lead="Ways to keep your account yours."
+			/>
 			<AuthenticatorApp />
 			<Passkeys />
-		</main>
+		</>
 	);
 }
 
 function Section({
 	title,
 	description,
+	first,
 	children,
 }: {
 	title: string;
 	description: string;
+	first?: boolean;
 	children: ReactNode;
 }) {
 	return (
-		<section className="flex flex-col gap-4 rounded-xl border bg-card p-5">
-			<div className="space-y-1">
-				<h2 className="font-medium">{title}</h2>
-				<p className="text-muted-foreground text-sm">{description}</p>
-			</div>
-			{children}
-		</section>
+		<SBlock title={title} first={first}>
+			<p className="mb-3 text-muted-foreground text-sm">{description}</p>
+			<div className="flex flex-col gap-4">{children}</div>
+		</SBlock>
 	);
 }
 
@@ -240,6 +238,7 @@ function AuthenticatorApp() {
 
 	return (
 		<Section
+			first
 			title="Authenticator app"
 			description="After you sign in, also enter a code from an app on your phone."
 		>

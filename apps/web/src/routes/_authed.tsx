@@ -106,7 +106,7 @@ function AuthedLayout() {
 				>
 					<AppSidebar viewer={viewer} collapsed={collapsed} onToggle={toggle} />
 				</div>
-				<div className="flex min-w-0 flex-col overflow-y-auto">
+				<div className="flex min-h-0 min-w-0 flex-col overflow-y-auto">
 					<div className="flex items-center gap-2 border-b px-3 py-2 md:hidden">
 						<button
 							type="button"

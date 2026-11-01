@@ -18,8 +18,14 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TwoFactorRouteImport } from './routes/two-factor'
 import { Route as AuthedIndexRouteImport } from './routes/_authed/index'
 import { Route as AuthedOnboardingRouteImport } from './routes/_authed/onboarding'
+import { Route as AuthedSettingsRouteImport } from './routes/_authed/settings'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
+import { Route as AuthedSettingsIndexRouteImport } from './routes/_authed/settings.index'
+import { Route as AuthedSettingsAppearanceRouteImport } from './routes/_authed/settings.appearance'
+import { Route as AuthedSettingsOrganizationRouteImport } from './routes/_authed/settings.organization'
+import { Route as AuthedSettingsProfileRouteImport } from './routes/_authed/settings.profile'
 import { Route as AuthedSettingsSecurityRouteImport } from './routes/_authed/settings.security'
+import { Route as AuthedSettingsSessionsRouteImport } from './routes/_authed/settings.sessions'
 
 const AuthedRoute = AuthedRouteImport.update({
   id: '/_authed',
@@ -65,15 +71,47 @@ const AuthedOnboardingRoute = AuthedOnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedSettingsRoute = AuthedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const ApiSplatRoute = ApiSplatRouteImport.update({
   id: '/api/$',
   path: '/api/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthedSettingsIndexRoute = AuthedSettingsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthedSettingsRoute,
+} as any)
+const AuthedSettingsAppearanceRoute =
+  AuthedSettingsAppearanceRouteImport.update({
+    id: '/appearance',
+    path: '/appearance',
+    getParentRoute: () => AuthedSettingsRoute,
+  } as any)
+const AuthedSettingsOrganizationRoute =
+  AuthedSettingsOrganizationRouteImport.update({
+    id: '/organization',
+    path: '/organization',
+    getParentRoute: () => AuthedSettingsRoute,
+  } as any)
+const AuthedSettingsProfileRoute = AuthedSettingsProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AuthedSettingsRoute,
+} as any)
 const AuthedSettingsSecurityRoute = AuthedSettingsSecurityRouteImport.update({
-  id: '/settings/security',
-  path: '/settings/security',
-  getParentRoute: () => AuthedRoute,
+  id: '/security',
+  path: '/security',
+  getParentRoute: () => AuthedSettingsRoute,
+} as any)
+const AuthedSettingsSessionsRoute = AuthedSettingsSessionsRouteImport.update({
+  id: '/sessions',
+  path: '/sessions',
+  getParentRoute: () => AuthedSettingsRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -85,8 +123,14 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/two-factor': typeof TwoFactorRoute
   '/onboarding': typeof AuthedOnboardingRoute
+  '/settings': typeof AuthedSettingsRouteWithChildren
   '/api/$': typeof ApiSplatRoute
+  '/settings/appearance': typeof AuthedSettingsAppearanceRoute
+  '/settings/organization': typeof AuthedSettingsOrganizationRoute
+  '/settings/profile': typeof AuthedSettingsProfileRoute
   '/settings/security': typeof AuthedSettingsSecurityRoute
+  '/settings/sessions': typeof AuthedSettingsSessionsRoute
+  '/settings/': typeof AuthedSettingsIndexRoute
 }
 export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
@@ -98,7 +142,12 @@ export interface FileRoutesByTo {
   '/onboarding': typeof AuthedOnboardingRoute
   '/api/$': typeof ApiSplatRoute
   '/': typeof AuthedIndexRoute
+  '/settings/appearance': typeof AuthedSettingsAppearanceRoute
+  '/settings/organization': typeof AuthedSettingsOrganizationRoute
+  '/settings/profile': typeof AuthedSettingsProfileRoute
   '/settings/security': typeof AuthedSettingsSecurityRoute
+  '/settings/sessions': typeof AuthedSettingsSessionsRoute
+  '/settings': typeof AuthedSettingsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -110,9 +159,15 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/two-factor': typeof TwoFactorRoute
   '/_authed/onboarding': typeof AuthedOnboardingRoute
+  '/_authed/settings': typeof AuthedSettingsRouteWithChildren
   '/api/$': typeof ApiSplatRoute
   '/_authed/': typeof AuthedIndexRoute
+  '/_authed/settings/appearance': typeof AuthedSettingsAppearanceRoute
+  '/_authed/settings/organization': typeof AuthedSettingsOrganizationRoute
+  '/_authed/settings/profile': typeof AuthedSettingsProfileRoute
   '/_authed/settings/security': typeof AuthedSettingsSecurityRoute
+  '/_authed/settings/sessions': typeof AuthedSettingsSessionsRoute
+  '/_authed/settings/': typeof AuthedSettingsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -125,8 +180,14 @@ export interface FileRouteTypes {
     | '/terms'
     | '/two-factor'
     | '/onboarding'
+    | '/settings'
     | '/api/$'
+    | '/settings/appearance'
+    | '/settings/organization'
+    | '/settings/profile'
     | '/settings/security'
+    | '/settings/sessions'
+    | '/settings/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/privacy'
@@ -138,7 +199,12 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/api/$'
     | '/'
+    | '/settings/appearance'
+    | '/settings/organization'
+    | '/settings/profile'
     | '/settings/security'
+    | '/settings/sessions'
+    | '/settings'
   id:
     | '__root__'
     | '/_authed'
@@ -149,9 +215,15 @@ export interface FileRouteTypes {
     | '/terms'
     | '/two-factor'
     | '/_authed/onboarding'
+    | '/_authed/settings'
     | '/api/$'
     | '/_authed/'
+    | '/_authed/settings/appearance'
+    | '/_authed/settings/organization'
+    | '/_authed/settings/profile'
     | '/_authed/settings/security'
+    | '/_authed/settings/sessions'
+    | '/_authed/settings/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -230,6 +302,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedOnboardingRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/settings': {
+      id: '/_authed/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthedSettingsRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/api/$': {
       id: '/api/$'
       path: '/api/$'
@@ -237,26 +316,83 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authed/settings/': {
+      id: '/_authed/settings/'
+      path: '/'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof AuthedSettingsIndexRouteImport
+      parentRoute: typeof AuthedSettingsRoute
+    }
+    '/_authed/settings/appearance': {
+      id: '/_authed/settings/appearance'
+      path: '/appearance'
+      fullPath: '/settings/appearance'
+      preLoaderRoute: typeof AuthedSettingsAppearanceRouteImport
+      parentRoute: typeof AuthedSettingsRoute
+    }
+    '/_authed/settings/organization': {
+      id: '/_authed/settings/organization'
+      path: '/organization'
+      fullPath: '/settings/organization'
+      preLoaderRoute: typeof AuthedSettingsOrganizationRouteImport
+      parentRoute: typeof AuthedSettingsRoute
+    }
+    '/_authed/settings/profile': {
+      id: '/_authed/settings/profile'
+      path: '/profile'
+      fullPath: '/settings/profile'
+      preLoaderRoute: typeof AuthedSettingsProfileRouteImport
+      parentRoute: typeof AuthedSettingsRoute
+    }
     '/_authed/settings/security': {
       id: '/_authed/settings/security'
-      path: '/settings/security'
+      path: '/security'
       fullPath: '/settings/security'
       preLoaderRoute: typeof AuthedSettingsSecurityRouteImport
-      parentRoute: typeof AuthedRoute
+      parentRoute: typeof AuthedSettingsRoute
+    }
+    '/_authed/settings/sessions': {
+      id: '/_authed/settings/sessions'
+      path: '/sessions'
+      fullPath: '/settings/sessions'
+      preLoaderRoute: typeof AuthedSettingsSessionsRouteImport
+      parentRoute: typeof AuthedSettingsRoute
     }
   }
 }
 
+interface AuthedSettingsRouteChildren {
+  AuthedSettingsAppearanceRoute: typeof AuthedSettingsAppearanceRoute
+  AuthedSettingsOrganizationRoute: typeof AuthedSettingsOrganizationRoute
+  AuthedSettingsProfileRoute: typeof AuthedSettingsProfileRoute
+  AuthedSettingsSecurityRoute: typeof AuthedSettingsSecurityRoute
+  AuthedSettingsSessionsRoute: typeof AuthedSettingsSessionsRoute
+  AuthedSettingsIndexRoute: typeof AuthedSettingsIndexRoute
+}
+
+const AuthedSettingsRouteChildren: AuthedSettingsRouteChildren = {
+  AuthedSettingsAppearanceRoute: AuthedSettingsAppearanceRoute,
+  AuthedSettingsOrganizationRoute: AuthedSettingsOrganizationRoute,
+  AuthedSettingsProfileRoute: AuthedSettingsProfileRoute,
+  AuthedSettingsSecurityRoute: AuthedSettingsSecurityRoute,
+  AuthedSettingsSessionsRoute: AuthedSettingsSessionsRoute,
+  AuthedSettingsIndexRoute: AuthedSettingsIndexRoute,
+}
+
+const AuthedSettingsRouteWithChildren = AuthedSettingsRoute._addFileChildren(
+  AuthedSettingsRouteChildren,
+)
+
 interface AuthedRouteChildren {
   AuthedOnboardingRoute: typeof AuthedOnboardingRoute
+  AuthedSettingsRoute: typeof AuthedSettingsRouteWithChildren
   AuthedIndexRoute: typeof AuthedIndexRoute
-  AuthedSettingsSecurityRoute: typeof AuthedSettingsSecurityRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedOnboardingRoute: AuthedOnboardingRoute,
+  AuthedSettingsRoute: AuthedSettingsRouteWithChildren,
   AuthedIndexRoute: AuthedIndexRoute,
-  AuthedSettingsSecurityRoute: AuthedSettingsSecurityRoute,
 }
 
 const AuthedRouteWithChildren =
