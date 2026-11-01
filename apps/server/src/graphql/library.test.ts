@@ -299,6 +299,20 @@ test("folders hold content and can't go inside themselves", async () => {
 		"BAD_USER_INPUT",
 		"only into folders",
 	);
+	// two crossing moves at once: one wins, the other is refused, never a loop
+	const { item: a } = await create("amina", slugs.amina, {
+		kind: "folder",
+		title: "A",
+	});
+	const { item: b } = await create("amina", slugs.amina, {
+		kind: "folder",
+		title: "B",
+	});
+	const crossed = await Promise.all([move(a.id, b.id), move(b.id, a.id)]);
+	assert.deepEqual(crossed.map((r) => (code(r) ? "refused" : "moved")).sort(), [
+		"moved",
+		"refused",
+	]);
 	const top = await move(page.id, null);
 	assert.equal((top.data?.updateContent as Item | undefined)?.parentId, null);
 });

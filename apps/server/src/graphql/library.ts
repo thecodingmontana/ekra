@@ -327,7 +327,13 @@ export const libraryResolvers = {
 			manage(ctx, slug, async (tx, org, userId) => {
 				const data = parse(updateInput, input);
 				const { item } = await mustFind(tx, org, userId, id);
-				if (data.parentId) await checkFolder(tx, data.parentId, id);
+				if (data.parentId) {
+					// one move at a time per organization: two crossing moves could each pass the check and loop
+					await tx.execute(
+						sql`select pg_advisory_xact_lock(hashtext(${org.id}))`,
+					);
+					await checkFolder(tx, data.parentId, id);
+				}
 				if (item.kind === "folder") {
 					data.isTemplate = false;
 					data.status = undefined;
