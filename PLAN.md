@@ -215,6 +215,14 @@ predictable latency and memory. It doesn't where the code is mostly glue around 
   Pages render `<picture>` with `srcset`, so browsers fetch the smallest file that looks sharp.
 - **Validate**: tests with a large JPEG (smaller output, no EXIF/GPS left), a PNG with transparency (kept), a
   fake image (refused), a pixel bomb (refused).
+- **Done (2026-11-02)**: Tiptap editor on each content page (slash menu, formatting and block toolbars, callouts,
+  tables, toggles, YouTube, pictures), autosave refused with CONFLICT on a newer body (`body_updated_at`, so title or
+  status edits don't count), `checkDoc` in `@ekra/core` on the server, `content_version` folded per 10-minute sitting,
+  word diff and restore. Pictures: `@ekra/media` (sharp) and `@ekra/storage` (a small SigV4 S3 client, no SDK).
+  Decided: pictures upload through the API (`POST /api/media`, 20 MB) and are processed in the request, so there is
+  no `incoming/` prefix and no presigned URL for them; presigned multipart uploads come with videos (Phase 4).
+  Addresses have no file extension (`/api/media/<org>/<id>/1280-webp`), served to members only. HEIC isn't readable
+  by sharp's prebuilt libvips: refused with "export it as JPEG". Organization logos use the same uploads.
 
 ### Phase 4 — Video courses (M)
 
