@@ -155,6 +155,15 @@ export const contentVersion = pgTable(
  * A picture uploaded to an organization, stored as the sizes the image pipeline made (@ekra/media) under
  * media/<org_id>/<id>/ in storage. The original upload is never kept or served.
  */
+export const mediaKind = pgEnum("media_kind", ["image", "video"]);
+/** a video is uploaded, then processed by the worker; a picture is ready as soon as it's stored */
+export const mediaStatus = pgEnum("media_status", [
+	"uploading",
+	"processing",
+	"ready",
+	"failed",
+]);
+
 export const mediaAsset = pgTable(
 	"media_asset",
 	{
@@ -162,18 +171,32 @@ export const mediaAsset = pgTable(
 		orgId: idRef("org_id")
 			.notNull()
 			.references(() => organization.id, { onDelete: "cascade" }),
-		width: integer("width").notNull(),
-		height: integer("height").notNull(),
+		kind: mediaKind("kind").notNull().default("image"),
+		status: mediaStatus("status").notNull().default("ready"),
+		/** known once processed */
+		width: integer("width"),
+		height: integer("height"),
 		/** a tiny blurred picture (data URL) shown while the real one loads */
-		placeholder: text("placeholder").notNull(),
-		/** the stored files: name ("640.avif"), MIME type, width */
+		placeholder: text("placeholder"),
+		/** the stored files: name ("640.avif", "720p.m3u8"), MIME type, width */
 		files: jsonb("files")
 			.$type<{ name: string; type: string; width: number }[]>()
-			.notNull(),
+			.notNull()
+			.default([]),
+		/** a video's length */
+		durationSeconds: integer("duration_seconds"),
+		/** a video's original upload, kept private so it can be processed again later; never served */
+		originalKey: text("original_key"),
+		/** why processing failed, in words for the person who uploaded it */
+		error: text("error"),
 		createdBy: idRef("created_by").references(() => user.id, {
 			onDelete: "set null",
 		}),
 		createdAt: moment("created_at").defaultNow().notNull(),
+		updatedAt: moment("updated_at")
+			.defaultNow()
+			.notNull()
+			.$onUpdateFn(() => new Date()),
 	},
 	(table) => [
 		index("media_asset_org_idx").on(table.orgId),

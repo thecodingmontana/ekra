@@ -169,10 +169,10 @@ const updateInput = z.object({
 	isTemplate: z.boolean().optional(),
 });
 
-type Ctx = { session: { user: { id: string } } | null };
+export type Ctx = { session: { user: { id: string } } | null };
 type Row = typeof contentItem.$inferSelect;
 
-const refuse = (message: string, code = "FORBIDDEN"): never => {
+export const refuse = (message: string, code = "FORBIDDEN"): never => {
 	throw new GraphQLError(message, { extensions: { code } });
 };
 
@@ -186,7 +186,10 @@ const visibleTo = (org: ActiveOrg) =>
 				isNull(contentItem.archivedAt),
 			);
 
-function parse<T extends z.ZodType>(schema: T, input: unknown): z.infer<T> {
+export function parse<T extends z.ZodType>(
+	schema: T,
+	input: unknown,
+): z.infer<T> {
 	const parsed = schema.safeParse(input);
 	if (!parsed.success)
 		return refuse(
@@ -244,7 +247,12 @@ const toGraphQL = ({ item, author, favoritedAt, viewedAt }: Selected) => ({
 });
 
 /** One piece of content the person may see, or null. */
-async function findOne(tx: Tx, org: ActiveOrg, userId: string, id: string) {
+export async function findOne(
+	tx: Tx,
+	org: ActiveOrg,
+	userId: string,
+	id: string,
+) {
 	const [row] = await select(tx, userId)
 		.where(and(eq(contentItem.id, id), visibleTo(org)))
 		.limit(1);
@@ -279,7 +287,7 @@ async function checkFolder(tx: Tx, folderId: string, movingId?: string) {
 }
 
 /** Resolve the organization and the person, check they may manage content, and run `work` under RLS. */
-async function manage<T>(
+export async function manage<T>(
 	ctx: Ctx,
 	slug: string,
 	work: (tx: Tx, org: ActiveOrg, userId: string) => Promise<T>,
@@ -291,7 +299,7 @@ async function manage<T>(
 }
 
 /** Same, for anything a member who can see the content may do. */
-async function asMember<T>(
+export async function asMember<T>(
 	ctx: Ctx,
 	slug: string,
 	work: (tx: Tx, org: ActiveOrg, userId: string) => Promise<T>,
@@ -300,13 +308,13 @@ async function asMember<T>(
 	return withOrg(db, org.id, (tx) => work(tx, org, ctx.session?.user.id ?? ""));
 }
 
-type SlugId = { slug: string; id: string };
+export type SlugId = { slug: string; id: string };
 
 /** saves by the same person within this long fold into one version */
 const VERSION_SITTING_MS = 10 * 60_000;
 
 /** The body as checked Tiptap JSON and plain text, or a BAD_USER_INPUT refusal that says why. */
-function cleanBody(doc: string) {
+export function cleanBody(doc: string) {
 	try {
 		return checkDoc(JSON.parse(doc));
 	} catch (error) {

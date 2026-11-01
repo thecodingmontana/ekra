@@ -17,6 +17,7 @@ import { auth, signInMethods } from "../auth/index.ts";
 import { db } from "../db.ts";
 import { env } from "../env.ts";
 import { announceChange, mutationSlugs } from "../realtime.ts";
+import { courseResolvers, courseTypeDefs } from "./course.ts";
 import { libraryResolvers, libraryTypeDefs } from "./library.ts";
 import { requireOrg } from "./tenant.ts";
 
@@ -87,9 +88,11 @@ const schema = createSchema<GraphQLContext>({
 		}
 	`,
 		libraryTypeDefs,
+		courseTypeDefs,
 	],
 	resolvers: [
 		libraryResolvers,
+		courseResolvers,
 		{
 			Query: {
 				health: () => "ok",

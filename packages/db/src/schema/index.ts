@@ -22,5 +22,13 @@ export {
 	contentVersion,
 	contentView,
 	mediaAsset,
+	mediaKind,
+	mediaStatus,
 	tenantPolicy,
 } from "./content.ts";
+export {
+	courseSection,
+	lesson,
+	lessonKind,
+	lessonProgress,
+} from "./course.ts";

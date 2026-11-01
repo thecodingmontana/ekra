@@ -1,0 +1,1700 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "ae7c79ef-9784-47a5-8295-427a5542e081",
+  "prevIds": [
+    "2022f7d3-0bbd-4d63-b2e0-341c23b7e5a0"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "lesson_kind"
+      ],
+      "writes": [
+        "s|enum|public.lesson_kind",
+        "n|enum|public.lesson_kind",
+        "e|enum|public.lesson_kind",
+        "n|type|public.lesson_kind"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "media_kind"
+      ],
+      "writes": [
+        "s|enum|public.media_kind",
+        "n|enum|public.media_kind",
+        "e|enum|public.media_kind",
+        "n|type|public.media_kind"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "media_status"
+      ],
+      "writes": [
+        "s|enum|public.media_status",
+        "n|enum|public.media_status",
+        "e|enum|public.media_status",
+        "n|type|public.media_status"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "course_section"
+      ],
+      "writes": [
+        "s|tbl|public.course_section",
+        "n|tbl|public.course_section",
+        "e|tbl|public.course_section",
+        "n|rel|public.course_section",
+        "n|type|public.course_section",
+        "n|rel|public.course_section_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "lesson"
+      ],
+      "writes": [
+        "s|tbl|public.lesson",
+        "n|tbl|public.lesson",
+        "e|tbl|public.lesson",
+        "n|rel|public.lesson",
+        "n|type|public.lesson",
+        "n|rel|public.lesson_pkey"
+      ],
+      "reads": [
+        "n|sch|public",
+        "n|enum|public.lesson_kind"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "lesson_progress"
+      ],
+      "writes": [
+        "s|tbl|public.lesson_progress",
+        "n|tbl|public.lesson_progress",
+        "e|tbl|public.lesson_progress",
+        "n|rel|public.lesson_progress",
+        "n|type|public.lesson_progress",
+        "n|rel|public.lesson_progress_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "media_asset",
+        "kind"
+      ],
+      "writes": [
+        "s|col|public.media_asset.kind",
+        "n|col|public.media_asset.kind",
+        "e|col|public.media_asset.kind"
+      ],
+      "reads": [
+        "n|tbl|public.media_asset",
+        "n|sch|public",
+        "n|enum|public.media_kind"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "media_asset",
+        "status"
+      ],
+      "writes": [
+        "s|col|public.media_asset.status",
+        "n|col|public.media_asset.status",
+        "e|col|public.media_asset.status"
+      ],
+      "reads": [
+        "n|tbl|public.media_asset",
+        "n|sch|public",
+        "n|enum|public.media_status"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "media_asset",
+        "duration_seconds"
+      ],
+      "writes": [
+        "s|col|public.media_asset.duration_seconds",
+        "n|col|public.media_asset.duration_seconds",
+        "e|col|public.media_asset.duration_seconds"
+      ],
+      "reads": [
+        "n|tbl|public.media_asset",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "media_asset",
+        "original_key"
+      ],
+      "writes": [
+        "s|col|public.media_asset.original_key",
+        "n|col|public.media_asset.original_key",
+        "e|col|public.media_asset.original_key"
+      ],
+      "reads": [
+        "n|tbl|public.media_asset",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "media_asset",
+        "error"
+      ],
+      "writes": [
+        "s|col|public.media_asset.error",
+        "n|col|public.media_asset.error",
+        "e|col|public.media_asset.error"
+      ],
+      "reads": [
+        "n|tbl|public.media_asset",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "media_asset",
+        "updated_at"
+      ],
+      "writes": [
+        "s|col|public.media_asset.updated_at",
+        "n|col|public.media_asset.updated_at",
+        "e|col|public.media_asset.updated_at"
+      ],
+      "reads": [
+        "n|tbl|public.media_asset",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "alter_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "media_asset",
+        "width"
+      ],
+      "writes": [
+        "s|colprop|public.media_asset.width.notNull"
+      ],
+      "reads": [
+        "n|tbl|public.media_asset",
+        "n|sch|public",
+        "n|col|public.media_asset.width"
+      ],
+      "sqlHash": "6600578466144a18"
+    },
+    {
+      "statementType": "alter_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "media_asset",
+        "height"
+      ],
+      "writes": [
+        "s|colprop|public.media_asset.height.notNull"
+      ],
+      "reads": [
+        "n|tbl|public.media_asset",
+        "n|sch|public",
+        "n|col|public.media_asset.height"
+      ],
+      "sqlHash": "cf596b9412fb5ac0"
+    },
+    {
+      "statementType": "alter_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "media_asset",
+        "placeholder"
+      ],
+      "writes": [
+        "s|colprop|public.media_asset.placeholder.notNull"
+      ],
+      "reads": [
+        "n|tbl|public.media_asset",
+        "n|sch|public",
+        "n|col|public.media_asset.placeholder"
+      ],
+      "sqlHash": "dd74ea63a4f466af"
+    },
+    {
+      "statementType": "alter_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "media_asset",
+        "files"
+      ],
+      "writes": [
+        "s|colprop|public.media_asset.files.default"
+      ],
+      "reads": [
+        "n|tbl|public.media_asset",
+        "n|sch|public",
+        "n|col|public.media_asset.files"
+      ],
+      "sqlHash": "c27a0394ecb09f5b"
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "course_section",
+        "course_section_course_idx"
+      ],
+      "writes": [
+        "s|idx|public.course_section_course_idx",
+        "n|idx|public.course_section_course_idx",
+        "e|idx|public.course_section_course_idx",
+        "n|rel|public.course_section_course_idx"
+      ],
+      "reads": [
+        "n|tbl|public.course_section",
+        "n|sch|public",
+        "n|col|public.course_section.course_id",
+        "n|col|public.course_section.position"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "lesson",
+        "lesson_section_idx"
+      ],
+      "writes": [
+        "s|idx|public.lesson_section_idx",
+        "n|idx|public.lesson_section_idx",
+        "e|idx|public.lesson_section_idx",
+        "n|rel|public.lesson_section_idx"
+      ],
+      "reads": [
+        "n|tbl|public.lesson",
+        "n|sch|public",
+        "n|col|public.lesson.section_id",
+        "n|col|public.lesson.position"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "lesson",
+        "lesson_course_idx"
+      ],
+      "writes": [
+        "s|idx|public.lesson_course_idx",
+        "n|idx|public.lesson_course_idx",
+        "e|idx|public.lesson_course_idx",
+        "n|rel|public.lesson_course_idx"
+      ],
+      "reads": [
+        "n|tbl|public.lesson",
+        "n|sch|public",
+        "n|col|public.lesson.course_id"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "lesson_progress",
+        "lesson_progress_course_idx"
+      ],
+      "writes": [
+        "s|idx|public.lesson_progress_course_idx",
+        "n|idx|public.lesson_progress_course_idx",
+        "e|idx|public.lesson_progress_course_idx",
+        "n|rel|public.lesson_progress_course_idx"
+      ],
+      "reads": [
+        "n|tbl|public.lesson_progress",
+        "n|sch|public",
+        "n|col|public.lesson_progress.user_id",
+        "n|col|public.lesson_progress.course_id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "course_section"
+      ],
+      "writes": [
+        "s|fk|public.course_section.course_section_org_id_organization_id_fkey",
+        "n|fk|public.course_section.course_section_org_id_organization_id_fkey",
+        "e|fk|public.course_section.course_section_org_id_organization_id_fkey",
+        "n|con|public.course_section.course_section_org_id_organization_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.course_section",
+        "n|sch|public",
+        "n|tbl|public.organization",
+        "n|sch|public",
+        "n|col|public.course_section.org_id",
+        "n|col|public.organization.id",
+        "e|uniqueness|public.organization.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "course_section"
+      ],
+      "writes": [
+        "s|fk|public.course_section.course_section_course_id_content_item_id_fkey",
+        "n|fk|public.course_section.course_section_course_id_content_item_id_fkey",
+        "e|fk|public.course_section.course_section_course_id_content_item_id_fkey",
+        "n|con|public.course_section.course_section_course_id_content_item_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.course_section",
+        "n|sch|public",
+        "n|tbl|public.content_item",
+        "n|sch|public",
+        "n|col|public.course_section.course_id",
+        "n|col|public.content_item.id",
+        "e|uniqueness|public.content_item.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "lesson"
+      ],
+      "writes": [
+        "s|fk|public.lesson.lesson_org_id_organization_id_fkey",
+        "n|fk|public.lesson.lesson_org_id_organization_id_fkey",
+        "e|fk|public.lesson.lesson_org_id_organization_id_fkey",
+        "n|con|public.lesson.lesson_org_id_organization_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.lesson",
+        "n|sch|public",
+        "n|tbl|public.organization",
+        "n|sch|public",
+        "n|col|public.lesson.org_id",
+        "n|col|public.organization.id",
+        "e|uniqueness|public.organization.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "lesson"
+      ],
+      "writes": [
+        "s|fk|public.lesson.lesson_course_id_content_item_id_fkey",
+        "n|fk|public.lesson.lesson_course_id_content_item_id_fkey",
+        "e|fk|public.lesson.lesson_course_id_content_item_id_fkey",
+        "n|con|public.lesson.lesson_course_id_content_item_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.lesson",
+        "n|sch|public",
+        "n|tbl|public.content_item",
+        "n|sch|public",
+        "n|col|public.lesson.course_id",
+        "n|col|public.content_item.id",
+        "e|uniqueness|public.content_item.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "lesson"
+      ],
+      "writes": [
+        "s|fk|public.lesson.lesson_section_id_course_section_id_fkey",
+        "n|fk|public.lesson.lesson_section_id_course_section_id_fkey",
+        "e|fk|public.lesson.lesson_section_id_course_section_id_fkey",
+        "n|con|public.lesson.lesson_section_id_course_section_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.lesson",
+        "n|sch|public",
+        "n|tbl|public.course_section",
+        "n|sch|public",
+        "n|col|public.lesson.section_id",
+        "n|col|public.course_section.id",
+        "e|uniqueness|public.course_section.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "lesson"
+      ],
+      "writes": [
+        "s|fk|public.lesson.lesson_media_id_media_asset_id_fkey",
+        "n|fk|public.lesson.lesson_media_id_media_asset_id_fkey",
+        "e|fk|public.lesson.lesson_media_id_media_asset_id_fkey",
+        "n|con|public.lesson.lesson_media_id_media_asset_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.lesson",
+        "n|sch|public",
+        "n|tbl|public.media_asset",
+        "n|sch|public",
+        "n|col|public.lesson.media_id",
+        "n|col|public.media_asset.id",
+        "e|uniqueness|public.media_asset.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "lesson_progress"
+      ],
+      "writes": [
+        "s|fk|public.lesson_progress.lesson_progress_org_id_organization_id_fkey",
+        "n|fk|public.lesson_progress.lesson_progress_org_id_organization_id_fkey",
+        "e|fk|public.lesson_progress.lesson_progress_org_id_organization_id_fkey",
+        "n|con|public.lesson_progress.lesson_progress_org_id_organization_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.lesson_progress",
+        "n|sch|public",
+        "n|tbl|public.organization",
+        "n|sch|public",
+        "n|col|public.lesson_progress.org_id",
+        "n|col|public.organization.id",
+        "e|uniqueness|public.organization.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "lesson_progress"
+      ],
+      "writes": [
+        "s|fk|public.lesson_progress.lesson_progress_user_id_user_id_fkey",
+        "n|fk|public.lesson_progress.lesson_progress_user_id_user_id_fkey",
+        "e|fk|public.lesson_progress.lesson_progress_user_id_user_id_fkey",
+        "n|con|public.lesson_progress.lesson_progress_user_id_user_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.lesson_progress",
+        "n|sch|public",
+        "n|tbl|public.user",
+        "n|sch|public",
+        "n|col|public.lesson_progress.user_id",
+        "n|col|public.user.id",
+        "e|uniqueness|public.user.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "lesson_progress"
+      ],
+      "writes": [
+        "s|fk|public.lesson_progress.lesson_progress_lesson_id_lesson_id_fkey",
+        "n|fk|public.lesson_progress.lesson_progress_lesson_id_lesson_id_fkey",
+        "e|fk|public.lesson_progress.lesson_progress_lesson_id_lesson_id_fkey",
+        "n|con|public.lesson_progress.lesson_progress_lesson_id_lesson_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.lesson_progress",
+        "n|sch|public",
+        "n|tbl|public.lesson",
+        "n|sch|public",
+        "n|col|public.lesson_progress.lesson_id",
+        "n|col|public.lesson.id",
+        "e|uniqueness|public.lesson.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "lesson_progress"
+      ],
+      "writes": [
+        "s|fk|public.lesson_progress.lesson_progress_course_id_content_item_id_fkey",
+        "n|fk|public.lesson_progress.lesson_progress_course_id_content_item_id_fkey",
+        "e|fk|public.lesson_progress.lesson_progress_course_id_content_item_id_fkey",
+        "n|con|public.lesson_progress.lesson_progress_course_id_content_item_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.lesson_progress",
+        "n|sch|public",
+        "n|tbl|public.content_item",
+        "n|sch|public",
+        "n|col|public.lesson_progress.course_id",
+        "n|col|public.content_item.id",
+        "e|uniqueness|public.content_item.id"
+      ]
+    },
+    {
+      "statementType": "create_policy",
+      "statementTarget": [
+        "table",
+        "public",
+        "course_section"
+      ],
+      "writes": [
+        "s|pol|public.course_section.course_section_tenant",
+        "n|pol|public.course_section.course_section_tenant",
+        "e|pol|public.course_section.course_section_tenant"
+      ],
+      "reads": [
+        "n|tbl|public.course_section",
+        "n|sch|public",
+        "n|role|ekra_app",
+        "e|rls|public.course_section"
+      ]
+    },
+    {
+      "statementType": "create_policy",
+      "statementTarget": [
+        "table",
+        "public",
+        "lesson"
+      ],
+      "writes": [
+        "s|pol|public.lesson.lesson_tenant",
+        "n|pol|public.lesson.lesson_tenant",
+        "e|pol|public.lesson.lesson_tenant"
+      ],
+      "reads": [
+        "n|tbl|public.lesson",
+        "n|sch|public",
+        "n|role|ekra_app",
+        "e|rls|public.lesson"
+      ]
+    },
+    {
+      "statementType": "create_policy",
+      "statementTarget": [
+        "table",
+        "public",
+        "lesson_progress"
+      ],
+      "writes": [
+        "s|pol|public.lesson_progress.lesson_progress_tenant",
+        "n|pol|public.lesson_progress.lesson_progress_tenant",
+        "e|pol|public.lesson_progress.lesson_progress_tenant"
+      ],
+      "reads": [
+        "n|tbl|public.lesson_progress",
+        "n|sch|public",
+        "n|role|ekra_app",
+        "e|rls|public.lesson_progress"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "course_section",
+        "isRlsEnabled": true,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "lesson",
+        "isRlsEnabled": true,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "lesson_progress",
+        "isRlsEnabled": true,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "lesson_kind",
+        "values": [
+          "video",
+          "page"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "media_kind",
+        "values": [
+          "image",
+          "video"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "media_status",
+        "values": [
+          "uploading",
+          "processing",
+          "ready",
+          "failed"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "course_section",
+        "name": "id",
+        "type": "varchar(16)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "course_section",
+        "name": "org_id",
+        "type": "varchar(16)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "course_section",
+        "name": "course_id",
+        "type": "varchar(16)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "course_section",
+        "name": "title",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "course_section",
+        "name": "position",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "course_section",
+        "name": "created_at",
+        "type": "timestamp(3) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "course_section",
+        "name": "updated_at",
+        "type": "timestamp(3) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "lesson",
+        "name": "id",
+        "type": "varchar(16)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "lesson",
+        "name": "org_id",
+        "type": "varchar(16)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "lesson",
+        "name": "course_id",
+        "type": "varchar(16)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "lesson",
+        "name": "section_id",
+        "type": "varchar(16)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "lesson",
+        "name": "kind",
+        "type": "lesson_kind",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "lesson",
+        "name": "title",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "lesson",
+        "name": "position",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "lesson",
+        "name": "doc",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "lesson",
+        "name": "body_text",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "lesson",
+        "name": "body_updated_at",
+        "type": "timestamp(3) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "lesson",
+        "name": "media_id",
+        "type": "varchar(16)",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "lesson",
+        "name": "created_at",
+        "type": "timestamp(3) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "lesson",
+        "name": "updated_at",
+        "type": "timestamp(3) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "lesson_progress",
+        "name": "org_id",
+        "type": "varchar(16)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "lesson_progress",
+        "name": "user_id",
+        "type": "varchar(16)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "lesson_progress",
+        "name": "lesson_id",
+        "type": "varchar(16)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "lesson_progress",
+        "name": "course_id",
+        "type": "varchar(16)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "lesson_progress",
+        "name": "position_seconds",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "0",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "lesson_progress",
+        "name": "completed_at",
+        "type": "timestamp(3) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "lesson_progress",
+        "name": "updated_at",
+        "type": "timestamp(3) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "media_asset",
+        "name": "kind",
+        "type": "media_kind",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": "'image'",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "media_asset",
+        "name": "status",
+        "type": "media_status",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": "'ready'",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "media_asset",
+        "name": "duration_seconds",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "media_asset",
+        "name": "original_key",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "media_asset",
+        "name": "error",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "media_asset",
+        "name": "updated_at",
+        "type": "timestamp(3) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "course_section",
+        "name": "course_section_course_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "course_id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "position",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "lesson",
+        "name": "lesson_section_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "section_id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "position",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "lesson",
+        "name": "lesson_course_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "course_id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "lesson_progress",
+        "name": "lesson_progress_course_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "user_id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "course_id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "course_section",
+        "name": "course_section_org_id_organization_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "org_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "organization",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "course_section",
+        "name": "course_section_course_id_content_item_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "course_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "content_item",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "lesson",
+        "name": "lesson_org_id_organization_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "org_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "organization",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "lesson",
+        "name": "lesson_course_id_content_item_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "course_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "content_item",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "lesson",
+        "name": "lesson_section_id_course_section_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "section_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "course_section",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "lesson",
+        "name": "lesson_media_id_media_asset_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "media_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "media_asset",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "SET NULL",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "lesson_progress",
+        "name": "lesson_progress_org_id_organization_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "org_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "organization",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "lesson_progress",
+        "name": "lesson_progress_user_id_user_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "user_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "user",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "lesson_progress",
+        "name": "lesson_progress_lesson_id_lesson_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "lesson_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "lesson",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "lesson_progress",
+        "name": "lesson_progress_course_id_content_item_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "course_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "content_item",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "lesson_progress",
+        "name": "lesson_progress_pkey",
+        "columns": [
+          "user_id",
+          "lesson_id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "course_section",
+        "name": "course_section_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "lesson",
+        "name": "lesson_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "course_section",
+        "name": "course_section_tenant",
+        "as": "PERMISSIVE",
+        "for": "ALL",
+        "roles": [
+          "ekra_app"
+        ],
+        "using": "org_id = current_setting('app.org_id', true)",
+        "withCheck": "org_id = current_setting('app.org_id', true)",
+        "entityType": "policies"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "lesson",
+        "name": "lesson_tenant",
+        "as": "PERMISSIVE",
+        "for": "ALL",
+        "roles": [
+          "ekra_app"
+        ],
+        "using": "org_id = current_setting('app.org_id', true)",
+        "withCheck": "org_id = current_setting('app.org_id', true)",
+        "entityType": "policies"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "lesson_progress",
+        "name": "lesson_progress_tenant",
+        "as": "PERMISSIVE",
+        "for": "ALL",
+        "roles": [
+          "ekra_app"
+        ],
+        "using": "org_id = current_setting('app.org_id', true)",
+        "withCheck": "org_id = current_setting('app.org_id', true)",
+        "entityType": "policies"
+      }
+    },
+    {
+      "op": "alter",
+      "key": "columns\u0000[\"public\",\"media_asset\",\"width\"]",
+      "set": {
+        "notNull": false
+      }
+    },
+    {
+      "op": "alter",
+      "key": "columns\u0000[\"public\",\"media_asset\",\"height\"]",
+      "set": {
+        "notNull": false
+      }
+    },
+    {
+      "op": "alter",
+      "key": "columns\u0000[\"public\",\"media_asset\",\"placeholder\"]",
+      "set": {
+        "notNull": false
+      }
+    },
+    {
+      "op": "alter",
+      "key": "columns\u0000[\"public\",\"media_asset\",\"files\"]",
+      "set": {
+        "default": "'[]'"
+      }
+    }
+  ]
+}
