@@ -1,3 +1,4 @@
+import { Av } from "@ekra/ui/components/av";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -106,42 +107,13 @@ function ExternalItem({
 	);
 }
 
-function Avatar({
-	viewer,
-	size = "size-6",
-}: {
-	viewer: Viewer;
-	size?: string;
-}) {
-	return viewer.image ? (
-		// a fixed round frame the photo fills, so any image shape stays a circle
-		<span className={cn(size, "block shrink-0 overflow-hidden rounded-full")}>
-			<img
-				src={viewer.image}
-				alt=""
-				className="size-full object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
-				referrerPolicy="no-referrer"
-			/>
-		</span>
-	) : (
-		<span
-			aria-hidden
-			className={cn(
-				size,
-				"grid shrink-0 place-items-center rounded-full bg-muted font-medium text-foreground text-xs",
-			)}
-		>
-			{initial(viewer.name)}
-		</span>
-	);
-}
-
-function Logo({ name, size = "size-6" }: { name: string; size?: string }) {
+// zadaci's .ws-logo: 22px, 6px corners
+function Logo({ name, size = "size-[22px]" }: { name: string; size?: string }) {
 	return (
 		<span
 			aria-hidden
 			className={cn(
-				"grid shrink-0 place-items-center rounded-md bg-brand font-semibold text-brand-foreground text-xs",
+				"grid shrink-0 place-items-center rounded-[6px] bg-brand font-semibold text-[11px] text-brand-foreground",
 				size,
 			)}
 		>
@@ -150,7 +122,6 @@ function Logo({ name, size = "size-6" }: { name: string; size?: string }) {
 	);
 }
 
-/** zadaci's sidebar with Frappe Learning's layout: organization on top, pages, then you at the bottom. */
 export function AppSidebar({
 	viewer,
 	collapsed,
@@ -175,15 +146,13 @@ export function AppSidebar({
 		await router.invalidate();
 	}
 
-	const item =
-		"flex h-[30px] shrink-0 items-center gap-2.5 whitespace-nowrap rounded-md px-2 text-left font-[450] text-base text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground";
-	// zadaci's collapse: the column narrows, icons stay put, labels fade while the edge clips them (desktop only;
-	// the phone drawer is always full width)
-	const fadeOnly = cn(
-		"transition-opacity duration-150 ease-out motion-reduce:transition-none",
-		collapsed && "md:opacity-0",
+	// zadaci's .sitem; collapsed (desktop only, the phone drawer is always full): centred, no padding, labels hidden
+	const item = cn(
+		"flex h-[30px] shrink-0 items-center gap-[9px] whitespace-nowrap rounded-md px-2 text-left font-[450] text-base text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground",
+		collapsed && "md:justify-center md:px-0",
 	);
-	const fade = cn("min-w-0", fadeOnly);
+	const hide = collapsed ? "md:hidden" : "";
+	const fade = cn("min-w-0 truncate", hide);
 
 	return (
 		<nav
@@ -197,32 +166,29 @@ export function AppSidebar({
 						collapsed={collapsed}
 					>
 						<DropdownMenuTrigger
-							className="flex min-w-0 flex-1 items-center gap-2 rounded-md p-1.5 text-left transition-colors hover:bg-muted"
+							className={cn(
+								"flex min-w-0 flex-1 items-center gap-2 rounded-md px-1.5 py-[5px] text-left transition-colors hover:bg-muted",
+								collapsed && "md:justify-center md:px-0",
+							)}
 							aria-label="Switch organization"
 							data-testid="organization-switcher"
 						>
 							<Logo name={active?.organization.name ?? "Ekra"} />
 							<span
 								className={cn(
-									"flex min-w-0 flex-1 items-center gap-2",
-									fadeOnly,
+									"min-w-0 flex-1 truncate font-semibold text-base",
+									hide,
 								)}
 							>
-								<span className="min-w-0 flex-1">
-									<span className="block truncate font-semibold text-base">
-										{active?.organization.name ?? "Choose an organization"}
-									</span>
-									{active && (
-										<span className="block truncate text-muted-foreground text-xs">
-											{ROLE_LABEL[active.role] ?? active.role}
-										</span>
-									)}
-								</span>
-								<span
-									aria-hidden
-									className="icon-[solar--sort-vertical-linear] size-3.5 shrink-0 text-muted-foreground"
-								/>
+								{active?.organization.name ?? "Choose an organization"}
 							</span>
+							<span
+								aria-hidden
+								className={cn(
+									"icon-[solar--sort-vertical-linear] size-[13px] shrink-0 text-muted-foreground",
+									hide,
+								)}
+							/>
 						</DropdownMenuTrigger>
 					</SideTip>
 					<DropdownMenuContent align="start" className="w-64">
@@ -376,27 +342,31 @@ export function AppSidebar({
 				<DropdownMenu>
 					<SideTip label={viewer.name} collapsed={collapsed}>
 						<DropdownMenuTrigger
-							className={cn(item, "h-9 font-medium text-foreground")}
+							// zadaci: 36px row, 22px avatar; collapsed it gets 7px padding to sit on the icons' line
+							className={cn(item, "h-9", collapsed && "md:px-[7px]")}
 							aria-label="Your account"
 						>
-							<Avatar viewer={viewer} />
+							<Av name={viewer.name} image={viewer.image} />
 							<span
 								className={cn(
-									"flex min-w-0 flex-1 items-center gap-2",
-									fadeOnly,
+									"min-w-0 flex-1 truncate font-medium text-foreground",
+									hide,
 								)}
 							>
-								<span className="min-w-0 flex-1 truncate">{viewer.name}</span>
-								<span
-									aria-hidden
-									className="icon-[solar--sort-vertical-linear] size-3.5 shrink-0 text-muted-foreground"
-								/>
+								{viewer.name}
 							</span>
+							<span
+								aria-hidden
+								className={cn(
+									"icon-[solar--sort-vertical-linear] size-[13px] shrink-0 text-muted-foreground",
+									hide,
+								)}
+							/>
 						</DropdownMenuTrigger>
 					</SideTip>
 					<DropdownMenuContent align="start" side="top" className="w-64">
 						<div className="flex items-center gap-2.5 px-2 py-2">
-							<Avatar viewer={viewer} size="size-9" />
+							<Av name={viewer.name} image={viewer.image} size="lg" />
 							<div className="min-w-0">
 								<div className="truncate font-semibold text-sm">
 									{viewer.name}
