@@ -8,6 +8,7 @@ import { tenantUrls } from "@ekra/core";
 import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 import { createIsomorphicFn } from "@tanstack/react-start";
 import { PageFailed, PageNotFound } from "./components/states";
+import { TAB_ID } from "./lib/tab";
 import { routeTree } from "./routeTree.gen";
 
 // During server rendering, call the API directly with the visitor's cookies; in the browser, use /api on this origin.
@@ -22,7 +23,12 @@ const graphqlFetch = createIsomorphicFn()
 		if (cookie) headers.set("cookie", cookie);
 		return fetch(`${env.API_URL}/api/graphql`, { ...init, headers });
 	})
-	.client((): typeof fetch => fetch);
+	.client((): typeof fetch => (input, init) => {
+		// lets live updates skip the tab that made a change (it already shows it)
+		const headers = new Headers(init?.headers);
+		headers.set("x-ekra-tab", TAB_ID);
+		return fetch(input, { ...init, headers });
+	});
 
 export function getRouter() {
 	const apolloClient = new ApolloClient({

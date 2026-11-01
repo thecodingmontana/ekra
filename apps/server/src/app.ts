@@ -1,15 +1,18 @@
 import { organization } from "@ekra/db";
 import { eq } from "drizzle-orm";
-import { EvlogError, parseError } from "evlog";
+import { createError, EvlogError, parseError } from "evlog";
 import type { EvlogVariables } from "evlog/hono";
 import { Hono } from "hono";
+import { streamSSE } from "hono/streaming";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { z } from "zod";
 import { auth } from "./auth/index.ts";
 import { db } from "./db.ts";
 import { env } from "./env.ts";
+import { orgBySlug } from "./graphql/tenant.ts";
 import { yoga } from "./graphql/yoga.ts";
 import { requestLogs } from "./log.ts";
+import { onChange } from "./realtime.ts";
 
 /** Every API route lives under /api, so a proxy (or the web app's server) can send /api/* here. */
 export const app = new Hono<EvlogVariables>().basePath("/api");
@@ -67,3 +70,35 @@ app.post("/client-error", async (c) => {
 app.on(["GET", "POST"], "/auth/*", (c) => auth.handler(c.req.raw));
 
 app.on(["GET", "POST"], "/graphql", (c) => yoga.fetch(c.req.raw));
+
+/** a comment line now and then keeps proxies from closing a quiet stream */
+const KEEPALIVE_MS = 25_000;
+
+// Live updates for one organization (Server-Sent Events): "changed" whenever something in it changes. Members only.
+app.get("/events", async (c) => {
+	const session = await auth.api.getSession({ headers: c.req.raw.headers });
+	if (!session) throw createError({ message: "Sign in first.", status: 401 });
+	const org = await orgBySlug({ session }, c.req.query("org") ?? "").catch(
+		() => {
+			throw createError({
+				message: "Choose an organization you belong to.",
+				status: 403,
+			});
+		},
+	);
+	return streamSSE(c, async (stream) => {
+		const stop = await onChange(org.id, (from) => {
+			void stream.writeSSE({
+				event: "changed",
+				data: JSON.stringify({ from }),
+			});
+		});
+		stream.onAbort(stop);
+		await stream.writeSSE({ event: "ready", data: "{}" });
+		while (!stream.aborted) {
+			await stream.sleep(KEEPALIVE_MS);
+			if (!stream.aborted) await stream.write(": keepalive\n\n");
+		}
+		stop();
+	});
+});

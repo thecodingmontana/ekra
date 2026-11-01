@@ -7,5 +7,6 @@ export {
 	passwordScore,
 } from "./password.ts";
 export { SLUG_MAX, SLUG_MIN, slugify, slugProblem } from "./slug.ts";
+export { spaced } from "./spaced.ts";
 export { tenantUrls } from "./tenant-url.ts";
 export { ago } from "./time.ts";

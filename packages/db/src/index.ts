@@ -21,7 +21,16 @@ export function createDb(url: string = env.DATABASE_URL) {
 		idle_timeout: 20,
 		connect_timeout: 10,
 	});
-	return { db: drizzle({ client }), close: () => client.end() };
+	return {
+		db: drizzle({ client }),
+		close: () => client.end(),
+		/** Postgres LISTEN on its own connection; calls `onMessage` with each NOTIFY payload. */
+		listen: (channel: string, onMessage: (payload: string) => void) =>
+			client.listen(channel, onMessage),
+		/** Postgres NOTIFY: every process LISTENing on `channel` gets `payload`. */
+		notify: (channel: string, payload: string) =>
+			client.notify(channel, payload),
+	};
 }
 
 export type Db = ReturnType<typeof createDb>["db"];

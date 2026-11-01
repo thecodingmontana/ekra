@@ -7,10 +7,16 @@ import { asc, eq } from "drizzle-orm";
 import { identifyUser } from "evlog/better-auth";
 import { useLogger } from "evlog/hono";
 import { GraphQLError } from "graphql";
-import { createSchema, createYoga, useErrorHandler } from "graphql-yoga";
+import {
+	createSchema,
+	createYoga,
+	type Plugin,
+	useErrorHandler,
+} from "graphql-yoga";
 import { auth, signInMethods } from "../auth/index.ts";
 import { db } from "../db.ts";
 import { env } from "../env.ts";
+import { announceChange, mutationSlugs } from "../realtime.ts";
 import { libraryResolvers, libraryTypeDefs } from "./library.ts";
 import { requireOrg } from "./tenant.ts";
 
@@ -135,6 +141,23 @@ const schema = createSchema<GraphQLContext>({
 	],
 });
 
+/** After a change succeeds, everyone viewing that organization refreshes (../realtime.ts). */
+const announceChanges: Plugin<GraphQLContext> = {
+	onExecute: ({ args }) => ({
+		onExecuteDone: ({ result }) => {
+			if ("errors" in result && result.errors?.length) return;
+			// the tab that made the change already shows it
+			const tab = args.contextValue.request.headers
+				.get("x-ekra-tab")
+				?.slice(0, 64);
+			announceChange(
+				mutationSlugs(args.document, args.variableValues, args.operationName),
+				tab ?? null,
+			);
+		},
+	}),
+};
+
 /** A bug rather than an expected refusal: anything not thrown on purpose as a GraphQLError. */
 const isUnexpected = (error: GraphQLError) =>
 	!!error.originalError && !(error.originalError instanceof GraphQLError);
@@ -162,6 +185,7 @@ export const yoga = createYoga<object, GraphQLContext>({
 		maxAliasesPlugin({ n: LIMITS.aliases }),
 		maxDepthPlugin({ n: LIMITS.depth }),
 		costLimitPlugin({ maxCost: LIMITS.cost }),
+		announceChanges,
 		useErrorHandler(({ errors }) => {
 			for (const error of errors)
 				if (error instanceof GraphQLError && isUnexpected(error)) {

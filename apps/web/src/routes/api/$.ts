@@ -14,7 +14,7 @@ const HOP_BY_HOP = [
  * Forwards every /api/* request to the Hono API (API_URL), so the browser only ever talks to this origin and
  * sign-in cookies stay first-party. Handles page loads too (a sign-in link, Google's callback), which a proxy rule
  * can miss because the page router answers them first. Redirects and cookies pass through untouched.
- * shortcut: plain HTTP only; WebSocket upgrades are added with the realtime work (Phase 1e).
+ * Responses stream through, so live updates (/api/events, Server-Sent Events) work over the same path.
  */
 async function forward({ request }: { request: Request }): Promise<Response> {
 	const url = new URL(request.url);

@@ -24,7 +24,7 @@ A separate static marketing site (`apps/site`) tells people about Ekra and is th
 | Auth             | **Better Auth** (Google, email links, passkeys, TOTP; `@better-auth/expo` + `bearer` later for mobile/desktop)                                                                                         |
 | DB               | PostgreSQL + Drizzle ORM 1.0 RC, drizzle-kit migrations, RLS per tenant                                                                                                                                |
 | Client data      | **Apollo Client 4** (as in zadaci). No offline sync.                                                                                                                                                   |
-| Realtime         | Own WebSockets (`@hono/node-ws`), fan-out via Postgres LISTEN/NOTIFY; ping → Apollo refetch                                                                                                            |
+| Realtime         | Server-Sent Events at `/api/events` (decided 2026-11-02, see Phase 1), fan-out via Postgres LISTEN/NOTIFY; ping → Apollo refetch                                                                       |
 | Files            | **SeaweedFS** via S3 API (`@aws-sdk/client-s3`, presigned URLs)                                                                                                                                        |
 | Images           | **Always compressed before storing** (sharp/libvips): auto-rotate, strip metadata (EXIF/GPS), cap at 2560px, AVIF + WebP at 320/640/1280/1920 widths. Raw uploads are never kept or served             |
 | Video            | **Always transcoded** in the worker (ffmpeg): probe first, adaptive HLS ladder up to the source size, loudness normalized, poster + scrub thumbnails, MP4 download copy; original kept for re-encodes  |
@@ -176,6 +176,12 @@ predictable latency and memory. It doesn't where the code is mostly glue around 
 
 - **Action**: organization/member/team, Better Auth in Hono, session middleware resolving host → org → role, Postgres RLS (`set_config('app.org_id')` per transaction), subdomain routing, branding. WebSocket server with session auth on upgrade, org-scoped channels, LISTEN/NOTIFY fan-out, "changed" ping → Apollo refetch.
 - **Validate**: cross-tenant read test on every resolver fails closed; WS rejects other-tenant channels.
+- **Done (1e, 2026-11-02)**: live updates. Decided: Server-Sent Events (`GET /api/events?org=slug`) instead of
+  WebSockets. The ping only goes server → browser, SSE is plain HTTP, so it passes through the web app's `/api`
+  forwarder and any operator proxy with no extra routes, and the browser reconnects by itself. Session and
+  membership are checked when the stream opens; every GraphQL mutation that names an organization (`slug`) sends a
+  Postgres NOTIFY, and each server process forwards it to its open streams. The tab that made the change skips the
+  refetch (`x-ekra-tab`). Live classes (Phase 7) will need two-way signaling: a WebSocket (or SSE + POST) then.
 - **Done (1d, 2026-11-01)**: each organization on its own subdomain of the app (acme.ekra.localhost:3000 in
   development), mapped onto the /o/$slug routes by the router's URL rewrite (`tenantUrls` in packages/core); one
   sign-in for all (session cookie for the app's domain and subdomains); sign-in/setup on the app's address. Branding

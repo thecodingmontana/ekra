@@ -5,6 +5,7 @@ import {
 	useRouter,
 } from "@tanstack/react-router";
 import { useEffect } from "react";
+import { LiveUpdates } from "@/components/live-updates";
 import { authClient } from "@/lib/auth-client";
 
 /**
@@ -36,5 +37,10 @@ function OrganizationLayout() {
 			.then(() => router.invalidate());
 	}, [id]);
 
-	return <Outlet />;
+	return (
+		<>
+			<LiveUpdates slug={membership.organization.slug} />
+			<Outlet />
+		</>
+	);
 }

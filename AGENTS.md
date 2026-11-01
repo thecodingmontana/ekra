@@ -208,7 +208,7 @@ The full plan, decisions and phases live in [PLAN.md](PLAN.md). Read it before s
 ## Stack
 
 TanStack Start (web) · Tailwind 4 + shadcn/ui on Base UI · Hono (API server) · Better Auth · GraphQL Yoga + Apollo Client · Drizzle ORM + PostgreSQL ·
-own WebSockets and WebRTC · SeaweedFS (S3 API) · pg-boss worker · evlog (structured logs) · Docker Compose on our own server.
+live updates over Server-Sent Events · WebRTC · SeaweedFS (S3 API) · pg-boss worker · evlog (structured logs) · Docker Compose on our own server.
 No Vercel, Supabase or Cloudinary.
 
 ## Layout
@@ -240,7 +240,7 @@ scripts/    repo scripts (git hooks)
 ## Conventions
 
 - **Local first.** Everything must work on a developer machine (`docker compose up` + `pnpm dev`) before anything
-  else. No reverse proxy is shipped: in dev, Vite proxies `/api` and `/ws` to the server; in production the operator
+  else. No reverse proxy is shipped: in dev, the web app forwards `/api` (live updates included) to the server; in production the operator
   brings their own proxy (Caddy, Nginx, …). No server/deploy setup until we decide to set up a server.
 - **Document every setup step in [SETUP.md](SETUP.md).** A new service, env variable, port or tool updates SETUP.md
   (and `.env.example`) in the same commit.
