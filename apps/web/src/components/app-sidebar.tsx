@@ -1,13 +1,12 @@
 import { Av } from "@ekra/ui/components/av";
 import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuGroup,
-	DropdownMenuItem,
-	DropdownMenuLabel,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from "@ekra/ui/components/dropdown-menu";
+	Menu,
+	MenuContent,
+	MenuItem,
+	MenuLabel,
+	MenuSeparator,
+	MenuTrigger,
+} from "@ekra/ui/components/menu";
 import {
 	Tooltip,
 	TooltipContent,
@@ -15,11 +14,19 @@ import {
 } from "@ekra/ui/components/tooltip";
 import { cn } from "@ekra/ui/lib/utils";
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
-import { type ReactElement, type ReactNode, useEffect, useState } from "react";
+import {
+	type CSSProperties,
+	type ReactElement,
+	type ReactNode,
+	useEffect,
+	useState,
+} from "react";
 import type { Viewer } from "@/graphql/viewer";
 import { authClient } from "@/lib/auth-client";
 import { getTheme, setTheme, type Theme } from "@/lib/theme";
 import { useSignOut } from "@/lib/use-sign-out";
+
+// Mirrors zadaci's components/shell/app-sidebar.tsx (sidebar, workspace menu, UserMenuContent), q/menu.tsx and ui.css.
 
 /** One entry per page that exists. Add a line when a phase ships a page (Courses, Members, Quizzes…). */
 const NAV = [
@@ -36,7 +43,7 @@ const ROLE_LABEL: Record<string, string> = {
 
 const REPO = "https://github.com/thecodingmontana/ekra";
 
-// the page you're on (TanStack Router marks active links with data-status="active")
+// the page you're on (TanStack Router marks active links with data-status="active"); zadaci's .sitem.on
 const ACTIVE =
 	"data-[status=active]:bg-background data-[status=active]:font-medium data-[status=active]:text-foreground data-[status=active]:shadow-[0_1px_2px_rgba(0,0,0,0.05),0_0_0_1px_var(--border)] dark:data-[status=active]:bg-muted dark:data-[status=active]:shadow-none";
 
@@ -46,11 +53,10 @@ const THEMES = [
 	["system", "icon-[solar--monitor-linear]", "System"],
 ] as const;
 
-const initial = (name: string) => name.trim()[0]?.toUpperCase() ?? "?";
-
+/** zadaci's kbd */
 function Kbd({ children }: { children: ReactNode }) {
 	return (
-		<kbd className="rounded border bg-muted px-1 font-mono text-[10px] text-muted-foreground leading-4">
+		<kbd className="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-[4px] border border-b-[1.5px] bg-background px-[5px] font-mono text-[11px] text-muted-foreground leading-none">
 			{children}
 		</kbd>
 	);
@@ -84,44 +90,46 @@ function SideTip({
 	);
 }
 
-function ExternalItem({
-	href,
-	icon,
-	children,
+/** zadaci's WsLogo: the organization's logo, or its first letter (Ekra's brand colour). */
+function OrgLogo({
+	organization,
+	px = 22,
 }: {
-	href: string;
-	icon: string;
-	children: string;
+	organization: { name: string; logo: string | null };
+	px?: number;
 }) {
-	return (
-		<DropdownMenuItem
-			onClick={() => window.open(href, "_blank", "noopener,noreferrer")}
-		>
-			<span aria-hidden className={cn(icon, "size-4")} />
-			<span className="flex-1">{children}</span>
-			<span
-				aria-hidden
-				className="icon-[solar--arrow-right-up-linear] size-3 text-muted-foreground"
+	const style = { width: px, height: px } as CSSProperties;
+	if (organization.logo)
+		return (
+			<img
+				src={organization.logo}
+				alt=""
+				style={style}
+				className="shrink-0 rounded-[6px] object-cover"
 			/>
-		</DropdownMenuItem>
-	);
-}
-
-// zadaci's .ws-logo: 22px, 6px corners
-function Logo({ name, size = "size-[22px]" }: { name: string; size?: string }) {
+		);
 	return (
 		<span
 			aria-hidden
-			className={cn(
-				"grid shrink-0 place-items-center rounded-[6px] bg-brand font-semibold text-[11px] text-brand-foreground",
-				size,
-			)}
+			style={{ ...style, fontSize: Math.max(9, Math.round(px * 0.46)) }}
+			className="grid shrink-0 place-items-center rounded-[6px] bg-brand font-semibold text-brand-foreground"
 		>
-			{initial(name)}
+			{organization.name[0]?.toUpperCase()}
 		</span>
 	);
 }
 
+const external = (href: string) =>
+	window.open(href, "_blank", "noopener,noreferrer");
+
+const arrow = (
+	<span
+		aria-hidden="true"
+		className="icon-[solar--arrow-right-up-linear] size-3"
+	/>
+);
+
+/** zadaci's sidebar with Frappe Learning's layout: organization on top, pages, then you at the bottom. */
 export function AppSidebar({
 	viewer,
 	collapsed,
@@ -159,21 +167,30 @@ export function AppSidebar({
 			aria-label="Main"
 			className="flex h-full flex-col overflow-hidden border-r bg-sidebar text-sidebar-foreground"
 		>
-			<div className="flex items-center gap-1 p-2">
-				<DropdownMenu>
+			<div className="flex items-center gap-0.5 p-2 pb-1">
+				<Menu>
 					<SideTip
 						label={active?.organization.name ?? "Switch organization"}
 						collapsed={collapsed}
 					>
-						<DropdownMenuTrigger
-							className={cn(
-								"flex min-w-0 flex-1 items-center gap-2 rounded-md px-1.5 py-[5px] text-left transition-colors hover:bg-muted",
-								collapsed && "md:justify-center md:px-0",
-							)}
-							aria-label="Switch organization"
-							data-testid="organization-switcher"
+						<MenuTrigger
+							render={
+								<button
+									type="button"
+									aria-label="Switch organization"
+									data-testid="organization-switcher"
+									className={cn(
+										"flex min-w-0 flex-1 items-center gap-2 rounded-md px-1.5 py-[5px] text-left transition-colors hover:bg-muted",
+										collapsed && "md:justify-center md:px-0",
+									)}
+								/>
+							}
 						>
-							<Logo name={active?.organization.name ?? "Ekra"} />
+							<OrgLogo
+								organization={
+									active?.organization ?? { name: "Ekra", logo: null }
+								}
+							/>
 							<span
 								className={cn(
 									"min-w-0 flex-1 truncate font-semibold text-base",
@@ -189,38 +206,38 @@ export function AppSidebar({
 									hide,
 								)}
 							/>
-						</DropdownMenuTrigger>
+						</MenuTrigger>
 					</SideTip>
-					<DropdownMenuContent align="start" className="w-64">
-						<DropdownMenuGroup>
-							<DropdownMenuLabel>Organizations</DropdownMenuLabel>
-							{viewer.memberships.map(({ organization, role }) => (
-								<DropdownMenuItem
-									key={organization.id}
-									onClick={() => switchTo(organization.id)}
-								>
-									<Logo name={organization.name} size="size-5" />
-									<span className="min-w-0 flex-1 truncate">
-										{organization.name}
-									</span>
-									<span className="text-muted-foreground text-xs">
-										{organization.id === viewer.activeOrganizationId
-											? "✓"
-											: (ROLE_LABEL[role] ?? role)}
-									</span>
-								</DropdownMenuItem>
-							))}
-						</DropdownMenuGroup>
-						<DropdownMenuSeparator />
-						<DropdownMenuItem onClick={() => navigate({ to: "/onboarding" })}>
-							<span
-								aria-hidden
-								className="icon-[solar--add-circle-linear] size-4"
-							/>
+					<MenuContent width={260} align="start">
+						<MenuLabel>Organizations</MenuLabel>
+						{viewer.memberships.map(({ organization, role }) => (
+							<MenuItem
+								key={organization.id}
+								checked={organization.id === viewer.activeOrganizationId}
+								onSelect={() => switchTo(organization.id)}
+							>
+								<OrgLogo organization={organization} px={20} />
+								<span className="min-w-0 flex-1 truncate">
+									{organization.name}
+								</span>
+								<span className="text-[11px] text-muted-foreground">
+									{ROLE_LABEL[role] ?? role}
+								</span>
+							</MenuItem>
+						))}
+						<MenuSeparator />
+						<MenuItem
+							icon="icon-[hugeicons--plus-sign]"
+							onSelect={() => navigate({ to: "/onboarding" })}
+						>
 							Create organization
-						</DropdownMenuItem>
-					</DropdownMenuContent>
-				</DropdownMenu>
+						</MenuItem>
+						<MenuSeparator />
+						<MenuItem icon="icon-[solar--logout-2-linear]" onSelect={signOut}>
+							Sign out
+						</MenuItem>
+					</MenuContent>
+				</Menu>
 				{!collapsed && (
 					<SideTip
 						label={
@@ -239,7 +256,7 @@ export function AppSidebar({
 						>
 							<span
 								aria-hidden
-								className="icon-[solar--sidebar-minimalistic-linear] size-4"
+								className="icon-[solar--sidebar-minimalistic-linear] size-[15px]"
 							/>
 						</button>
 					</SideTip>
@@ -247,7 +264,7 @@ export function AppSidebar({
 			</div>
 
 			{/* scrolls without a visible bar (one would eat width and shift the icons when collapsed), and never sideways */}
-			<div className="flex flex-1 flex-col gap-0.5 overflow-x-hidden overflow-y-auto px-2 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+			<div className="flex flex-1 flex-col gap-0.5 overflow-x-hidden overflow-y-auto px-2 pt-1 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
 				{collapsed && (
 					<SideTip
 						label={
@@ -284,38 +301,44 @@ export function AppSidebar({
 				))}
 			</div>
 
-			<div className="flex flex-col gap-0.5 border-t p-2">
-				<DropdownMenu>
+			<div className="flex flex-col gap-0.5 border-t px-2 pt-1.5 pb-2">
+				<Menu>
 					<SideTip label="Help & resources" collapsed={collapsed}>
-						<DropdownMenuTrigger className={item}>
+						<MenuTrigger render={<button type="button" className={item} />}>
 							<span
 								aria-hidden
 								className="icon-[solar--question-circle-linear] size-4 shrink-0"
 							/>
 							<span className={fade}>Help & resources</span>
-						</DropdownMenuTrigger>
+						</MenuTrigger>
 					</SideTip>
-					<DropdownMenuContent align="start" side="top" className="w-60">
-						<DropdownMenuGroup>
-							<DropdownMenuLabel>Help & resources</DropdownMenuLabel>
-							<ExternalItem
-								href={`${REPO}/blob/main/SETUP.md`}
-								icon="icon-[solar--book-2-linear]"
-							>
-								Setup guide
-							</ExternalItem>
-							<ExternalItem
-								href={`${REPO}/issues/new/choose`}
-								icon="icon-[solar--bug-linear]"
-							>
-								Report a problem
-							</ExternalItem>
-							<ExternalItem href={REPO} icon="icon-[hugeicons--github]">
-								Source code on GitHub
-							</ExternalItem>
-						</DropdownMenuGroup>
-					</DropdownMenuContent>
-				</DropdownMenu>
+					<MenuContent width={260} align="start" side="top">
+						<MenuLabel>Help & resources</MenuLabel>
+						<MenuItem
+							icon="icon-[solar--book-2-linear]"
+							onSelect={() => external(`${REPO}/blob/main/SETUP.md`)}
+							r={arrow}
+						>
+							Setup guide
+						</MenuItem>
+						<MenuSeparator />
+						<MenuLabel>Support</MenuLabel>
+						<MenuItem
+							icon="icon-[solar--bug-linear]"
+							onSelect={() => external(`${REPO}/issues/new/choose`)}
+							r={arrow}
+						>
+							Report a problem
+						</MenuItem>
+						<MenuItem
+							icon="icon-[hugeicons--github]"
+							onSelect={() => external(REPO)}
+							r={arrow}
+						>
+							Source code on GitHub
+						</MenuItem>
+					</MenuContent>
+				</Menu>
 				<SideTip label="Send feedback" collapsed={collapsed}>
 					<a
 						href={`${REPO}/issues/new/choose`}
@@ -339,12 +362,17 @@ export function AppSidebar({
 						<span className={fade}>Settings</span>
 					</Link>
 				</SideTip>
-				<DropdownMenu>
-					<SideTip label={viewer.name} collapsed={collapsed}>
-						<DropdownMenuTrigger
-							// zadaci: 36px row, 22px avatar; collapsed it gets 7px padding to sit on the icons' line
-							className={cn(item, "h-9", collapsed && "md:px-[7px]")}
-							aria-label="Your account"
+				<Menu>
+					<SideTip label="Account" collapsed={collapsed}>
+						<MenuTrigger
+							render={
+								<button
+									type="button"
+									aria-label="Your account"
+									// zadaci: 36px row, 22px avatar; collapsed it gets 7px padding to sit on the icons' line
+									className={cn(item, "h-9", collapsed && "md:px-[7px]")}
+								/>
+							}
 						>
 							<Av name={viewer.name} image={viewer.image} />
 							<span
@@ -362,62 +390,55 @@ export function AppSidebar({
 									hide,
 								)}
 							/>
-						</DropdownMenuTrigger>
+						</MenuTrigger>
 					</SideTip>
-					<DropdownMenuContent align="start" side="top" className="w-64">
-						<div className="flex items-center gap-2.5 px-2 py-2">
+					{/* zadaci's UserMenuContent */}
+					<MenuContent width={260} align="start" side="top">
+						<div className="flex items-center gap-2.5 px-2 pt-2 pb-2.5">
 							<Av name={viewer.name} image={viewer.image} size="lg" />
 							<div className="min-w-0">
-								<div className="truncate font-semibold text-sm">
-									{viewer.name}
-								</div>
+								<div className="font-semibold">{viewer.name}</div>
 								<div className="truncate text-muted-foreground text-xs">
 									{viewer.email}
 								</div>
 							</div>
 						</div>
-						<DropdownMenuSeparator />
-						<DropdownMenuItem
-							onClick={() => navigate({ to: "/settings/security" })}
+						<MenuSeparator />
+						<MenuItem
+							icon="icon-[solar--settings-linear]"
+							onSelect={() => navigate({ to: "/settings/security" })}
 						>
-							<span
-								aria-hidden
-								className="icon-[solar--settings-linear] size-4"
-							/>
 							Account settings
-						</DropdownMenuItem>
-						<DropdownMenuSeparator />
-						<DropdownMenuGroup>
-							<DropdownMenuLabel>Theme</DropdownMenuLabel>
-						</DropdownMenuGroup>
-						<fieldset className="mx-1.5 mb-1.5 flex gap-0.5 rounded-md bg-muted p-0.5">
-							<legend className="sr-only">Theme</legend>
-							{THEMES.map(([choice, icon, label]) => (
-								<button
-									key={choice}
-									type="button"
-									aria-pressed={theme === choice}
-									onClick={() => {
-										setTheme(choice);
-										setThemeChoice(choice);
-									}}
-									className="flex flex-1 items-center justify-center gap-1.5 rounded-[5px] py-1 text-muted-foreground text-xs transition-colors hover:text-foreground aria-pressed:bg-background aria-pressed:font-medium aria-pressed:text-foreground aria-pressed:shadow-[0_1px_2px_rgba(0,0,0,0.08),0_0_0_1px_var(--border)]"
-								>
-									<span aria-hidden className={cn(icon, "size-3.5")} />
-									{label}
-								</button>
-							))}
-						</fieldset>
-						<DropdownMenuSeparator />
-						<DropdownMenuItem onClick={signOut}>
-							<span
-								aria-hidden
-								className="icon-[solar--logout-2-linear] size-4"
-							/>
+						</MenuItem>
+						<MenuSeparator />
+						<MenuLabel>Theme</MenuLabel>
+						<div className="px-1.5 pt-0.5 pb-1.5">
+							{/* zadaci's .seg */}
+							<fieldset className="flex w-full gap-0.5 rounded-[6px] bg-muted p-0.5">
+								<legend className="sr-only">Theme</legend>
+								{THEMES.map(([choice, icon, label]) => (
+									<button
+										key={choice}
+										type="button"
+										aria-pressed={theme === choice}
+										onClick={() => {
+											setTheme(choice);
+											setThemeChoice(choice);
+										}}
+										className="inline-flex h-6 flex-1 items-center justify-center gap-[5px] rounded-[5px] px-[9px] font-medium text-muted-foreground text-xs transition-colors hover:text-foreground aria-pressed:bg-background aria-pressed:text-foreground aria-pressed:shadow-[0_1px_2px_rgba(0,0,0,0.08),0_0_0_1px_var(--border)]"
+									>
+										<span aria-hidden className={cn(icon, "size-[13px]")} />
+										{label}
+									</button>
+								))}
+							</fieldset>
+						</div>
+						<MenuSeparator />
+						<MenuItem icon="icon-[solar--logout-2-linear]" onSelect={signOut}>
 							Sign out
-						</DropdownMenuItem>
-					</DropdownMenuContent>
-				</DropdownMenu>
+						</MenuItem>
+					</MenuContent>
+				</Menu>
 			</div>
 		</nav>
 	);
