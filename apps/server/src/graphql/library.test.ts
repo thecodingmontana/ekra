@@ -384,3 +384,210 @@ test("bad input is refused with a reason", async () => {
 	});
 	assert.equal(code(long.result), "BAD_USER_INPUT");
 });
+
+const SAVE = `mutation ($slug: String!, $id: ID!, $doc: String!, $base: String) { r: saveContentBody(slug: $slug, id: $id, doc: $doc, baseBodyUpdatedAt: $base) { bodyUpdatedAt } }`;
+const READ = `query ($slug: String!, $id: ID!) { r: content(slug: $slug, id: $id) { doc bodyUpdatedAt } }`;
+const VERSIONS = `query ($slug: String!, $id: ID!) { r: contentVersions(slug: $slug, id: $id) { id bodyText author { name } } }`;
+const RESTORE = `mutation ($slug: String!, $id: ID!, $versionId: ID!) { r: restoreContentVersion(slug: $slug, id: $id, versionId: $versionId) { bodyUpdatedAt } }`;
+const page = (text: string) =>
+	JSON.stringify({
+		type: "doc",
+		content: [{ type: "paragraph", content: [{ type: "text", text }] }],
+	});
+const saved = (r: Result) =>
+	(r.data?.r as { bodyUpdatedAt: string } | undefined)?.bodyUpdatedAt ?? null;
+
+test("a page's body saves, reads back, and refuses a save on top of a newer one", async () => {
+	const { item } = await create("amina", slugs.amina, {
+		kind: "page",
+		title: "Handbook",
+	});
+	const first = await gql("amina", SAVE, {
+		slug: slugs.amina,
+		id: item.id,
+		doc: page("Hello"),
+		base: null,
+	});
+	const base = saved(first);
+	assert.ok(base, JSON.stringify(first.errors));
+	const read = await gql("amina", READ, { slug: slugs.amina, id: item.id });
+	assert.deepEqual(
+		JSON.parse((read.data?.r as { doc: string } | undefined)?.doc ?? ""),
+		JSON.parse(page("Hello")),
+	);
+
+	// another tab still on the empty page can't overwrite it
+	const stale = await gql("amina", SAVE, {
+		slug: slugs.amina,
+		id: item.id,
+		doc: page("Old tab"),
+		base: null,
+	});
+	assert.equal(code(stale), "CONFLICT");
+	const next = await gql("amina", SAVE, {
+		slug: slugs.amina,
+		id: item.id,
+		doc: page("Hello again"),
+		base,
+	});
+	assert.ok(saved(next));
+
+	// publishing doesn't count as a body change
+	await run("amina", "publish", slugs.amina, item.id);
+	const after = await gql("amina", SAVE, {
+		slug: slugs.amina,
+		id: item.id,
+		doc: page("Hello there"),
+		base: saved(next),
+	});
+	assert.ok(saved(after), JSON.stringify(after.errors));
+
+	// learners read it, can't save it; other organizations can't even read it
+	const learner = await gql("carol", READ, { slug: slugs.amina, id: item.id });
+	assert.match(
+		(learner.data?.r as { doc: string } | undefined)?.doc ?? "",
+		/Hello there/,
+	);
+	assert.equal(
+		code(
+			await gql("carol", SAVE, {
+				slug: slugs.amina,
+				id: item.id,
+				doc: page("x"),
+				base: saved(after),
+			}),
+		),
+		"FORBIDDEN",
+	);
+	assert.equal(
+		(await gql("brian", READ, { slug: slugs.brian, id: item.id })).data?.r,
+		null,
+	);
+	assert.equal(
+		code(
+			await gql("brian", SAVE, {
+				slug: slugs.brian,
+				id: item.id,
+				doc: page("x"),
+				base: saved(after),
+			}),
+		),
+		"NOT_FOUND",
+	);
+});
+
+test("a body with anything the editor can't make is refused", async () => {
+	const { item } = await create("amina", slugs.amina, {
+		kind: "page",
+		title: "Checked",
+	});
+	const bad = (doc: string) =>
+		gql("amina", SAVE, { slug: slugs.amina, id: item.id, doc, base: null });
+	assert.equal(code(await bad("{not json")), "BAD_USER_INPUT");
+	const script = await bad(
+		JSON.stringify({ type: "doc", content: [{ type: "script" }] }),
+	);
+	assert.equal(code(script), "BAD_USER_INPUT");
+	assert.match(script.errors?.[0]?.message ?? "", /Unsupported block/);
+	const picture = await bad(
+		JSON.stringify({
+			type: "doc",
+			content: [
+				{ type: "image", attrs: { src: "https://evil.example/a.png" } },
+			],
+		}),
+	);
+	assert.equal(code(picture), "BAD_USER_INPUT");
+});
+
+test("versions: one per sitting, restore brings an old body back, others see nothing", async () => {
+	const { item } = await create("amina", slugs.amina, {
+		kind: "wiki",
+		title: "Rules",
+	});
+	const one = saved(
+		await gql("amina", SAVE, {
+			slug: slugs.amina,
+			id: item.id,
+			doc: page("First rules"),
+			base: null,
+		}),
+	);
+	const two = saved(
+		await gql("amina", SAVE, {
+			slug: slugs.amina,
+			id: item.id,
+			doc: page("Second rules"),
+			base: one,
+		}),
+	);
+	// Tom saves next: a new sitting, so a new version
+	const three = saved(
+		await gql("tom", SAVE, {
+			slug: slugs.amina,
+			id: item.id,
+			doc: page("Tom's rules"),
+			base: two,
+		}),
+	);
+	assert.ok(three);
+	const versions = (
+		await gql("amina", VERSIONS, { slug: slugs.amina, id: item.id })
+	).data?.r as { id: string; bodyText: string; author: { name: string } }[];
+	assert.deepEqual(
+		versions.map((v) => v.bodyText),
+		["Tom's rules", "Second rules"],
+	);
+
+	const restored = await gql("amina", RESTORE, {
+		slug: slugs.amina,
+		id: item.id,
+		versionId: versions[1]?.id,
+	});
+	assert.ok(saved(restored), JSON.stringify(restored.errors));
+	const now = await gql("amina", READ, { slug: slugs.amina, id: item.id });
+	assert.match(
+		(now.data?.r as { doc: string } | undefined)?.doc ?? "",
+		/Second rules/,
+	);
+	const history = (
+		await gql("amina", VERSIONS, { slug: slugs.amina, id: item.id })
+	).data?.r as { bodyText: string }[];
+	assert.deepEqual(
+		history.map((v) => v.bodyText),
+		["Second rules", "Tom's rules", "Second rules"],
+	);
+
+	// learners don't see history; another organization finds none, even with the right ids
+	assert.equal(
+		code(await gql("carol", VERSIONS, { slug: slugs.amina, id: item.id })),
+		"FORBIDDEN",
+	);
+	assert.equal(
+		code(await gql("brian", VERSIONS, { slug: slugs.amina, id: item.id })),
+		"FORBIDDEN",
+	);
+	assert.deepEqual(
+		(await gql("brian", VERSIONS, { slug: slugs.brian, id: item.id })).data?.r,
+		[],
+	);
+	assert.equal(
+		code(
+			await gql("brian", RESTORE, {
+				slug: slugs.brian,
+				id: item.id,
+				versionId: versions[0]?.id,
+			}),
+		),
+		"NOT_FOUND",
+	);
+
+	// a copy keeps the body
+	const copy = (await run("amina", "duplicate", slugs.amina, item.id)).data
+		?.r as Item;
+	const copied = await gql("amina", READ, { slug: slugs.amina, id: copy.id });
+	assert.match(
+		(copied.data?.r as { doc: string } | undefined)?.doc ?? "",
+		/Second rules/,
+	);
+});

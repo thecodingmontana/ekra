@@ -8,6 +8,7 @@ import {
 	type AnyPgColumn,
 	boolean,
 	index,
+	jsonb,
 	pgEnum,
 	pgPolicy,
 	pgTable,
@@ -58,6 +59,12 @@ export const contentItem = pgTable(
 		}),
 		/** a starting point others copy ("Use template"); learners never see templates */
 		isTemplate: boolean("is_template").notNull().default(false),
+		/** the body (Tiptap JSON, checked by checkDoc in @ekra/core); null until someone writes in it */
+		doc: jsonb("doc"),
+		/** the body as plain text, for search and the version history's "what changed" */
+		bodyText: text("body_text"),
+		/** when the body last changed: an editor saving on top of an older body is refused (not title or status edits) */
+		bodyUpdatedAt: moment("body_updated_at"),
 		createdBy: idRef("created_by").references(() => user.id, {
 			onDelete: "set null",
 		}),
@@ -112,5 +119,33 @@ export const contentView = pgTable(
 		primaryKey({ columns: [table.userId, table.contentId] }),
 		index("content_view_user_idx").on(table.userId, table.viewedAt),
 		tenantPolicy("content_view"),
+	],
+).enableRLS();
+
+/**
+ * Earlier states of a piece of content's body. Saves by the same person within a few minutes update one version,
+ * so the history reads like sittings, not keystrokes.
+ */
+export const contentVersion = pgTable(
+	"content_version",
+	{
+		id: id(),
+		orgId: idRef("org_id")
+			.notNull()
+			.references(() => organization.id, { onDelete: "cascade" }),
+		contentId: idRef("content_id")
+			.notNull()
+			.references(() => contentItem.id, { onDelete: "cascade" }),
+		title: text("title").notNull(),
+		doc: jsonb("doc").notNull(),
+		bodyText: text("body_text").notNull(),
+		authorId: idRef("author_id").references(() => user.id, {
+			onDelete: "set null",
+		}),
+		...timestamps,
+	},
+	(table) => [
+		index("content_version_content_idx").on(table.contentId, table.updatedAt),
+		tenantPolicy("content_version"),
 	],
 ).enableRLS();

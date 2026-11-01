@@ -1,0 +1,47 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "c94e2995-f089-4dec-a1be-1c93be168867",
+  "prevIds": [
+    "fc9573dd-b74f-477e-91c5-8fffbcbab6e4"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "content_item",
+        "body_updated_at"
+      ],
+      "writes": [
+        "s|col|public.content_item.body_updated_at",
+        "n|col|public.content_item.body_updated_at",
+        "e|col|public.content_item.body_updated_at"
+      ],
+      "reads": [
+        "n|tbl|public.content_item",
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "content_item",
+        "name": "body_updated_at",
+        "type": "timestamp(3) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}

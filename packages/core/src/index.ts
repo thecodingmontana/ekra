@@ -1,3 +1,11 @@
+export {
+	checkDoc,
+	DocError,
+	type DocNode,
+	isImageSrc,
+	isYoutubeSrc,
+	MAX_DOC_BYTES,
+} from "./doc.ts";
 export { safeNextPath } from "./next-path.ts";
 export { isOrgColor, ORG_COLORS } from "./org-color.ts";
 export {
@@ -9,4 +17,5 @@ export {
 export { SLUG_MAX, SLUG_MIN, slugify, slugProblem } from "./slug.ts";
 export { spaced } from "./spaced.ts";
 export { tenantUrls } from "./tenant-url.ts";
+export { type DiffPart, diffWords } from "./text-diff.ts";
 export { ago } from "./time.ts";

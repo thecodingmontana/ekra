@@ -19,6 +19,7 @@ export {
 	contentItem,
 	contentKind,
 	contentStatus,
+	contentVersion,
 	contentView,
 	tenantPolicy,
 } from "./content.ts";

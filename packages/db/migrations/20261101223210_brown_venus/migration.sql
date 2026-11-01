@@ -1,0 +1,1 @@
+ALTER TABLE "content_item" ADD COLUMN "body_updated_at" timestamp(3) with time zone;
