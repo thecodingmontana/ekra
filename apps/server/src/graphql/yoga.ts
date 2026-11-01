@@ -12,16 +12,14 @@ import { auth, signInMethods } from "../auth/index.ts";
 import { db } from "../db.ts";
 import { env } from "../env.ts";
 import { libraryResolvers, libraryTypeDefs } from "./library.ts";
-import { type ActiveOrg, activeOrg, requireOrg } from "./tenant.ts";
+import { requireOrg } from "./tenant.ts";
 
 /**
- * What every resolver knows about the request: the Better Auth session (null when signed out) and the organization
- * it works in with the person's role (null when none, or when they aren't a member of it). Tenant resolvers use
- * `requireOrg` (./tenant.ts).
+ * What every resolver knows about the request: the Better Auth session (null when signed out). Tenant resolvers
+ * find their organization with `requireOrg` or `orgBySlug` (./tenant.ts), checked against `member` each time.
  */
 export type GraphQLContext = {
 	session: Awaited<ReturnType<typeof auth.api.getSession>>;
-	org: ActiveOrg | null;
 };
 
 /**
@@ -91,7 +89,7 @@ const schema = createSchema<GraphQLContext>({
 				health: () => "ok",
 				signInMethods: () => signInMethods,
 				organization: async (_parent, _args, ctx) => {
-					const { id, role } = requireOrg(ctx);
+					const { id, role } = await requireOrg(ctx);
 					const [row] = await db
 						.select()
 						.from(organization)
@@ -154,11 +152,7 @@ export const yoga = createYoga<object, GraphQLContext>({
 					organizationId: s.session.activeOrganizationId ?? null,
 				}),
 			});
-		const org = await activeOrg(
-			session?.user.id,
-			session?.session.activeOrganizationId,
-		);
-		return { session, org };
+		return { session };
 	},
 	// Yoga logs every request at "info": keep the logs to problems
 	logging: "warn",

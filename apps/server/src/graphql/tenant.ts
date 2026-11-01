@@ -26,16 +26,25 @@ export async function activeOrg(
 }
 
 /**
- * Every resolver that reads or writes an organization's data starts here, and scopes its queries by the id it
- * returns. Refuses (FORBIDDEN) when the request has no organization it belongs to.
- * Tenant tables add Postgres row-level security on top (withOrg in @ekra/db).
+ * The session's organization for resolvers that work in it (`organization`), checked against `member` when asked.
+ * Refuses (FORBIDDEN) when the request has no organization it belongs to. Library resolvers name their
+ * organization instead (`orgBySlug`).
  */
-export function requireOrg(ctx: { org: ActiveOrg | null }): ActiveOrg {
-	if (!ctx.org)
+export async function requireOrg(ctx: {
+	session: {
+		user: { id: string };
+		session: { activeOrganizationId?: string | null };
+	} | null;
+}): Promise<ActiveOrg> {
+	const org = await activeOrg(
+		ctx.session?.user.id,
+		ctx.session?.session.activeOrganizationId,
+	);
+	if (!org)
 		throw new GraphQLError("Choose an organization you belong to first.", {
 			extensions: { code: "FORBIDDEN" },
 		});
-	return ctx.org;
+	return org;
 }
 
 /**
