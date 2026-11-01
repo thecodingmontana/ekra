@@ -114,11 +114,15 @@ function Avatar({
 	size?: string;
 }) {
 	return viewer.image ? (
-		<img
-			src={viewer.image}
-			alt=""
-			className={cn(size, "shrink-0 rounded-full")}
-		/>
+		// a fixed round frame the photo fills, so any image shape stays a circle
+		<span className={cn(size, "block shrink-0 overflow-hidden rounded-full")}>
+			<img
+				src={viewer.image}
+				alt=""
+				className="size-full object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
+				referrerPolicy="no-referrer"
+			/>
+		</span>
 	) : (
 		<span
 			aria-hidden

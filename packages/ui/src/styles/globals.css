@@ -152,6 +152,18 @@
 	body {
 		@apply bg-background text-base text-foreground;
 	}
+	/* Tailwind 4 dropped the pointer on buttons; anything clickable shows it (not when disabled) */
+	:is(
+		button,
+		[role="button"],
+		[role="menuitem"],
+		[role="menuitemradio"],
+		[role="menuitemcheckbox"],
+		[role="option"],
+		[role="tab"]
+	):not(:disabled, [aria-disabled="true"], [data-disabled]) {
+		cursor: pointer;
+	}
 }
 
 /* Toasts (components/toast): colours for light and dark, and the pending spinner */
