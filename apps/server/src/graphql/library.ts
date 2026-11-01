@@ -237,7 +237,7 @@ async function checkFolder(tx: Tx, folderId: string, movingId?: string) {
 			})
 			.from(contentItem)
 			.where(eq(contentItem.id, at));
-		if (!folder || folder.kind !== "folder" || folder.archivedAt)
+		if (folder?.kind !== "folder" || folder.archivedAt)
 			refuse("Pick a folder from this library.", "BAD_USER_INPUT");
 		at = folder?.parentId ?? null;
 	}

@@ -22,6 +22,7 @@ import {
 	type LibraryData,
 } from "@/graphql/library";
 import { KIND_ORDER, KINDS } from "@/lib/content-kinds";
+import { filterLibrary } from "@/lib/library-filter";
 import { prime, reloadOnEnter } from "@/lib/routing";
 
 const SHOWS = [
@@ -107,54 +108,19 @@ function LibraryPage() {
 	const canManage = data?.library.canManage ?? false;
 	const all = archived ? (live?.library.items ?? []) : items;
 	const folders = all.filter((i) => i.kind === "folder");
-	const byId = new Map(all.map((i) => [i.id, i]));
 	const setSearch = (patch: Partial<Search>) =>
 		navigate({ search: (s) => ({ ...s, ...patch }), replace: true });
 
-	// folders are browsed only on the plain All view; any filter or search lists matches from every folder
-	const browsing =
-		show === "all" && !q.trim() && kind === "all" && status === "all";
-	const here = browsing && folder ? byId.get(folder) : undefined;
-	const visibleIds = new Set(items.map((i) => i.id));
-	const inHere = (i: ContentItem) =>
-		here ? i.parentId === here.id : !i.parentId || !visibleIds.has(i.parentId);
+	const { shown, counts, here, crumbs } = filterLibrary(items, all, {
+		kind,
+		show,
+		status,
+		sort,
+		q,
+		folder,
+	});
 	const childCount = (id: string) =>
 		items.filter((i) => i.parentId === id).length;
-
-	const query = q.trim().toLowerCase();
-	const matching = items.filter(
-		(i) =>
-			(show !== "favorites" || i.isFavorite) &&
-			(show !== "recent" || i.viewedAt) &&
-			(show !== "templates" || i.isTemplate) &&
-			(status === "all" || (i.kind !== "folder" && i.status === status)) &&
-			(!query ||
-				i.title.toLowerCase().includes(query) ||
-				(i.description ?? "").toLowerCase().includes(query)),
-	);
-	// tab counts are totals across folders
-	const counts = new Map<string, number>([["all", matching.length]]);
-	for (const i of matching) counts.set(i.kind, (counts.get(i.kind) ?? 0) + 1);
-	const base = browsing ? matching.filter(inHere) : matching;
-	const keyOf: Record<
-		NonNullable<Search["sort"]>,
-		(i: ContentItem) => string
-	> = {
-		updated: (i) => (show === "recent" ? (i.viewedAt ?? "") : i.updatedAt),
-		created: (i) => i.createdAt,
-		title: (i) => i.title.toLowerCase(),
-	};
-	const key = keyOf[sort];
-	const shown = base
-		.filter((i) => kind === "all" || i.kind === kind)
-		.sort((a, b) => {
-			// folders first while browsing, then by the chosen order
-			if (browsing && (a.kind === "folder") !== (b.kind === "folder"))
-				return a.kind === "folder" ? -1 : 1;
-			const [x, y] = [key(a), key(b)];
-			if (x === y) return 0;
-			return sort === "title" ? (x > y ? 1 : -1) : x < y ? 1 : -1;
-		});
 
 	const open = (i: ContentItem) =>
 		i.kind === "folder" && !archived
@@ -163,14 +129,7 @@ function LibraryPage() {
 	const menu = (i: ContentItem) => (
 		<ContentMenu slug={slug} item={i} canManage={canManage} folders={folders} />
 	);
-	const crumbs: ContentItem[] = [];
-	for (
-		let at = here;
-		at && crumbs.length < 20;
-		at = at.parentId ? byId.get(at.parentId) : undefined
-	)
-		crumbs.unshift(at);
-	const filtered = kind !== "all" || status !== "all" || !!query;
+	const filtered = kind !== "all" || status !== "all" || !!q.trim();
 	const showLabel = SHOWS.find(([k]) => k === show)?.[1] ?? "All content";
 
 	let body: ReactNode;

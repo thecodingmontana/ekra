@@ -14,7 +14,8 @@ import {
 import { KIND_ORDER, KINDS } from "@/lib/content-kinds";
 import { KindIcon } from "./bits";
 
-export const REFETCH = { refetchQueries: ["Library", "Content"] };
+// mutations return the whole item, so an open content page updates from the cache; lists refetch
+export const REFETCH = { refetchQueries: ["Library"] };
 
 const TEXTAREA =
 	"min-h-[72px] w-full resize-y rounded-lg border border-input bg-transparent px-2.5 py-2 text-base leading-normal outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30";

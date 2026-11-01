@@ -7,6 +7,7 @@ import {
 	createFileRoute,
 	Link,
 	notFound,
+	redirect,
 	useNavigate,
 } from "@tanstack/react-router";
 import { type ReactNode, useEffect, useState } from "react";
@@ -41,6 +42,13 @@ export const Route = createFileRoute("/_authed/o/$slug/library/$id")({
 			}),
 		]);
 		if (!data?.content) throw notFound();
+		// a folder is browsed in the library; only an archived one has its own page
+		if (data.content.kind === "folder" && !data.content.archivedAt)
+			throw redirect({
+				to: "/o/$slug/library",
+				params: { slug: params.slug },
+				search: { folder: params.id },
+			});
 		return { title: data.content.title };
 	},
 	head: ({ loaderData, match }) => ({
@@ -258,14 +266,18 @@ function ContentPage() {
 							<span className={cn(k.icon, "size-[22px]")} aria-hidden="true" />
 						</span>
 						<h2 className="m-0 font-semibold text-md">
-							{canManage
-								? `Building ${k.plural.toLowerCase()} comes next`
-								: "Nothing to read here yet"}
+							{item.kind === "folder"
+								? "Restore this folder to see what's inside"
+								: canManage
+									? `Building ${k.plural.toLowerCase()} comes next`
+									: "Nothing to read here yet"}
 						</h2>
 						<p className="m-0 max-w-[380px] text-muted-foreground text-sm">
-							{canManage
-								? `The editor for ${k.plural.toLowerCase()} (writing, video and uploads) arrives in the next update. Name it, describe it and file it in a folder now.`
-								: "Its trainers are still putting it together. Check back soon."}
+							{item.kind === "folder"
+								? "Archived folders can't be opened. Restoring it puts it and its content back in the library."
+								: canManage
+									? `The editor for ${k.plural.toLowerCase()} (writing, video and uploads) arrives in the next update. Name it, describe it and file it in a folder now.`
+									: "Its trainers are still putting it together. Check back soon."}
 						</p>
 					</div>
 				</section>
