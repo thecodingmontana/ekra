@@ -68,3 +68,22 @@ test("a crash tells the client nothing; an error raised on purpose explains itse
 		fix: "Use another card",
 	});
 });
+
+test("a browser crash report is accepted, and junk is refused", async () => {
+	const send = (body: unknown) =>
+		app.request("/api/client-error", {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify(body),
+		});
+	assert.equal(
+		(await send({ message: "boom", stack: "at x", path: "/o/acme" })).status,
+		204,
+	);
+	assert.equal((await send({ nope: true })).status, 400);
+	assert.equal(
+		(await send({ message: "x".repeat(5000), path: "/" })).status,
+		400,
+		"too long",
+	);
+});

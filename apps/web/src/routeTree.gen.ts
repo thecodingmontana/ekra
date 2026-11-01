@@ -20,6 +20,7 @@ import { Route as AuthedIndexRouteImport } from './routes/_authed/index'
 import { Route as AuthedOnboardingRouteImport } from './routes/_authed/onboarding'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
 import { Route as AuthedOSlugRouteImport } from './routes/_authed/o.$slug'
+import { Route as AuthedSettingsSplatRouteImport } from './routes/_authed/settings.$'
 import { Route as AuthedOSlugIndexRouteImport } from './routes/_authed/o.$slug.index'
 import { Route as AuthedOSlugSettingsRouteImport } from './routes/_authed/o.$slug.settings'
 import { Route as AuthedOSlugSettingsIndexRouteImport } from './routes/_authed/o.$slug.settings.index'
@@ -83,6 +84,11 @@ const AuthedOSlugRoute = AuthedOSlugRouteImport.update({
   path: '/o/$slug',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedSettingsSplatRoute = AuthedSettingsSplatRouteImport.update({
+  id: '/settings/$',
+  path: '/settings/$',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedOSlugIndexRoute = AuthedOSlugIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -141,6 +147,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof AuthedOnboardingRoute
   '/api/$': typeof ApiSplatRoute
   '/o/$slug': typeof AuthedOSlugRouteWithChildren
+  '/settings/$': typeof AuthedSettingsSplatRoute
   '/o/$slug/settings': typeof AuthedOSlugSettingsRouteWithChildren
   '/o/$slug/': typeof AuthedOSlugIndexRoute
   '/o/$slug/settings/appearance': typeof AuthedOSlugSettingsAppearanceRoute
@@ -160,6 +167,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof AuthedOnboardingRoute
   '/api/$': typeof ApiSplatRoute
   '/': typeof AuthedIndexRoute
+  '/settings/$': typeof AuthedSettingsSplatRoute
   '/o/$slug': typeof AuthedOSlugIndexRoute
   '/o/$slug/settings/appearance': typeof AuthedOSlugSettingsAppearanceRoute
   '/o/$slug/settings/organization': typeof AuthedOSlugSettingsOrganizationRoute
@@ -181,6 +189,7 @@ export interface FileRoutesById {
   '/api/$': typeof ApiSplatRoute
   '/_authed/': typeof AuthedIndexRoute
   '/_authed/o/$slug': typeof AuthedOSlugRouteWithChildren
+  '/_authed/settings/$': typeof AuthedSettingsSplatRoute
   '/_authed/o/$slug/settings': typeof AuthedOSlugSettingsRouteWithChildren
   '/_authed/o/$slug/': typeof AuthedOSlugIndexRoute
   '/_authed/o/$slug/settings/appearance': typeof AuthedOSlugSettingsAppearanceRoute
@@ -203,6 +212,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/api/$'
     | '/o/$slug'
+    | '/settings/$'
     | '/o/$slug/settings'
     | '/o/$slug/'
     | '/o/$slug/settings/appearance'
@@ -222,6 +232,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/api/$'
     | '/'
+    | '/settings/$'
     | '/o/$slug'
     | '/o/$slug/settings/appearance'
     | '/o/$slug/settings/organization'
@@ -242,6 +253,7 @@ export interface FileRouteTypes {
     | '/api/$'
     | '/_authed/'
     | '/_authed/o/$slug'
+    | '/_authed/settings/$'
     | '/_authed/o/$slug/settings'
     | '/_authed/o/$slug/'
     | '/_authed/o/$slug/settings/appearance'
@@ -342,6 +354,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedOSlugRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/settings/$': {
+      id: '/_authed/settings/$'
+      path: '/settings/$'
+      fullPath: '/settings/$'
+      preLoaderRoute: typeof AuthedSettingsSplatRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/o/$slug/': {
       id: '/_authed/o/$slug/'
       path: '/'
@@ -440,12 +459,14 @@ interface AuthedRouteChildren {
   AuthedOnboardingRoute: typeof AuthedOnboardingRoute
   AuthedIndexRoute: typeof AuthedIndexRoute
   AuthedOSlugRoute: typeof AuthedOSlugRouteWithChildren
+  AuthedSettingsSplatRoute: typeof AuthedSettingsSplatRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedOnboardingRoute: AuthedOnboardingRoute,
   AuthedIndexRoute: AuthedIndexRoute,
   AuthedOSlugRoute: AuthedOSlugRouteWithChildren,
+  AuthedSettingsSplatRoute: AuthedSettingsSplatRoute,
 }
 
 const AuthedRouteWithChildren =

@@ -24,14 +24,6 @@ export const Route =
 				{ rel: "icon", href: "/favicon.ico" },
 			],
 		}),
-		notFoundComponent: () => (
-			<main className="mx-auto flex min-h-svh max-w-md flex-col justify-center gap-2 p-6">
-				<h1 className="font-heading text-xl font-medium">Page not found</h1>
-				<p className="text-muted-foreground text-sm">
-					The page you're looking for doesn't exist.
-				</p>
-			</main>
-		),
 		shellComponent: RootDocument,
 	});
 

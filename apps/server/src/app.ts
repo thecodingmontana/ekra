@@ -2,6 +2,7 @@ import { EvlogError, parseError } from "evlog";
 import type { EvlogVariables } from "evlog/hono";
 import { Hono } from "hono";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
+import { z } from "zod";
 import { auth } from "./auth/index.ts";
 import { yoga } from "./graphql/yoga.ts";
 import { requestLogs } from "./log.ts";
@@ -27,6 +28,20 @@ app.onError((error, c) => {
 });
 
 app.get("/health", (c) => c.json({ status: "ok" }));
+
+// a page that crashed in someone's browser (the web app's error page sends it); size-capped, logged, nothing stored
+const clientError = z.object({
+	message: z.string().max(2000),
+	stack: z.string().max(8000).optional(),
+	path: z.string().max(500),
+});
+app.post("/client-error", async (c) => {
+	const body = clientError.safeParse(await c.req.json().catch(() => null));
+	if (!body.success) return c.body(null, 400);
+	const { message, stack, path } = body.data;
+	c.get("log").error(message, { client: { path, stack } });
+	return c.body(null, 204);
+});
 
 // Better Auth: sign-in, sessions, organizations, members, invitations, teams
 app.on(["GET", "POST"], "/auth/*", (c) => auth.handler(c.req.raw));

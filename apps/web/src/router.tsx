@@ -6,6 +6,7 @@ import {
 } from "@apollo/client-integration-tanstack-start";
 import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 import { createIsomorphicFn } from "@tanstack/react-start";
+import { PageFailed, PageNotFound } from "./components/states";
 import { routeTree } from "./routeTree.gen";
 
 // During server rendering, call the API directly with the visitor's cookies; in the browser, use /api on this origin.
@@ -41,6 +42,9 @@ export function getRouter() {
 		scrollRestoration: true,
 		defaultPreload: "intent",
 		defaultPreloadStaleTime: 0,
+		defaultNotFoundComponent: PageNotFound,
+		// a page that throws shows the "Something went wrong" state in its place
+		defaultErrorComponent: PageFailed,
 	});
 
 	return routerWithApolloClient(router, apolloClient);
