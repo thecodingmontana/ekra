@@ -1,5 +1,5 @@
 import { passkey } from "@better-auth/passkey";
-import { passwordProblem, slugProblem } from "@ekra/core";
+import { isOrgColor, passwordProblem, slugProblem } from "@ekra/core";
 import { generateId, schema } from "@ekra/db";
 import {
 	resetPasswordEmail,
@@ -29,6 +29,19 @@ const APP_SUBDOMAINS = (() => {
 const RESET_PASSWORD_MINUTES = 60;
 /** how long the "enter your code" step stays open after the first step */
 const TWO_FACTOR_SECONDS = 600;
+
+/** Only the picker's colours (or none): the value ends up in a style attribute. */
+function assertColor(color: unknown) {
+	// "" (or null) clears it back to Ekra's green
+	if (
+		color === undefined ||
+		color === null ||
+		color === "" ||
+		isOrgColor(color)
+	)
+		return;
+	throw new APIError("BAD_REQUEST", { message: "Pick one of the colours." });
+}
 
 function assertSlug(slug: string) {
 	const problem = slugProblem(slug);
@@ -216,9 +229,11 @@ export const auth = betterAuth({
 				// the slug becomes a subdomain, so it must follow hostname rules (packages/core)
 				beforeCreateOrganization: async ({ organization }) => {
 					assertSlug(organization.slug ?? "");
+					assertColor(organization.color);
 				},
 				beforeUpdateOrganization: async ({ organization }) => {
 					if (organization.slug !== undefined) assertSlug(organization.slug);
+					assertColor(organization.color);
 				},
 			},
 			schema: {
@@ -230,6 +245,8 @@ export const auth = betterAuth({
 							required: false,
 							defaultValue: "company",
 						},
+						// the logo letter's colour: one of ORG_COLORS, or null for Ekra's green
+						color: { type: "string", required: false },
 					},
 				},
 			},

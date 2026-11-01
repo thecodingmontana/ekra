@@ -14,13 +14,8 @@ import {
 } from "@ekra/ui/components/tooltip";
 import { cn } from "@ekra/ui/lib/utils";
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
-import {
-	type CSSProperties,
-	type ReactElement,
-	type ReactNode,
-	useEffect,
-	useState,
-} from "react";
+import { type ReactElement, type ReactNode, useEffect, useState } from "react";
+import { OrgLogo } from "@/components/org-logo";
 import type { Viewer } from "@/graphql/viewer";
 import { getTheme, setTheme, type Theme } from "@/lib/theme";
 import { useSignOut } from "@/lib/use-sign-out";
@@ -84,35 +79,6 @@ function SideTip({
 				{label}
 			</TooltipContent>
 		</Tooltip>
-	);
-}
-
-/** The organization's logo, or its first letter (Ekra's brand colour). */
-function OrgLogo({
-	organization,
-	px = 22,
-}: {
-	organization: { name: string; logo: string | null };
-	px?: number;
-}) {
-	const style = { width: px, height: px } as CSSProperties;
-	if (organization.logo)
-		return (
-			<img
-				src={organization.logo}
-				alt=""
-				style={style}
-				className="shrink-0 rounded-[6px] object-cover"
-			/>
-		);
-	return (
-		<span
-			aria-hidden
-			style={{ ...style, fontSize: Math.max(9, Math.round(px * 0.46)) }}
-			className="grid shrink-0 place-items-center rounded-[6px] bg-brand font-semibold text-brand-foreground"
-		>
-			{organization.name[0]?.toUpperCase()}
-		</span>
 	);
 }
 
@@ -184,7 +150,11 @@ export function AppSidebar({
 						>
 							<OrgLogo
 								organization={
-									active?.organization ?? { name: "Ekra", logo: null }
+									active?.organization ?? {
+										name: "Ekra",
+										logo: null,
+										color: null,
+									}
 								}
 							/>
 							<span

@@ -10,6 +10,7 @@ export type Membership = {
 		slug: string;
 		kind: OrganizationKind;
 		logo: string | null;
+		color: string | null;
 	};
 };
 
@@ -41,6 +42,7 @@ export const VIEWER = gql`
 					slug
 					kind
 					logo
+					color
 				}
 			}
 		}

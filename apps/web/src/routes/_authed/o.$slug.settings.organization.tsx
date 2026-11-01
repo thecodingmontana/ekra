@@ -1,15 +1,17 @@
-import { SLUG_MAX, slugProblem } from "@ekra/core";
+import { ORG_COLORS, SLUG_MAX, slugProblem } from "@ekra/core";
 import { Button } from "@ekra/ui/components/button";
 import { Field, FieldError, FieldLabel } from "@ekra/ui/components/field";
 import { Input } from "@ekra/ui/components/input";
 import { Spinner } from "@ekra/ui/components/spinner";
 import { toast } from "@ekra/ui/lib/toast";
+import { cn } from "@ekra/ui/lib/utils";
 import {
 	createFileRoute,
 	useNavigate,
 	useRouter,
 } from "@tanstack/react-router";
-import { type FormEvent, useState } from "react";
+import { type CSSProperties, type FormEvent, useState } from "react";
+import { OrgLogo } from "@/components/org-logo";
 import { SettingsHeader } from "@/components/settings-ui";
 import { authClient, authErrorMessage } from "@/lib/auth-client";
 
@@ -33,6 +35,17 @@ function Organization() {
 
 	const problem = slug ? slugProblem(slug) : "Choose an address";
 	const changed = name.trim() !== org.name || slug !== org.slug;
+
+	async function pickColor(color: string | null) {
+		const { error } = await authClient.organization.update({
+			organizationId: org.id,
+			// "" clears it: Ekra's green
+			data: { color: color ?? "" },
+		});
+		if (error) return void toast.error(authErrorMessage(error));
+		toast.success("Colour updated");
+		await router.invalidate();
+	}
 
 	async function save(event: FormEvent) {
 		event.preventDefault();
@@ -65,6 +78,42 @@ function Organization() {
 						: "Only owners and admins can change these."
 				}
 			/>
+			<div className="mb-5 flex items-center gap-3.5">
+				<OrgLogo organization={org} px={52} />
+				<div>
+					<div className="mb-1.5 font-medium text-sm">Colour</div>
+					{/* the chosen colour gets a ring; Ekra's green means none */}
+					<fieldset className="flex flex-wrap gap-2.5" disabled={!canEdit}>
+						<legend className="sr-only">Organization colour</legend>
+						{[null, ...ORG_COLORS].map((color) => (
+							<label
+								key={color ?? "ekra"}
+								className={cn(
+									"grid size-[22px] cursor-pointer place-items-center rounded-full shadow-[0_0_0_1px_rgba(0,0,0,0.08)] transition-transform duration-150 hover:scale-[1.08] has-focus-visible:ring-2 has-focus-visible:ring-ring",
+									color === null && "bg-brand",
+									(org.color || null) === color &&
+										"shadow-[0_0_0_2px_var(--background),0_0_0_4px_var(--c)]",
+								)}
+								style={
+									{
+										"--c": color ?? "var(--brand)",
+										...(color && { background: color }),
+									} as CSSProperties
+								}
+							>
+								<input
+									type="radio"
+									name="org-color"
+									className="sr-only"
+									checked={(org.color || null) === color}
+									onChange={() => pickColor(color)}
+									aria-label={color ?? "Ekra green"}
+								/>
+							</label>
+						))}
+					</fieldset>
+				</div>
+			</div>
 			<form onSubmit={save} className="flex max-w-[440px] flex-col gap-4">
 				<Field>
 					<FieldLabel htmlFor="org-name">Organization name</FieldLabel>

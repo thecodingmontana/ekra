@@ -203,3 +203,31 @@ test("organization subdomains share the sign-in; other sites are refused", async
 		"the session cookie is for the app and all its subdomains",
 	);
 });
+
+test("an organization's colour is one of the picker's, or refused", async () => {
+	const [org] = await db
+		.select({ id: organization.id })
+		.from(organization)
+		.where(eq(organization.slug, slug));
+	const setColor = (color: unknown) =>
+		call("/api/auth/organization/update", {
+			method: "POST",
+			body: JSON.stringify({ organizationId: org?.id, data: { color } }),
+		});
+
+	assert.equal((await setColor("#23918A")).status, 200);
+	const body = (await (
+		await call("/api/graphql", {
+			method: "POST",
+			body: JSON.stringify({
+				query: "{ viewer { memberships { organization { color } } } }",
+			}),
+		})
+	).json()) as {
+		data?: { viewer: { memberships: { organization: { color: string } }[] } };
+	};
+	assert.equal(body.data?.viewer.memberships[0]?.organization.color, "#23918A");
+
+	for (const bad of ["red; background:url(x)", "#000000", 7])
+		assert.equal((await setColor(bad)).status, 400, String(bad));
+});

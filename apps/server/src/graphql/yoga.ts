@@ -76,6 +76,8 @@ const schema = createSchema<GraphQLContext>({
 			"company or creator"
 			kind: String!
 			logo: String
+			"The logo letter's colour (hex), or null for Ekra's green."
+			color: String
 		}
 	`,
 	resolvers: {

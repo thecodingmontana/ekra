@@ -23,6 +23,7 @@ export const authClient = createAuthClient({
 				organization: {
 					additionalFields: {
 						kind: { type: ["company", "creator"], required: false },
+						color: { type: "string", required: false },
 					},
 				},
 			},

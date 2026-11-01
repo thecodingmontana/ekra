@@ -1,4 +1,5 @@
 export { safeNextPath } from "./next-path.ts";
+export { isOrgColor, ORG_COLORS } from "./org-color.ts";
 export {
 	PASSWORD_RULES,
 	passwordChecks,

@@ -11,6 +11,7 @@ import {
 	pgEnum,
 	pgTable,
 	text,
+	varchar,
 } from "drizzle-orm/pg-core";
 import { id, idRef, moment, timestamps } from "./columns.ts";
 
@@ -90,6 +91,8 @@ export const organization = pgTable("organization", {
 	/** subdomain and URL name, e.g. "acme" for acme.ekra.app */
 	slug: text("slug").notNull().unique(),
 	logo: text("logo"),
+	/** the logo letter's colour (ORG_COLORS in @ekra/core); null is Ekra's green */
+	color: varchar("color", { length: 20 }),
 	metadata: text("metadata"),
 	kind: organizationKind("kind").notNull().default("company"),
 	createdAt: moment("created_at").defaultNow().notNull(),

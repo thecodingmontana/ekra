@@ -1,0 +1,47 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "2dc5d8c6-99fd-4fa0-909d-b7929ea5e653",
+  "prevIds": [
+    "2703623f-9230-47ea-a61a-70f180e1fbee"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "organization",
+        "color"
+      ],
+      "writes": [
+        "s|col|public.organization.color",
+        "n|col|public.organization.color",
+        "e|col|public.organization.color"
+      ],
+      "reads": [
+        "n|tbl|public.organization",
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "organization",
+        "name": "color",
+        "type": "varchar(20)",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}
