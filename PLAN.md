@@ -190,6 +190,13 @@ predictable latency and memory. It doesn't where the code is mostly glue around 
   Postgres row-level security arrives with this first tenant table: a limited app database user (RLS doesn't apply
   to the table owner or a superuser), a separate migration URL, the org-scoped DB helper
   (`set_config('app.org_id')` per transaction) and policies, with a leak test per resolver.
+- **Done (2026-11-02)**: `content_item` (kinds folder, page, course, quiz, assignment, path, wiki; draft/published;
+  template flag; folders via `parent_id`), `content_favorite` and `content_view` (Recent), all under RLS. Tenant
+  queries run as the NOLOGIN `ekra_app` role (`SET LOCAL ROLE` inside `withOrg`), so no second database URL was
+  needed. Library queries name their organization by slug (`orgBySlug`), so a page never depends on which
+  organization the session switched to last. Learners see published content only (no drafts, templates or archived).
+  Library screen: tabs per kind, search, Show (favorites, recent, templates, archived), status, sort, grid/list,
+  folders with breadcrumbs; a content page per item. "Shared" waits for sharing rules (Phase 6, assignments).
 
 ### Phase 3 — Editor, versions, uploads (M)
 
