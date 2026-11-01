@@ -41,9 +41,13 @@ backup() {
 	printf '%s' "$file"
 }
 
+# empties the database first: tables a failed update added would otherwise stay while its migration log is
+# rolled back, and the next update would fail re-creating them
 restore() {
 	compose exec -T postgres sh -c \
-		'pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists --no-owner' <"$1"
+		'psql -q -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SET client_min_messages = warning; DROP SCHEMA IF EXISTS drizzle CASCADE; DROP SCHEMA public CASCADE; CREATE SCHEMA public;"'
+	compose exec -T postgres sh -c \
+		'pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --no-owner' <"$1"
 }
 
 update() {
