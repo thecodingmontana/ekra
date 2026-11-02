@@ -12,6 +12,13 @@ export type UploadedPicture = {
 export const smallest = (p: UploadedPicture) =>
 	p.src.replace(/\/\d+-webp$/, `/${p.widths[0] ?? 320}-webp`);
 
+/** The same picture at the smallest stored width of at least `min` (or the largest there is), e.g. for cards. */
+export const atLeast = (p: UploadedPicture, min: number) =>
+	p.src.replace(
+		/\/\d+-webp$/,
+		`/${p.widths.find((w) => w >= min) ?? p.widths.at(-1) ?? 640}-webp`,
+	);
+
 /** Pictures the image pipeline reads; the browser's file picker offers these. */
 export const PICTURE_TYPES =
 	"image/png,image/jpeg,image/webp,image/avif,image/gif";

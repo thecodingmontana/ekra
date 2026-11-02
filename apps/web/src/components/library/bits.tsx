@@ -68,3 +68,23 @@ export function StatusPill({ item }: { item: ContentItem }) {
 		</span>
 	);
 }
+
+/** Categories as small grey chips; past `max` they fold into "+n". */
+export function TagChips({ tags, max = 3 }: { tags: string[]; max?: number }) {
+	if (!tags.length) return null;
+	const chip =
+		"inline-flex h-5 max-w-[140px] shrink-0 items-center truncate rounded-[5px] bg-muted px-1.5 text-[11px] text-muted-foreground";
+	return (
+		<span
+			className="flex min-w-0 items-center gap-1 overflow-hidden"
+			data-testid="tags"
+		>
+			{tags.slice(0, max).map((t) => (
+				<span key={t} className={chip}>
+					<span className="truncate">{t}</span>
+				</span>
+			))}
+			{tags.length > max && <span className={chip}>+{tags.length - max}</span>}
+		</span>
+	);
+}

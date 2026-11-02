@@ -6,8 +6,21 @@ export type LibraryView = {
 	status: "all" | "published" | "draft";
 	sort: "updated" | "created" | "title";
 	q: string;
+	/** categories: an item matches when it has any of them */
+	tags: string[];
 	folder?: string;
 };
+
+/** Every category used in the library, each once (first spelling wins), A to Z. */
+export function libraryTags(items: ContentItem[]): string[] {
+	const seen = new Map<string, string>();
+	for (const i of items)
+		for (const t of i.tags)
+			if (!seen.has(t.toLowerCase())) seen.set(t.toLowerCase(), t);
+	return [...seen.values()].sort((a, b) =>
+		a.localeCompare(b, undefined, { sensitivity: "base" }),
+	);
+}
 
 /**
  * What the library shows for a view. Folders are browsed only on the plain All view; any filter or search lists
@@ -21,7 +34,11 @@ export function filterLibrary(
 ) {
 	const byId = new Map(all.map((i) => [i.id, i]));
 	const browsing =
-		v.show === "all" && !v.q.trim() && v.kind === "all" && v.status === "all";
+		v.show === "all" &&
+		!v.q.trim() &&
+		v.kind === "all" &&
+		v.status === "all" &&
+		!v.tags.length;
 	// a folder that's gone (deleted, archived, never existed) shows the top of the library
 	const here = browsing && v.folder ? byId.get(v.folder) : undefined;
 	const listed = new Set(items.map((i) => i.id));
@@ -30,12 +47,14 @@ export function filterLibrary(
 		here ? i.parentId === here.id : !i.parentId || !listed.has(i.parentId);
 
 	const query = v.q.trim().toLowerCase();
+	const tags = new Set(v.tags.map((t) => t.toLowerCase()));
 	const matching = items.filter(
 		(i) =>
 			(v.show !== "favorites" || i.isFavorite) &&
 			(v.show !== "recent" || i.viewedAt) &&
 			(v.show !== "templates" || i.isTemplate) &&
 			(v.status === "all" || (i.kind !== "folder" && i.status === v.status)) &&
+			(!tags.size || i.tags.some((t) => tags.has(t.toLowerCase()))) &&
 			(!query ||
 				i.title.toLowerCase().includes(query) ||
 				(i.description ?? "").toLowerCase().includes(query)),

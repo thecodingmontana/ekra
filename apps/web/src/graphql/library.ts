@@ -23,6 +23,10 @@ export type ContentItem = {
 	author: { id: string; name: string; image: string | null } | null;
 	isFavorite: boolean;
 	viewedAt: string | null;
+	/** categories */
+	tags: string[];
+	/** a picture address (/api/media/…) for cards */
+	cover: string | null;
 };
 
 const ITEM = gql`
@@ -44,6 +48,8 @@ const ITEM = gql`
 		}
 		isFavorite
 		viewedAt
+		tags
+		cover
 	}
 `;
 

@@ -4,7 +4,7 @@ import { cn } from "@ekra/ui/lib/utils";
 import type { ReactNode } from "react";
 import type { ContentItem } from "@/graphql/library";
 import { KINDS } from "@/lib/content-kinds";
-import { KindIcon, StatusPill } from "./bits";
+import { KindIcon, StatusPill, TagChips } from "./bits";
 
 /** The menu and the star stop a click from also opening the card. */
 function Stop({ children }: { children: ReactNode }) {
@@ -54,6 +54,36 @@ function Title({
 	);
 }
 
+const inside = (n = 0) => `${n} ${n === 1 ? "item" : "items"} inside`;
+
+/** The card's top: the cover picture, or the kind's icon on a panel in the kind's tint. */
+function Cover({ item }: { item: ContentItem }) {
+	const k = KINDS[item.kind];
+	return (
+		<div
+			className={cn(
+				"relative grid h-[108px] place-items-center overflow-hidden rounded-[7px]",
+				!item.cover && k.tint,
+			)}
+		>
+			{item.cover ? (
+				<img
+					src={item.cover}
+					alt=""
+					loading="lazy"
+					className="size-full object-cover"
+					data-testid="card-cover"
+				/>
+			) : (
+				<span className={cn(k.icon, "size-7 opacity-80")} aria-hidden="true" />
+			)}
+			<span className="absolute top-1.5 left-1.5 inline-flex h-5 items-center rounded-[5px] bg-background/90 px-1.5 font-medium text-[11px] text-foreground backdrop-blur-sm">
+				{k.label}
+			</span>
+		</div>
+	);
+}
+
 /** A piece of content in the grid. */
 export function ContentCard({
 	item,
@@ -71,14 +101,14 @@ export function ContentCard({
 		// biome-ignore lint/a11y/noStaticElementInteractions: the title button is the keyboard target; the card is a bigger click area
 		// biome-ignore lint/a11y/useKeyWithClickEvents: same as above
 		<div
-			className="group relative flex cursor-pointer flex-col gap-3 rounded-[10px] border bg-card p-3.5 text-left transition-[border-color,box-shadow] duration-140 hover:border-foreground/15 hover:shadow-[0_4px_12px_-6px_rgba(0,0,0,0.1)]"
+			className="group relative flex cursor-pointer flex-col gap-2.5 rounded-[10px] border bg-card p-1.5 pb-3 text-left transition-[border-color,box-shadow] duration-140 hover:border-foreground/15 hover:shadow-[0_4px_12px_-6px_rgba(0,0,0,0.1)]"
 			onClick={onOpen}
 			data-testid="content-card"
 			data-kind={item.kind}
 		>
-			<div className="flex items-center gap-2 pr-7">
-				<KindIcon kind={item.kind} />
-				<div className="flex min-w-0 flex-1 items-center gap-1.5">
+			<Cover item={item} />
+			<div className="flex min-w-0 flex-col gap-2 px-2">
+				<div className="flex min-w-0 items-center gap-1.5">
 					<Title
 						item={item}
 						onOpen={onOpen}
@@ -86,29 +116,26 @@ export function ContentCard({
 					/>
 					<Star item={item} />
 				</div>
-			</div>
-			<p className="line-clamp-2 min-h-[2.9em] text-muted-foreground text-sm leading-[1.45]">
-				{item.description ||
-					(item.kind === "folder"
-						? `${childCount ?? 0} ${childCount === 1 ? "item" : "items"} inside`
-						: "No description yet.")}
-			</p>
-			<div className="flex items-center gap-2.5 border-t border-border/60 pt-2.5 text-muted-foreground text-xs">
-				<span className="truncate">{KINDS[item.kind].label}</span>
-				<StatusPill item={item} />
-				<span className="flex-1" />
-				<span className="shrink-0" suppressHydrationWarning>
-					{ago(item.updatedAt)}
-				</span>
-				{item.author && (
-					<span title={`Made by ${item.author.name}`} className="inline-flex">
-						<Av name={item.author.name} image={item.author.image} size="sm" />
+				<div className="flex min-h-5 items-center">
+					<TagChips tags={item.tags} />
+				</div>
+				<div className="flex items-center gap-2 text-muted-foreground text-xs">
+					<span className="truncate" suppressHydrationWarning>
+						{item.kind === "folder" && `${inside(childCount)} · `}
+						Edited {ago(item.updatedAt)}
 					</span>
-				)}
+					<StatusPill item={item} />
+					<span className="flex-1" />
+					{item.author && (
+						<span title={`Made by ${item.author.name}`} className="inline-flex">
+							<Av name={item.author.name} image={item.author.image} size="sm" />
+						</span>
+					)}
+					<span className="inline-flex opacity-0 transition-opacity duration-140 group-focus-within:opacity-100 group-hover:opacity-100 has-[[aria-expanded=true]]:opacity-100 [@media(hover:none)]:opacity-100">
+						<Stop>{menu}</Stop>
+					</span>
+				</div>
 			</div>
-			<span className="absolute top-2.5 right-2.5 opacity-0 transition-opacity duration-140 group-focus-within:opacity-100 group-hover:opacity-100 has-[[aria-expanded=true]]:opacity-100 [@media(hover:none)]:opacity-100">
-				<Stop>{menu}</Stop>
-			</span>
 		</div>
 	);
 }
@@ -134,7 +161,16 @@ export function ContentRow({
 			data-testid="content-row"
 			data-kind={item.kind}
 		>
-			<KindIcon kind={item.kind} />
+			{item.cover ? (
+				<img
+					src={item.cover}
+					alt=""
+					loading="lazy"
+					className="size-7 shrink-0 rounded-[6px] object-cover"
+				/>
+			) : (
+				<KindIcon kind={item.kind} />
+			)}
 			<div className="min-w-0 flex-1 py-1.5">
 				<div className="flex items-center gap-1.5">
 					<Title item={item} onOpen={onOpen} className="font-medium" />
@@ -143,10 +179,13 @@ export function ContentRow({
 				<div className="truncate text-muted-foreground text-xs">
 					{item.description ||
 						(item.kind === "folder"
-							? `${childCount ?? 0} ${childCount === 1 ? "item" : "items"} inside`
+							? inside(childCount)
 							: KINDS[item.kind].label)}
 				</div>
 			</div>
+			<span className="hidden w-[170px] lg:flex">
+				<TagChips tags={item.tags} max={2} />
+			</span>
 			<span className="hidden w-28 truncate text-muted-foreground text-xs md:block">
 				{KINDS[item.kind].label}
 			</span>

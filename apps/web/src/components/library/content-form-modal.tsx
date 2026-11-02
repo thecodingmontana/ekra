@@ -13,6 +13,7 @@ import {
 } from "@/graphql/library";
 import { KIND_ORDER, KINDS } from "@/lib/content-kinds";
 import { KindIcon } from "./bits";
+import { CoverPicker, TagInput } from "./content-form-fields";
 
 // mutations return the whole item, so an open content page updates from the cache; lists refetch
 export const REFETCH = { refetchQueries: ["Library"] };
@@ -46,6 +47,8 @@ export function ContentFormModal({
 		title: item?.title ?? "",
 		description: item?.description ?? "",
 		isTemplate: item?.isTemplate ?? false,
+		tags: item?.tags ?? [],
+		cover: item?.cover ?? null,
 	});
 	const [form, setForm] = useState(initial);
 	const [err, setErr] = useState("");
@@ -53,7 +56,8 @@ export function ContentFormModal({
 		createContent: ContentItem;
 	}>(CREATE_CONTENT, REFETCH);
 	const [update, { loading: saving }] = useMutation(UPDATE_CONTENT, REFETCH);
-	const busy = creating || saving;
+	const [uploading, setUploading] = useState(false);
+	const busy = creating || saving || uploading;
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: reset only when the dialog opens
 	useEffect(() => {
@@ -74,6 +78,8 @@ export function ContentFormModal({
 		const fields = {
 			title,
 			description: form.description.trim() || null,
+			tags: form.tags,
+			cover: form.cover,
 			...(form.kind !== "folder" && { isTemplate: form.isTemplate }),
 		};
 		try {
@@ -215,6 +221,17 @@ export function ContentFormModal({
 							rows={3}
 						/>
 					</div>
+					<TagInput
+						slug={slug}
+						value={form.tags}
+						onChange={(tags) => set("tags", tags)}
+					/>
+					<CoverPicker
+						slug={slug}
+						value={form.cover}
+						onChange={(cover) => set("cover", cover)}
+						onBusy={setUploading}
+					/>
 					{form.kind !== "folder" && (
 						<label className="flex cursor-pointer items-start gap-2.5 text-sm">
 							<input

@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { ContentItem } from "../graphql/library.ts";
-import { filterLibrary, type LibraryView } from "./library-filter.ts";
+import {
+	filterLibrary,
+	type LibraryView,
+	libraryTags,
+} from "./library-filter.ts";
 
 let n = 0;
 const item = (fields: Partial<ContentItem>): ContentItem => {
@@ -20,6 +24,8 @@ const item = (fields: Partial<ContentItem>): ContentItem => {
 		author: null,
 		isFavorite: false,
 		viewedAt: null,
+		tags: [],
+		cover: null,
 		...fields,
 	};
 };
@@ -36,10 +42,12 @@ const course = item({
 	status: "published",
 	parentId: folder.id,
 	isFavorite: true,
+	tags: ["Service", "Onboarding"],
 });
 const page = item({
 	title: "Code of conduct",
 	viewedAt: "2026-02-01T00:00:00Z",
+	tags: ["policy", "onboarding"],
 });
 const template = item({ kind: "course", title: "Safety", isTemplate: true });
 const orphan = item({ title: "In a hidden folder", parentId: "gone" });
@@ -51,6 +59,7 @@ const view = (v: Partial<LibraryView> = {}): LibraryView => ({
 	status: "all",
 	sort: "updated",
 	q: "",
+	tags: [],
 	...v,
 });
 const titles = (v: Partial<LibraryView>) =>
@@ -110,4 +119,25 @@ test("sort by name goes A to Z", () => {
 		"Code of conduct",
 		"In a hidden folder",
 	]);
+});
+
+test("categories list matches from every folder: any chosen category, any case", () => {
+	assert.deepEqual(titles({ tags: ["policy"] }), ["Code of conduct"]);
+	assert.deepEqual(titles({ tags: ["ONBOARDING"] }), [
+		"Code of conduct",
+		"Customer service",
+	]);
+	assert.deepEqual(titles({ tags: ["service", "policy"] }), [
+		"Code of conduct",
+		"Customer service",
+	]);
+	assert.deepEqual(titles({ tags: ["nothing"] }), []);
+	assert.equal(
+		filterLibrary(items, items, view({ tags: ["policy"] })).browsing,
+		false,
+	);
+});
+
+test("the library's categories: each once, A to Z", () => {
+	assert.deepEqual(libraryTags(items), ["Onboarding", "policy", "Service"]);
 });
