@@ -1,4 +1,4 @@
-import { organization } from "@ekra/db";
+import { certificate, organization } from "@ekra/db";
 import { eq } from "drizzle-orm";
 import { createError, EvlogError, parseError } from "evlog";
 import type { EvlogVariables } from "evlog/hono";
@@ -73,6 +73,30 @@ app.on(["GET", "POST"], "/auth/*", (c) => auth.handler(c.req.raw));
 app.on(["GET", "POST"], "/graphql", (c) => yoga.fetch(c.req.raw));
 
 app.route("/media", media);
+
+// A certificate's public check (its id is the code): who, for what, from which organization, when. No sign-in.
+app.get("/certificates/:id", async (c) => {
+	const id = c.req.param("id");
+	if (!/^[0-9A-Za-z]{16}$/.test(id)) return c.json({ error: "Not found" }, 404);
+	const [row] = await db
+		.select({
+			id: certificate.id,
+			name: certificate.name,
+			title: certificate.title,
+			issuedAt: certificate.issuedAt,
+			organization: {
+				name: organization.name,
+				slug: organization.slug,
+				logo: organization.logo,
+				color: organization.color,
+			},
+		})
+		.from(certificate)
+		.innerJoin(organization, eq(organization.id, certificate.orgId))
+		.where(eq(certificate.id, id));
+	if (!row) return c.json({ error: "Not found" }, 404);
+	return c.json({ ...row, issuedAt: row.issuedAt.toISOString() });
+});
 
 /** a comment line now and then keeps proxies from closing a quiet stream */
 const KEEPALIVE_MS = 25_000;

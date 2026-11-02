@@ -33,6 +33,7 @@ export {
 	lessonProgress,
 } from "./course.ts";
 export {
+	certificate,
 	contentCompletion,
 	enrollment,
 	enrollmentSource,

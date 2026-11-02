@@ -8,6 +8,7 @@ import {
 	pgEnum,
 	pgTable,
 	primaryKey,
+	text,
 	unique,
 } from "drizzle-orm/pg-core";
 import { organization, user } from "./auth.ts";
@@ -69,5 +70,33 @@ export const contentCompletion = pgTable(
 	(table) => [
 		primaryKey({ columns: [table.userId, table.contentId] }),
 		tenantPolicy("content_completion"),
+	],
+).enableRLS();
+
+/**
+ * A certificate for finishing a course, path or quiz. Its id (16 random characters) is the public verification
+ * code: anyone with the link can check it, without signing in.
+ */
+export const certificate = pgTable(
+	"certificate",
+	{
+		id: id(),
+		orgId: idRef("org_id")
+			.notNull()
+			.references(() => organization.id, { onDelete: "cascade" }),
+		userId: idRef("user_id")
+			.notNull()
+			.references(() => user.id, { onDelete: "cascade" }),
+		contentId: idRef("content_id")
+			.notNull()
+			.references(() => contentItem.id, { onDelete: "cascade" }),
+		/** the name and title as they were when issued, so the certificate reads the same later */
+		name: text("name").notNull(),
+		title: text("title").notNull(),
+		issuedAt: moment("issued_at").defaultNow().notNull(),
+	},
+	(table) => [
+		unique("certificate_person_content").on(table.userId, table.contentId),
+		tenantPolicy("certificate"),
 	],
 ).enableRLS();

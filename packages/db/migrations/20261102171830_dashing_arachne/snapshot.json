@@ -1,0 +1,346 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "b9636a9e-95c3-4b36-89fc-37c0d5d2e086",
+  "prevIds": [
+    "9b4473a5-d4ed-4bc9-82ed-b2f42464b1ec"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "certificate"
+      ],
+      "writes": [
+        "s|tbl|public.certificate",
+        "n|tbl|public.certificate",
+        "e|tbl|public.certificate",
+        "n|rel|public.certificate",
+        "n|type|public.certificate",
+        "n|rel|public.certificate_pkey",
+        "n|rel|public.certificate_person_content"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "certificate"
+      ],
+      "writes": [
+        "s|fk|public.certificate.certificate_org_id_organization_id_fkey",
+        "n|fk|public.certificate.certificate_org_id_organization_id_fkey",
+        "e|fk|public.certificate.certificate_org_id_organization_id_fkey",
+        "n|con|public.certificate.certificate_org_id_organization_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.certificate",
+        "n|sch|public",
+        "n|tbl|public.organization",
+        "n|sch|public",
+        "n|col|public.certificate.org_id",
+        "n|col|public.organization.id",
+        "e|uniqueness|public.organization.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "certificate"
+      ],
+      "writes": [
+        "s|fk|public.certificate.certificate_user_id_user_id_fkey",
+        "n|fk|public.certificate.certificate_user_id_user_id_fkey",
+        "e|fk|public.certificate.certificate_user_id_user_id_fkey",
+        "n|con|public.certificate.certificate_user_id_user_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.certificate",
+        "n|sch|public",
+        "n|tbl|public.user",
+        "n|sch|public",
+        "n|col|public.certificate.user_id",
+        "n|col|public.user.id",
+        "e|uniqueness|public.user.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "certificate"
+      ],
+      "writes": [
+        "s|fk|public.certificate.certificate_content_id_content_item_id_fkey",
+        "n|fk|public.certificate.certificate_content_id_content_item_id_fkey",
+        "e|fk|public.certificate.certificate_content_id_content_item_id_fkey",
+        "n|con|public.certificate.certificate_content_id_content_item_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.certificate",
+        "n|sch|public",
+        "n|tbl|public.content_item",
+        "n|sch|public",
+        "n|col|public.certificate.content_id",
+        "n|col|public.content_item.id",
+        "e|uniqueness|public.content_item.id"
+      ]
+    },
+    {
+      "statementType": "create_policy",
+      "statementTarget": [
+        "table",
+        "public",
+        "certificate"
+      ],
+      "writes": [
+        "s|pol|public.certificate.certificate_tenant",
+        "n|pol|public.certificate.certificate_tenant",
+        "e|pol|public.certificate.certificate_tenant"
+      ],
+      "reads": [
+        "n|tbl|public.certificate",
+        "n|sch|public",
+        "n|role|ekra_app",
+        "e|rls|public.certificate"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "certificate",
+        "isRlsEnabled": true,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "certificate",
+        "name": "id",
+        "type": "varchar(16)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "certificate",
+        "name": "org_id",
+        "type": "varchar(16)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "certificate",
+        "name": "user_id",
+        "type": "varchar(16)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "certificate",
+        "name": "content_id",
+        "type": "varchar(16)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "certificate",
+        "name": "name",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "certificate",
+        "name": "title",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "certificate",
+        "name": "issued_at",
+        "type": "timestamp(3) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "certificate",
+        "name": "certificate_org_id_organization_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "org_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "organization",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "certificate",
+        "name": "certificate_user_id_user_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "user_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "user",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "certificate",
+        "name": "certificate_content_id_content_item_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "content_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "content_item",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "certificate",
+        "name": "certificate_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "certificate",
+        "name": "certificate_person_content",
+        "nameExplicit": true,
+        "columns": [
+          "user_id",
+          "content_id"
+        ],
+        "nullsNotDistinct": false,
+        "entityType": "uniques"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "certificate",
+        "name": "certificate_tenant",
+        "as": "PERMISSIVE",
+        "for": "ALL",
+        "roles": [
+          "ekra_app"
+        ],
+        "using": "org_id = current_setting('app.org_id', true)",
+        "withCheck": "org_id = current_setting('app.org_id', true)",
+        "entityType": "policies"
+      }
+    }
+  ]
+}

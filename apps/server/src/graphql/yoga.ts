@@ -17,6 +17,7 @@ import { auth, signInMethods } from "../auth/index.ts";
 import { db } from "../db.ts";
 import { env } from "../env.ts";
 import { announceChange, mutationSlugs } from "../realtime.ts";
+import { certificateResolvers, certificateTypeDefs } from "./certificate.ts";
 import { courseResolvers, courseTypeDefs } from "./course.ts";
 import { enrollmentResolvers, enrollmentTypeDefs } from "./enrollment.ts";
 import { libraryResolvers, libraryTypeDefs } from "./library.ts";
@@ -95,6 +96,7 @@ const schema = createSchema<GraphQLContext>({
 		quizTypeDefs,
 		enrollmentTypeDefs,
 		pathTypeDefs,
+		certificateTypeDefs,
 	],
 	resolvers: [
 		libraryResolvers,
@@ -102,6 +104,7 @@ const schema = createSchema<GraphQLContext>({
 		quizResolvers,
 		enrollmentResolvers,
 		pathResolvers,
+		certificateResolvers,
 		{
 			Query: {
 				health: () => "ok",
