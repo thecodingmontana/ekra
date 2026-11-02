@@ -58,6 +58,8 @@ export const enrollmentTypeDefs = /* GraphQL */ `
 			ids: [ID!]!
 			kind: ReminderKind!
 		): ReminderResult!
+		"Start something from the catalog yourself (it then shows in your learning, without a due date)."
+		startLearning(slug: String!, contentId: ID!): Boolean!
 		"Mark a page or wiki done (or not) for yourself."
 		markDone(slug: String!, contentId: ID!, done: Boolean!): Boolean!
 	}
@@ -385,6 +387,21 @@ export const enrollmentResolvers = {
 						),
 					);
 				return { sent: due.length, waiting: rows.length - due.length };
+			}),
+		startLearning: (_p: unknown, args: Args<{ contentId: string }>, ctx: Ctx) =>
+			asMember(ctx, args.slug, async (tx, org, userId) => {
+				await takeable(tx, org, userId, args.contentId);
+				// already given it (assigned or started): keep that, with its dates
+				await tx
+					.insert(enrollment)
+					.values({
+						orgId: org.id,
+						contentId: args.contentId,
+						userId,
+						source: "self",
+					})
+					.onConflictDoNothing();
+				return true;
 			}),
 		markDone: (
 			_p: unknown,

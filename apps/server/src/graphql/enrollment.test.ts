@@ -271,3 +271,30 @@ test("reminders are emailed, then wait half an hour; dates change and people are
 		"another organization sees nothing",
 	);
 });
+
+test("a learner starts something from the catalog themselves; a draft can't be started", async () => {
+	const page = await make("page", "Open to all");
+	await publish(page);
+	const START =
+		"mutation ($slug: String!, $c: ID!) { r: startLearning(slug: $slug, contentId: $c) }";
+	assert.equal(data(await gql("carol", START, { slug: S, c: page })), true);
+	assert.equal(data(await gql("carol", START, { slug: S, c: page })), true);
+	const mine = data<{ content: { title: string } }[]>(
+		await gql(
+			"carol",
+			"query ($slug: String!) { r: myLearning(slug: $slug) { content { title } } }",
+			{ slug: S },
+		),
+	);
+	assert.equal(
+		mine.filter((m) => m.content.title === "Open to all").length,
+		1,
+		"once",
+	);
+	assert.equal((await status(page))?.status, "not_started");
+	const draft = await make("page", "Draft for later");
+	assert.equal(
+		code(await gql("carol", START, { slug: S, c: draft })),
+		"NOT_FOUND",
+	);
+});
