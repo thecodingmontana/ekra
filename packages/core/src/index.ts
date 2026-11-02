@@ -14,6 +14,18 @@ export {
 	passwordProblem,
 	passwordScore,
 } from "./password.ts";
+export {
+	isCorrect,
+	type PublicQuestion,
+	publicQuestion,
+	type QuestionAnswer,
+	type QuestionKind,
+	type QuestionPayload,
+	questionAnswer,
+	questionPayload,
+	questionProblem,
+	seededShuffle,
+} from "./quiz.ts";
 export { SLUG_MAX, SLUG_MIN, slugify, slugProblem } from "./slug.ts";
 export { spaced } from "./spaced.ts";
 export { tenantUrls } from "./tenant-url.ts";
