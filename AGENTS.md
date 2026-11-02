@@ -205,6 +205,10 @@ Guide for AI coding agents (Claude Code, Codex, Cursor, …) and humans working 
 A self-hosted, multi-tenant learning platform for companies training staff and creators publishing courses.
 The full plan, decisions and phases live in [PLAN.md](PLAN.md). Read it before starting a phase.
 
+**Feature reference:** [docs/reference/trenning/README.md](docs/reference/trenning/README.md) (Fikri Studio's Trenning case
+study: screenshots, screen recordings and a checklist). Before building or closing a feature, check what Trenning
+shows for it and update the checklist's status. Look and components still follow zadaci.
+
 ## Stack
 
 TanStack Start (web) · Tailwind 4 + shadcn/ui on Base UI · Hono (API server) · Better Auth · GraphQL Yoga + Apollo Client · Drizzle ORM + PostgreSQL ·

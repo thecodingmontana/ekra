@@ -148,6 +148,9 @@ predictable latency and memory. It doesn't where the code is mostly glue around 
 
 ## Key screens
 
+The full feature reference (screens, recordings, checklist with status) is Trenning:
+[docs/reference/trenning/README.md](docs/reference/trenning/README.md). Check it before closing each phase.
+
 1. **Library** (Trenning screenshot): tabs Folder/Page/Course/Quiz/Assignment/Learning Path/Wiki, filter chips, sort, grid/list, favorites, recents, shared, archived, templates.
 2. **Course landing** (codewithantonio): title, subtitle, creator card, Start/Continue Learning, resources link, Share, overview video, numbered lesson list.
 3. **Lesson player**: collapsible sidebar (course thumb + title, Autoplay toggle, numbered lessons with active/completed/locked state), search, video, resources link, **Complete** toggle, **Next**, lesson body, **transcript with clickable timestamps** that seek the video, captions.

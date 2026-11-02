@@ -15,3 +15,6 @@ coverage
 
 # evlog local log files (development)
 .evlog/
+
+# Trenning reference videos (264 MB): docs/reference/trenning/videos.txt lists them; get them with scripts/fetch-reference-videos.sh
+docs/reference/trenning/videos/
