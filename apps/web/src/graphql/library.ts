@@ -107,7 +107,8 @@ export type SaveContentBodyData = {
 export type ContentVersion = {
 	id: string;
 	title: string;
-	bodyText: string;
+	/** only from CONTENT_VERSION (one version); null in the list */
+	bodyText: string | null;
 	author: { id: string; name: string; image: string | null } | null;
 	createdAt: string;
 	updatedAt: string;
@@ -118,7 +119,6 @@ export const CONTENT_VERSIONS = gql`
 		contentVersions(slug: $slug, id: $id) {
 			id
 			title
-			bodyText
 			author {
 				id
 				name
@@ -129,6 +129,19 @@ export const CONTENT_VERSIONS = gql`
 		}
 	}
 `;
+
+/** One version's text, for "what changed" (the list leaves it out: it can be long). */
+export const CONTENT_VERSION = gql`
+	query ContentVersion($slug: String!, $id: ID!, $versionId: ID!) {
+		contentVersion(slug: $slug, id: $id, versionId: $versionId) {
+			id
+			bodyText
+		}
+	}
+`;
+export type ContentVersionData = {
+	contentVersion: { id: string; bodyText: string | null } | null;
+};
 export type ContentVersionsData = { contentVersions: ContentVersion[] };
 
 export const RESTORE_CONTENT_VERSION = gql`

@@ -1,5 +1,5 @@
 import { CombinedGraphQLErrors } from "@apollo/client";
-import { useMutation } from "@apollo/client/react";
+import { useApolloClient, useMutation } from "@apollo/client/react";
 import { isYoutubeSrc } from "@ekra/core";
 import { Button } from "@ekra/ui/components/button";
 import { Input } from "@ekra/ui/components/input";
@@ -18,6 +18,8 @@ import {
 import { BubbleMenu } from "@tiptap/react/menus";
 import { useEffect, useRef, useState } from "react";
 import {
+	CONTENT,
+	type ContentData,
 	type ContentDetail,
 	SAVE_CONTENT_BODY,
 	type SaveContentBodyData,
@@ -34,6 +36,7 @@ const SAVE_MS = 800;
 type Status = "saved" | "saving" | "conflict" | "error";
 
 function useAutosave(slug: string, item: ContentDetail) {
+	const client = useApolloClient();
 	const [save] = useMutation<SaveContentBodyData>(SAVE_CONTENT_BODY);
 	const pending = useRef<string | null>(null);
 	const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -68,7 +71,11 @@ function useAutosave(slug: string, item: ContentDetail) {
 			const code = CombinedGraphQLErrors.is(error)
 				? error.errors[0]?.extensions?.code
 				: undefined;
-			if (code === "CONFLICT") return setStatus("conflict");
+			if (code === "CONFLICT") {
+				// kept: "Keep mine" saves it on top of the newer body
+				pending.current ??= doc;
+				return setStatus("conflict");
+			}
 			setStatus("error");
 			// keep the edits; the next change (or leaving the page) sends them again
 			pending.current ??= doc;
@@ -88,17 +95,35 @@ function useAutosave(slug: string, item: ContentDetail) {
 		clearTimeout(timer.current);
 		timer.current = setTimeout(() => void flush(), SAVE_MS);
 	};
+	/** After a conflict: save this tab's text on top of the newer body (that body stays in the version history). */
+	const keepMine = async () => {
+		const { data } = await client.query<ContentData>({
+			query: CONTENT,
+			variables: { slug, id: item.id },
+			fetchPolicy: "network-only",
+		});
+		base.current = data?.content?.bodyUpdatedAt ?? null;
+		await flush();
+	};
+	const unsaved = useRef(false);
+	unsaved.current = status !== "saved";
 	// leaving the page, or closing the tab, saves what's waiting
 	// biome-ignore lint/correctness/useExhaustiveDependencies: register once; flush reads refs
 	useEffect(() => {
 		const onHide = () => void flush();
+		// a closing tab cancels the save request: ask first while something isn't saved yet
+		const onLeave = (e: BeforeUnloadEvent) => {
+			if (unsaved.current) e.preventDefault();
+		};
 		window.addEventListener("pagehide", onHide);
+		window.addEventListener("beforeunload", onLeave);
 		return () => {
 			window.removeEventListener("pagehide", onHide);
+			window.removeEventListener("beforeunload", onLeave);
 			void flush();
 		};
 	}, []);
-	return { queue, status };
+	return { queue, status, keepMine };
 }
 
 function addImage(editor: Editor, slug: string, file: File, at: number) {
@@ -130,7 +155,7 @@ export function BodyEditor({
 	slug: string;
 	item: ContentDetail;
 }) {
-	const { queue, status } = useAutosave(slug, item);
+	const { queue, status, keepMine } = useAutosave(slug, item);
 	const editable = status !== "conflict";
 	const [youtube, setYoutube] = useState(false);
 	const editor = useEditor({
@@ -203,8 +228,8 @@ export function BodyEditor({
 						aria-hidden="true"
 					/>
 					<span className="flex-1">
-						Someone else changed this page. Reload to see their version; your
-						last changes weren't saved.
+						Someone else changed this page while you were writing. Reload to see
+						their version, or keep yours (theirs stays in the history).
 					</span>
 					<Button
 						size="sm"
@@ -212,6 +237,13 @@ export function BodyEditor({
 						onClick={() => window.location.reload()}
 					>
 						Reload
+					</Button>
+					<Button
+						size="sm"
+						onClick={() => void keepMine()}
+						data-testid="keep-mine"
+					>
+						Keep mine
 					</Button>
 				</div>
 			)}

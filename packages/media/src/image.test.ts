@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { crc32 } from "node:zlib";
 import sharp from "sharp";
-import { ImageError, processImage } from "./image.ts";
+import { ImageError, MAX_PIXELS, processImage } from "./image.ts";
 
 const refused = async (input: Buffer, why: RegExp) =>
 	assert.rejects(
@@ -144,4 +144,36 @@ test("files that aren't pictures, SVGs and pixel bombs are refused", async () =>
 		chunk("IEND", Buffer.alloc(0)),
 	]);
 	await refused(bomb, /isn't a picture|too large/);
+});
+
+test("an animation with too many big frames is refused, not decoded", async () => {
+	// different frames (identical ones are merged into one by the encoder)
+	const frames = await Promise.all(
+		Array.from({ length: 40 }, (_, i) =>
+			sharp({
+				create: {
+					width: 1200,
+					height: 1200,
+					channels: 3,
+					background: {
+						r: (i * 53) % 256,
+						g: (i * 97) % 256,
+						b: (i * 151) % 256,
+					},
+				},
+			})
+				.png()
+				.toBuffer(),
+		),
+	);
+	// 40 frames of 1200 × 1200 is 57.6 million pixels: over the limit, though each frame alone is fine
+	const gif = await sharp(frames, { join: { animated: true } })
+		.gif()
+		.toBuffer();
+	const meta = await sharp(gif).metadata();
+	assert.ok(
+		1200 * 1200 * (meta.pages ?? 1) > MAX_PIXELS,
+		`${meta.pages} frames`,
+	);
+	await refused(gif, /too large/);
 });

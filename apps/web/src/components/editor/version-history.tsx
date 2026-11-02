@@ -8,7 +8,9 @@ import { toast } from "@ekra/ui/lib/toast";
 import { cn } from "@ekra/ui/lib/utils";
 import { useState } from "react";
 import {
+	CONTENT_VERSION,
 	CONTENT_VERSIONS,
+	type ContentVersionData,
 	type ContentVersionsData,
 	RESTORE_CONTENT_VERSION,
 } from "@/graphql/library";
@@ -50,8 +52,13 @@ export function VersionHistory({
 	const [confirming, setConfirming] = useState(false);
 	const versions = data?.contentVersions ?? [];
 	const picked = versions.find((v) => v.id === pickedId) ?? versions[0];
-	const parts = picked ? diffWords(picked.bodyText, bodyText(doc)) : [];
-	const same = parts.every((p) => p.op === "same");
+	const text = useQuery<ContentVersionData>(CONTENT_VERSION, {
+		variables: { slug, id, versionId: picked?.id ?? "" },
+		skip: !open || !picked,
+	}).data?.contentVersion?.bodyText;
+	const parts = text != null && picked ? diffWords(text, bodyText(doc)) : [];
+	const loadingText = !!picked && text == null;
+	const same = !loadingText && parts.every((p) => p.op === "same");
 
 	return (
 		<>
@@ -71,7 +78,7 @@ export function VersionHistory({
 						</span>
 						<Button
 							className="ml-auto"
-							disabled={!picked || same}
+							disabled={!picked || same || loadingText}
 							onClick={() => setConfirming(true)}
 							data-testid="restore-version"
 						>
@@ -136,7 +143,9 @@ export function VersionHistory({
 								className="min-h-0 overflow-y-auto whitespace-pre-wrap break-words rounded-[10px] border bg-card px-3.5 py-3 text-[14px] leading-[1.65]"
 								data-testid="version-diff"
 							>
-								{same ? (
+								{loadingText ? (
+									<Spinner className="size-4 text-muted-foreground" />
+								) : same ? (
 									<p className="m-0 text-muted-foreground">
 										Nothing changed since this version.
 									</p>

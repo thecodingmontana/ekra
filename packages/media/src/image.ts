@@ -41,13 +41,14 @@ export async function processImage(input: Buffer): Promise<ProcessedImage> {
 			"HEIC photos can't be read here yet. Export it as JPEG and try again.",
 		);
 	const animated = (meta.pages ?? 1) > 1;
-	if ((meta.width ?? 0) * (meta.pageHeight ?? meta.height ?? 0) > MAX_PIXELS)
+	// counted over every frame (sharp's own limit counts one): many big frames are refused before decoding
+	const frameHeight = meta.pageHeight ?? meta.height ?? 0;
+	if ((meta.width ?? 0) * frameHeight * (meta.pages ?? 1) > MAX_PIXELS)
 		throw new ImageError("That picture is too large.");
 
-	// limitInputPixels counts every frame of an animation; the check above is per frame
 	const upright = sharp(input, {
 		animated,
-		limitInputPixels: animated ? false : MAX_PIXELS,
+		limitInputPixels: MAX_PIXELS,
 	})
 		.rotate()
 		.resize({
@@ -64,8 +65,12 @@ export async function processImage(input: Buffer): Promise<ProcessedImage> {
 			? upright.webp({ lossless: true })
 			: upright.raw()
 		).toBuffer({ resolveWithObject: true }));
-	} catch {
-		throw new ImageError("That picture is damaged and can't be read.");
+	} catch (error) {
+		throw new ImageError(
+			/pixel limit/i.test(String(error))
+				? "That picture is too large."
+				: "That picture is damaged and can't be read.",
+		);
 	}
 	const size = { width: info.width, height: info.pageHeight ?? info.height };
 	const from = () =>

@@ -84,10 +84,15 @@ export function createStorage(config: S3Config) {
 	};
 
 	return {
-		/** Creates the bucket if it isn't there yet. */
+		/**
+		 * Creates the bucket if it isn't there yet. Asks first: a key limited to one existing bucket (usual on managed
+		 * S3) may not create buckets, and a refused question means the same (an upload then says what's wrong).
+		 */
 		async ensureBucket() {
+			const head = await send("HEAD", "");
+			if (head.status !== 404) return;
 			const res = await send("PUT", "");
-			// 409: it exists already (owned by us)
+			// 409: someone else just made it
 			if (!res.ok && res.status !== 409) await fail("bucket setup", res);
 		},
 		async put(key: string, body: Uint8Array, contentType: string) {

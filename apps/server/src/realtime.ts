@@ -39,7 +39,8 @@ export async function onChange(orgId: string, listener: Listener) {
 	listeners.set(orgId, set);
 	return () => {
 		set.delete(listener);
-		if (!set.size) listeners.delete(orgId);
+		// only this set: a stop that runs late must not drop a newer viewer's
+		if (!set.size && listeners.get(orgId) === set) listeners.delete(orgId);
 	};
 }
 
@@ -73,6 +74,19 @@ export function announceChange(slugs: string[], from: string | null) {
 	);
 }
 
+/**
+ * Mutations nobody else needs to see at once: personal ones (opened, starred, progress) and autosaves (every few
+ * seconds while someone types; co-editors are protected by the conflict check, readers get it on their next open).
+ */
+const QUIET = new Set([
+	"viewContent",
+	"favoriteContent",
+	"saveContentBody",
+	"saveLessonBody",
+	"completeLesson",
+	"saveLessonPosition",
+]);
+
 /** The organizations a mutation changed: its fields' `slug` argument, as written or as a variable. */
 export function mutationSlugs(
 	document: DocumentNode,
@@ -83,7 +97,7 @@ export function mutationSlugs(
 	if (op?.operation !== "mutation") return [];
 	const slugs = new Set<string>();
 	for (const field of op.selectionSet.selections) {
-		if (field.kind !== Kind.FIELD) continue;
+		if (field.kind !== Kind.FIELD || QUIET.has(field.name.value)) continue;
 		const arg = field.arguments?.find((a) => a.name.value === "slug")?.value;
 		const value =
 			arg?.kind === Kind.STRING

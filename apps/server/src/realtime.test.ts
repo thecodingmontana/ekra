@@ -4,8 +4,8 @@ import { organization, user } from "@ekra/db";
 import { inArray } from "drizzle-orm";
 import { parse } from "graphql";
 import { app } from "./app.ts";
-import { closeDb, db } from "./db.ts";
-import { closeStreams, mutationSlugs } from "./realtime.ts";
+import { closeDb, db, notify } from "./db.ts";
+import { closeStreams, mutationSlugs, onChange } from "./realtime.ts";
 import {
 	call,
 	cookieFrom,
@@ -34,6 +34,13 @@ test("a change is announced to the organizations its mutation names; reads annou
 		["acme", "beta"],
 	);
 	assert.deepEqual(slugs(`query { library(slug: "acme") { canManage } }`), []);
+	assert.deepEqual(
+		slugs(
+			`mutation { viewContent(slug: "acme", id: "1") saveContentBody(slug: "acme", id: "1", doc: "{}") }`,
+		),
+		[],
+		"personal actions and autosaves don't make everyone refetch",
+	);
 });
 
 const stamp = Date.now();
@@ -155,4 +162,17 @@ test("shutting down ends open streams, so the server can stop", async () => {
 	assert.equal((await amina.next()).event, "ready");
 	closeStreams();
 	await assert.rejects(amina.next(2000), /stream ended/);
+});
+
+test("a late second stop from a closed stream doesn't cut off the next viewer", async () => {
+	const org = `rt-late-${stamp}`.slice(0, 16);
+	const stopOld = await onChange(org, () => {});
+	stopOld();
+	const heard: (string | null)[] = [];
+	await onChange(org, (from) => heard.push(from));
+	stopOld(); // the old stream's loop wakes up and stops again
+	// what announceChange sends, without needing an organization row
+	await notify("ekra_changed", JSON.stringify({ org, from: "tab-new" }));
+	await new Promise((r) => setTimeout(r, 300));
+	assert.deepEqual(heard, ["tab-new"]);
 });

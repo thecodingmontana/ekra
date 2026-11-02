@@ -518,6 +518,10 @@ What it does, in order (safe to run again; it keeps your `.env` and proxy config
 
 Then point **DNS** at the server: an A record for `domain` and one for `*.domain`.
 
+Serve it over **HTTPS with HTTP/2** (Caddy does by default; the Nginx config setup writes turns `http2 on`).
+Every open tab keeps one live-updates connection (`/api/events`), and over plain HTTP/1.1 browsers allow only six
+connections per site, so a seventh tab would hang. In development, open a few tabs at most.
+
 | Command           | What it does                                                                        |
 | ----------------- | ----------------------------------------------------------------------------------- |
 | `ekra status`     | What's running                                                                      |

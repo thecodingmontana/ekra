@@ -388,6 +388,26 @@ test("bad input is refused with a reason", async () => {
 const SAVE = `mutation ($slug: String!, $id: ID!, $doc: String!, $base: String) { r: saveContentBody(slug: $slug, id: $id, doc: $doc, baseBodyUpdatedAt: $base) { bodyUpdatedAt } }`;
 const READ = `query ($slug: String!, $id: ID!) { r: content(slug: $slug, id: $id) { doc bodyUpdatedAt } }`;
 const VERSIONS = `query ($slug: String!, $id: ID!) { r: contentVersions(slug: $slug, id: $id) { id bodyText author { name } } }`;
+const VERSION = `query ($slug: String!, $id: ID!, $versionId: ID!) { r: contentVersion(slug: $slug, id: $id, versionId: $versionId) { bodyText } }`;
+/** each version's text, newest first (the list itself leaves texts out) */
+async function versionTexts(who: string, slug: string, id: string) {
+	const list = (await gql(who, VERSIONS, { slug, id })).data?.r as {
+		id: string;
+		bodyText: string | null;
+	}[];
+	assert.ok(
+		list.every((v) => v.bodyText === null),
+		"the list has no texts",
+	);
+	const texts: string[] = [];
+	for (const v of list) {
+		const one = await gql(who, VERSION, { slug, id, versionId: v.id });
+		texts.push(
+			(one.data?.r as { bodyText: string } | undefined)?.bodyText ?? "",
+		);
+	}
+	return { list, texts };
+}
 const RESTORE = `mutation ($slug: String!, $id: ID!, $versionId: ID!) { r: restoreContentVersion(slug: $slug, id: $id, versionId: $versionId) { bodyUpdatedAt } }`;
 const page = (text: string) =>
 	JSON.stringify({
@@ -415,6 +435,18 @@ test("a page's body saves, reads back, and refuses a save on top of a newer one"
 		JSON.parse((read.data?.r as { doc: string } | undefined)?.doc ?? ""),
 		JSON.parse(page("Hello")),
 	);
+
+	// a list never carries bodies (one request can't pull every page's text)
+	const list = await gql(
+		"amina",
+		"query ($slug: String!) { library(slug: $slug) { items { id doc } } }",
+		{ slug: slugs.amina },
+	);
+	const items =
+		(list.data?.library as { items: { doc: string | null }[] } | undefined)
+			?.items ?? [];
+	assert.ok(items.length > 0);
+	assert.ok(items.every((i) => i.doc === null));
 
 	// another tab still on the empty page can't overwrite it
 	const stale = await gql("amina", SAVE, {
@@ -531,13 +563,12 @@ test("versions: one per sitting, restore brings an old body back, others see not
 		}),
 	);
 	assert.ok(three);
-	const versions = (
-		await gql("amina", VERSIONS, { slug: slugs.amina, id: item.id })
-	).data?.r as { id: string; bodyText: string; author: { name: string } }[];
-	assert.deepEqual(
-		versions.map((v) => v.bodyText),
-		["Tom's rules", "Second rules"],
+	const { list: versions, texts } = await versionTexts(
+		"amina",
+		slugs.amina,
+		item.id,
 	);
+	assert.deepEqual(texts, ["Tom's rules", "Second rules"]);
 
 	const restored = await gql("amina", RESTORE, {
 		slug: slugs.amina,
@@ -550,13 +581,11 @@ test("versions: one per sitting, restore brings an old body back, others see not
 		(now.data?.r as { doc: string } | undefined)?.doc ?? "",
 		/Second rules/,
 	);
-	const history = (
-		await gql("amina", VERSIONS, { slug: slugs.amina, id: item.id })
-	).data?.r as { bodyText: string }[];
-	assert.deepEqual(
-		history.map((v) => v.bodyText),
-		["Second rules", "Tom's rules", "Second rules"],
-	);
+	assert.deepEqual((await versionTexts("amina", slugs.amina, item.id)).texts, [
+		"Second rules",
+		"Tom's rules",
+		"Second rules",
+	]);
 
 	// learners don't see history; another organization finds none, even with the right ids
 	assert.equal(
@@ -589,5 +618,20 @@ test("versions: one per sitting, restore brings an old body back, others see not
 	assert.match(
 		(copied.data?.r as { doc: string } | undefined)?.doc ?? "",
 		/Second rules/,
+	);
+	// and its history starts with that body, so it can be restored after edits
+	assert.deepEqual((await versionTexts("amina", slugs.amina, copy.id)).texts, [
+		"Second rules",
+	]);
+	// another organization can't read a version's text either
+	assert.equal(
+		(
+			await gql("brian", VERSION, {
+				slug: slugs.brian,
+				id: item.id,
+				versionId: versions[0]?.id,
+			})
+		).data?.r,
+		null,
 	);
 });

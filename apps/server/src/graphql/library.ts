@@ -16,6 +16,7 @@ import {
 	gt,
 	isNotNull,
 	isNull,
+	type SQL,
 	sql,
 } from "drizzle-orm";
 import { GraphQLError } from "graphql";
@@ -35,8 +36,10 @@ export const libraryTypeDefs = /* GraphQL */ `
 		library(slug: String!, archived: Boolean = false): Library!
 		"One piece of content, or null when it doesn't exist or you can't see it."
 		content(slug: String!, id: ID!): ContentItem
-		"Earlier states of a body, newest first (owners, admins and trainers)."
+		"Earlier states of a body, newest first (owners, admins and trainers); bodyText is null here."
 		contentVersions(slug: String!, id: ID!): [ContentVersion!]!
+		"One earlier state with its text, for the history's what-changed view."
+		contentVersion(slug: String!, id: ID!, versionId: ID!): ContentVersion
 	}
 
 	type Mutation {
@@ -101,7 +104,7 @@ export const libraryTypeDefs = /* GraphQL */ `
 		isFavorite: Boolean!
 		"When you last opened it."
 		viewedAt: String
-		"The body as Tiptap JSON text, or null when nothing's written yet."
+		"The body as Tiptap JSON text (on content and restoreContentVersion only; null in lists)."
 		doc: String
 		"When the body last changed (send it back when saving)."
 		bodyUpdatedAt: String
@@ -110,8 +113,8 @@ export const libraryTypeDefs = /* GraphQL */ `
 	type ContentVersion {
 		id: ID!
 		title: String!
-		"The body as plain text, for the history's what-changed view."
-		bodyText: String!
+		"The body as plain text (only from contentVersion)."
+		bodyText: String
 		author: Author
 		createdAt: String!
 		updatedAt: String!
@@ -310,6 +313,43 @@ export async function asMember<T>(
 
 export type SlugId = { slug: string; id: string };
 
+/** One item's body as Tiptap JSON text. Only single-item answers carry it; lists answer doc: null. */
+async function docOf(tx: Tx, id: string) {
+	const [row] = await tx
+		.select({ doc: contentItem.doc })
+		.from(contentItem)
+		.where(eq(contentItem.id, id));
+	return row?.doc ? JSON.stringify(row.doc) : null;
+}
+
+/** Versions newest first, with their author; the text only when asked (it can be long). */
+async function versionsWhere(
+	tx: Tx,
+	where: SQL | undefined,
+	withText: boolean,
+) {
+	const rows = await tx
+		.select({
+			id: contentVersion.id,
+			title: contentVersion.title,
+			bodyText: withText ? contentVersion.bodyText : sql<null>`null`,
+			createdAt: contentVersion.createdAt,
+			updatedAt: contentVersion.updatedAt,
+			author: { id: user.id, name: user.name, image: user.image },
+		})
+		.from(contentVersion)
+		.leftJoin(user, eq(user.id, contentVersion.authorId))
+		.where(where)
+		.orderBy(desc(contentVersion.updatedAt))
+		.limit(100);
+	return rows.map((v) => ({
+		...v,
+		author: v.author?.id ? v.author : null,
+		createdAt: v.createdAt.toISOString(),
+		updatedAt: v.updatedAt.toISOString(),
+	}));
+}
+
 /** saves by the same person within this long fold into one version */
 const VERSION_SITTING_MS = 10 * 60_000;
 
@@ -408,26 +448,27 @@ export const libraryResolvers = {
 		content: (_parent: unknown, { slug, id }: SlugId, ctx: Ctx) =>
 			asMember(ctx, slug, async (tx, org, userId) => {
 				const row = await findOne(tx, org, userId, id);
-				return row ? toGraphQL(row) : null;
+				return row ? { ...toGraphQL(row), doc: await docOf(tx, id) } : null;
 			}),
 		contentVersions: (_parent: unknown, { slug, id }: SlugId, ctx: Ctx) =>
+			manage(ctx, slug, (tx) =>
+				versionsWhere(tx, eq(contentVersion.contentId, id), false),
+			),
+		contentVersion: (
+			_parent: unknown,
+			{ slug, id, versionId }: SlugId & { versionId: string },
+			ctx: Ctx,
+		) =>
 			manage(ctx, slug, async (tx) => {
-				const rows = await tx
-					.select({
-						version: contentVersion,
-						author: { id: user.id, name: user.name, image: user.image },
-					})
-					.from(contentVersion)
-					.leftJoin(user, eq(user.id, contentVersion.authorId))
-					.where(eq(contentVersion.contentId, id))
-					.orderBy(desc(contentVersion.updatedAt))
-					.limit(100);
-				return rows.map(({ version, author }) => ({
-					...version,
-					author: author?.id ? author : null,
-					createdAt: version.createdAt.toISOString(),
-					updatedAt: version.updatedAt.toISOString(),
-				}));
+				const [version] = await versionsWhere(
+					tx,
+					and(
+						eq(contentVersion.contentId, id),
+						eq(contentVersion.id, versionId),
+					),
+					true,
+				);
+				return version ?? null;
 			}),
 	},
 	Mutation: {
@@ -520,6 +561,16 @@ export const libraryResolvers = {
 						createdBy: userId,
 					})
 					.returning({ id: contentItem.id });
+				// the copy's history starts with what it was copied from, so that can always be restored
+				if (copy && body?.doc)
+					await writeBody(
+						tx,
+						org,
+						userId,
+						copy.id,
+						{ doc: body.doc, text: body.bodyText ?? "" },
+						false,
+					);
 				return toGraphQL(await mustFind(tx, org, userId, copy?.id ?? ""));
 			}),
 		favoriteContent: (
@@ -622,19 +673,10 @@ export const libraryResolvers = {
 					{ doc: version?.doc, text: version?.text ?? "" },
 					false,
 				);
-				return toGraphQL(await mustFind(tx, org, userId, id));
+				return {
+					...toGraphQL(await mustFind(tx, org, userId, id)),
+					doc: await docOf(tx, id),
+				};
 			}),
-	},
-	ContentItem: {
-		// asked for on one item at a time (the content page): the parent resolver already checked it's visible
-		doc: async (item: { id: string; orgId: string }) => {
-			const [row] = await withOrg(db, item.orgId, (tx) =>
-				tx
-					.select({ doc: contentItem.doc })
-					.from(contentItem)
-					.where(eq(contentItem.id, item.id)),
-			);
-			return row?.doc ? JSON.stringify(row.doc) : null;
-		},
 	},
 };
