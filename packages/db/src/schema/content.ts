@@ -64,6 +64,8 @@ export const contentItem = pgTable(
 		tags: text("tags").array().notNull().default(sql`'{}'::text[]`),
 		/** a cover picture from the image pipeline (/api/media/…), shown on cards */
 		cover: text("cover"),
+		/** courses and paths: learners take the parts in order (each unlocks when the one before is done) */
+		sequential: boolean("sequential").notNull().default(false),
 		/** the body (Tiptap JSON, checked by checkDoc in @ekra/core); null until someone writes in it */
 		doc: jsonb("doc"),
 		/** the body as plain text, for search and the version history's "what changed" */

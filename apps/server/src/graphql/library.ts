@@ -108,6 +108,8 @@ export const libraryTypeDefs = /* GraphQL */ `
 		tags: [String!]!
 		"A cover picture (/api/media/…) for cards."
 		cover: String
+		"Courses and paths: learners take the parts in order."
+		sequential: Boolean!
 		"The body as Tiptap JSON text (on content and restoreContentVersion only; null in lists)."
 		doc: String
 		"When the body last changed (send it back when saving)."
@@ -151,6 +153,8 @@ export const libraryTypeDefs = /* GraphQL */ `
 		tags: [String!]
 		"A picture from an upload; null removes it."
 		cover: String
+		"Courses and paths: take the parts in order."
+		sequential: Boolean
 	}
 `;
 
@@ -201,6 +205,7 @@ const updateInput = z.object({
 	isTemplate: z.boolean().optional(),
 	tags: tags.optional(),
 	cover,
+	sequential: z.boolean().optional(),
 });
 
 export type Ctx = { session: { user: { id: string } } | null };

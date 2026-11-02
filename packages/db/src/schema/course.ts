@@ -15,7 +15,7 @@ import { organization, user } from "./auth.ts";
 import { id, idRef, moment, timestamps } from "./columns.ts";
 import { contentItem, mediaAsset, tenantPolicy } from "./content.ts";
 
-export const lessonKind = pgEnum("lesson_kind", ["video", "page"]);
+export const lessonKind = pgEnum("lesson_kind", ["video", "page", "quiz"]);
 
 export const courseSection = pgTable(
 	"course_section",
@@ -59,6 +59,10 @@ export const lesson = pgTable(
 		doc: jsonb("doc"),
 		bodyText: text("body_text"),
 		bodyUpdatedAt: moment("body_updated_at"),
+		/** a quiz lesson's quiz (a library item of kind quiz); passing it completes the lesson */
+		quizId: idRef("quiz_id").references(() => contentItem.id, {
+			onDelete: "set null",
+		}),
 		/** a video lesson's video, once uploaded */
 		mediaId: idRef("media_id").references(() => mediaAsset.id, {
 			onDelete: "set null",

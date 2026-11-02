@@ -1,0 +1,149 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "d5e28e19-18a8-4aaf-8473-acaab2bda9ae",
+  "prevIds": [
+    "86e6a6c5-494a-40fc-835a-628b99262053"
+  ],
+  "footprints": [
+    {
+      "statementType": "alter_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "lesson_kind"
+      ],
+      "writes": [
+        "s|enum|public.lesson_kind"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "content_item",
+        "sequential"
+      ],
+      "writes": [
+        "s|col|public.content_item.sequential",
+        "n|col|public.content_item.sequential",
+        "e|col|public.content_item.sequential"
+      ],
+      "reads": [
+        "n|tbl|public.content_item",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "lesson",
+        "quiz_id"
+      ],
+      "writes": [
+        "s|col|public.lesson.quiz_id",
+        "n|col|public.lesson.quiz_id",
+        "e|col|public.lesson.quiz_id"
+      ],
+      "reads": [
+        "n|tbl|public.lesson",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "lesson"
+      ],
+      "writes": [
+        "s|fk|public.lesson.lesson_quiz_id_content_item_id_fkey",
+        "n|fk|public.lesson.lesson_quiz_id_content_item_id_fkey",
+        "e|fk|public.lesson.lesson_quiz_id_content_item_id_fkey",
+        "n|con|public.lesson.lesson_quiz_id_content_item_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.lesson",
+        "n|sch|public",
+        "n|tbl|public.content_item",
+        "n|sch|public",
+        "n|col|public.lesson.quiz_id",
+        "n|col|public.content_item.id",
+        "e|uniqueness|public.content_item.id"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "content_item",
+        "name": "sequential",
+        "type": "boolean",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "false",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "lesson",
+        "name": "quiz_id",
+        "type": "varchar(16)",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "lesson",
+        "name": "lesson_quiz_id_content_item_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "quiz_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "content_item",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "SET NULL",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "alter",
+      "key": "enums\u0000[\"public\",\"lesson_kind\"]",
+      "set": {
+        "values": [
+          "video",
+          "page",
+          "quiz"
+        ]
+      }
+    }
+  ]
+}

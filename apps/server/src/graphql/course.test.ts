@@ -295,3 +295,150 @@ test("a lesson's text saves and refuses a save on top of a newer one", async () 
 	});
 	assert.equal(code(bad), "BAD_USER_INPUT");
 });
+
+const publish = (id: string) =>
+	gql(
+		"amina",
+		`mutation ($slug: String!, $id: ID!) { r: updateContent(slug: $slug, id: $id, input: { status: published }) { id } }`,
+		{ slug: slugs.amina, id },
+	);
+const LOCKS = `query ($slug: String!, $id: ID!) { r: course(slug: $slug, id: $id) { sequential sections { lessons { id locked completed } } } }`;
+const locks = async (who: string, courseId: string) =>
+	data<{
+		sequential: boolean;
+		sections: {
+			lessons: { id: string; locked: boolean; completed: boolean }[];
+		}[];
+	}>(
+		await gql(who, LOCKS, { slug: slugs.amina, id: courseId }),
+	).sections.flatMap((s) => s.lessons);
+
+test("a course taken in order: each lesson opens when the ones before are done", async () => {
+	const course = await newCourse("In order");
+	const one = await addSection(course, "One");
+	const two = await addSection(course, "Two");
+	const first = await addLesson(one, "First", "page");
+	const second = await addLesson(two, "Second", "page");
+	data(
+		await gql(
+			"amina",
+			`mutation ($slug: String!, $id: ID!) { r: updateContent(slug: $slug, id: $id, input: { sequential: true }) { sequential } }`,
+			{ slug: slugs.amina, id: course },
+		),
+	);
+	await publish(course);
+
+	assert.deepEqual(
+		(await locks("carol", course)).map((l) => l.locked),
+		[false, true],
+	);
+	assert.deepEqual(
+		(await locks("amina", course)).map((l) => l.locked),
+		[false, false],
+		"trainers are never locked",
+	);
+	const early = await gql(
+		"carol",
+		`mutation ($slug: String!, $id: ID!) { r: completeLesson(slug: $slug, id: $id, complete: true) { id } }`,
+		{ slug: slugs.amina, id: second },
+	);
+	assert.equal(code(early), "FORBIDDEN");
+	assert.equal(
+		code(
+			await gql(
+				"carol",
+				`query ($slug: String!, $id: ID!) { r: lesson(slug: $slug, id: $id) { id doc } }`,
+				{ slug: slugs.amina, id: second },
+			),
+		),
+		"FORBIDDEN",
+		"a locked lesson's content isn't sent",
+	);
+	data(
+		await gql(
+			"carol",
+			`mutation ($slug: String!, $id: ID!) { r: completeLesson(slug: $slug, id: $id, complete: true) { id } }`,
+			{ slug: slugs.amina, id: first },
+		),
+	);
+	assert.deepEqual(
+		(await locks("carol", course)).map((l) => l.locked),
+		[false, false],
+	);
+});
+
+test("a quiz lesson is finished by passing its quiz", async () => {
+	const quizItem = data<{ id: string }>(
+		await gql(
+			"amina",
+			`mutation ($slug: String!) { r: createContent(slug: $slug, input: { kind: quiz, title: "Check" }) { id } }`,
+			{ slug: slugs.amina },
+		),
+	).id;
+	const question = data<{ id: string }>(
+		await gql(
+			"amina",
+			`mutation ($slug: String!, $q: ID!, $input: QuestionInput!) { r: addQuestion(slug: $slug, quizId: $q, input: $input) { id } }`,
+			{
+				slug: slugs.amina,
+				q: quizItem,
+				input: {
+					kind: "multiple_choice",
+					prompt: "2 + 2?",
+					payload: JSON.stringify({
+						options: [
+							{ id: "a", text: "4" },
+							{ id: "b", text: "5" },
+						],
+						correct: ["a"],
+					}),
+				},
+			},
+		),
+	).id;
+	await publish(quizItem);
+	const course = await newCourse("With a quiz");
+	const section = await addSection(course, "Only");
+	const noQuiz = await gql(
+		"amina",
+		`mutation ($slug: String!, $s: ID!) { r: addLesson(slug: $slug, sectionId: $s, kind: quiz, title: "Check") { id } }`,
+		{ slug: slugs.amina, s: section },
+	);
+	assert.equal(code(noQuiz), "BAD_USER_INPUT", "a quiz lesson needs a quiz");
+	const lessonId = data<{ id: string }>(
+		await gql(
+			"amina",
+			`mutation ($slug: String!, $s: ID!, $q: ID!) { r: addLesson(slug: $slug, sectionId: $s, kind: quiz, title: "Check", quizId: $q) { id } }`,
+			{ slug: slugs.amina, s: section, q: quizItem },
+		),
+	).id;
+	await publish(course);
+
+	const tick = await gql(
+		"carol",
+		`mutation ($slug: String!, $id: ID!) { r: completeLesson(slug: $slug, id: $id, complete: true) { id } }`,
+		{ slug: slugs.amina, id: lessonId },
+	);
+	assert.equal(code(tick), "FORBIDDEN", "it can't just be ticked off");
+
+	const attempt = data<{ id: string }>(
+		await gql(
+			"carol",
+			`mutation ($slug: String!, $q: ID!) { r: startQuizAttempt(slug: $slug, quizId: $q) { id } }`,
+			{ slug: slugs.amina, q: quizItem },
+		),
+	).id;
+	await gql(
+		"carol",
+		`mutation ($slug: String!, $a: ID!, $q: ID!) { r: saveQuizAnswer(slug: $slug, attemptId: $a, questionId: $q, answer: "[\\"a\\"]") { saved } }`,
+		{ slug: slugs.amina, a: attempt, q: question },
+	);
+	data(
+		await gql(
+			"carol",
+			`mutation ($slug: String!, $a: ID!) { r: submitQuizAttempt(slug: $slug, attemptId: $a) { id } }`,
+			{ slug: slugs.amina, a: attempt },
+		),
+	);
+	assert.equal((await locks("carol", course))[0]?.completed, true);
+});

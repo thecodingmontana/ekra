@@ -8,7 +8,14 @@ import {
 	questionProblem,
 	seededShuffle,
 } from "@ekra/core";
-import { quiz, quizAttempt, quizQuestion, type Tx } from "@ekra/db";
+import {
+	lesson,
+	lessonProgress,
+	quiz,
+	quizAttempt,
+	quizQuestion,
+	type Tx,
+} from "@ekra/db";
 import { and, asc, eq, ne, sql } from "drizzle-orm";
 import { z } from "zod";
 import {
@@ -669,6 +676,27 @@ export const quizResolvers = {
 					.set({ submittedAt: new Date(), score, maxScore, passed })
 					.where(eq(quizAttempt.id, attempt.id))
 					.returning();
+				// passing (or finishing a quiz without a pass mark) completes the course lessons that use it
+				if (passed !== false) {
+					const lessons = await tx
+						.select({ id: lesson.id, courseId: lesson.courseId })
+						.from(lesson)
+						.where(eq(lesson.quizId, attempt.quizId));
+					for (const l of lessons)
+						await tx
+							.insert(lessonProgress)
+							.values({
+								orgId: org.id,
+								userId,
+								lessonId: l.id,
+								courseId: l.courseId,
+								completedAt: new Date(),
+							})
+							.onConflictDoUpdate({
+								target: [lessonProgress.userId, lessonProgress.lessonId],
+								set: { completedAt: new Date(), updatedAt: new Date() },
+							});
+				}
 				return attemptView(tx, done ?? attempt, settings);
 			}),
 	},

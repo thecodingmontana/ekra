@@ -8,6 +8,7 @@ import {
 import { and, asc, eq, ne, type SQL, sql } from "drizzle-orm";
 import { GraphQLError } from "graphql";
 import { z } from "zod";
+import { canManageContent } from "../auth/permissions.ts";
 import {
 	asMember,
 	type Ctx,
@@ -39,11 +40,13 @@ export const courseTypeDefs = /* GraphQL */ `
 		deleteSection(slug: String!, id: ID!): Boolean!
 		"Puts a section at this place in the course (0 is first)."
 		moveSection(slug: String!, id: ID!, position: Int!): Boolean!
+		"A quiz lesson needs quizId: a quiz from the library; passing it completes the lesson."
 		addLesson(
 			slug: String!
 			sectionId: ID!
 			kind: LessonKind!
 			title: String!
+			quizId: ID
 		): Lesson!
 		renameLesson(slug: String!, id: ID!, title: String!): Lesson!
 		deleteLesson(slug: String!, id: ID!): Boolean!
@@ -65,12 +68,14 @@ export const courseTypeDefs = /* GraphQL */ `
 	enum LessonKind {
 		video
 		page
+		quiz
 	}
 
 	type Course {
 		id: ID!
 		title: String!
 		description: String
+		sequential: Boolean!
 		sections: [CourseSection!]!
 		"Lessons you've completed, out of all of them."
 		completedCount: Int!
@@ -95,6 +100,10 @@ export const courseTypeDefs = /* GraphQL */ `
 		doc: String
 		bodyUpdatedAt: String
 		video: LessonVideo
+		"A quiz lesson's quiz."
+		quizId: ID
+		"In a course taken in order: the lessons before it aren't all done yet (never for those who manage it)."
+		locked: Boolean!
 		completed: Boolean!
 		positionSeconds: Int!
 	}
@@ -138,6 +147,7 @@ const toLesson = (
 	bodyUpdatedAt: l.bodyUpdatedAt?.toISOString() ?? null,
 	doc: l.doc ? JSON.stringify(l.doc) : null,
 	video: videoOf(video),
+	locked: false,
 	completed: !!progress.completedAt,
 	positionSeconds: progress.positionSeconds ?? 0,
 });
@@ -178,6 +188,58 @@ async function lessonsWhere(tx: Tx, userId: string, where: SQL | undefined) {
 	return rows.map((r) => toLesson(r.lesson, r.video, r));
 }
 
+type OutlineLesson = Awaited<ReturnType<typeof lessonsWhere>>[number];
+
+/**
+ * In a course taken in order, a learner's lesson is locked until every lesson before it (sections in order, then
+ * lessons) is complete. Those who manage content are never locked.
+ */
+export function lockedLessons(
+	sections: { id: string }[],
+	lessons: OutlineLesson[],
+	sequential: boolean,
+	manager: boolean,
+) {
+	const locked = new Set<string>();
+	if (!sequential || manager) return locked;
+	let open = true;
+	for (const s of sections)
+		for (const l of lessons.filter((x) => x.sectionId === s.id)) {
+			if (!open) locked.add(l.id);
+			if (!l.completed) open = false;
+		}
+	return locked;
+}
+
+/** The course's sections and lessons in order, with this person's progress and locks. */
+async function outline(
+	tx: Tx,
+	org: ActiveOrg,
+	userId: string,
+	course: { id: string; sequential: boolean },
+) {
+	const sections = await tx
+		.select()
+		.from(courseSection)
+		.where(eq(courseSection.courseId, course.id))
+		.orderBy(asc(courseSection.position));
+	const lessons = await lessonsWhere(
+		tx,
+		userId,
+		eq(lesson.courseId, course.id),
+	);
+	const locked = lockedLessons(
+		sections,
+		lessons,
+		course.sequential,
+		canManageContent(org.role),
+	);
+	return {
+		sections,
+		lessons: lessons.map((l) => ({ ...l, locked: locked.has(l.id) })),
+	};
+}
+
 /** A lesson this person may see (its course is visible to them), else NOT_FOUND. */
 export async function visibleLesson(
 	tx: Tx,
@@ -190,9 +252,19 @@ export async function visibleLesson(
 		.from(lesson)
 		.where(eq(lesson.id, id));
 	if (!row) return refuse("That lesson doesn't exist.", "NOT_FOUND");
-	await visibleCourse(tx, org, userId, row.courseId);
-	const [found] = await lessonsWhere(tx, userId, eq(lesson.id, id));
+	const course = await visibleCourse(tx, org, userId, row.courseId);
+	const found = (await outline(tx, org, userId, course)).lessons.find(
+		(l) => l.id === id,
+	);
 	return found ?? refuse("That lesson doesn't exist.", "NOT_FOUND");
+}
+
+/** A lesson this person may take now: visible and not locked. */
+async function openLesson(tx: Tx, org: ActiveOrg, userId: string, id: string) {
+	const found = await visibleLesson(tx, org, userId, id);
+	if (found.locked)
+		return refuse("Finish the lessons before this one first.", "FORBIDDEN");
+	return found;
 }
 
 /** Rewrites positions 0..n-1 in the given order (sections of a course, or lessons of a section). */
@@ -231,12 +303,12 @@ export const courseResolvers = {
 			asMember(ctx, slug, async (tx, org, userId) => {
 				const found = await findOne(tx, org, userId, id);
 				if (found?.item.kind !== "course") return null;
-				const sections = await tx
-					.select()
-					.from(courseSection)
-					.where(eq(courseSection.courseId, id))
-					.orderBy(asc(courseSection.position));
-				const lessons = await lessonsWhere(tx, userId, eq(lesson.courseId, id));
+				const { sections, lessons } = await outline(
+					tx,
+					org,
+					userId,
+					found.item,
+				);
 				return {
 					...found.item,
 					sections: sections.map((s) => ({
@@ -249,7 +321,7 @@ export const courseResolvers = {
 			}),
 		lesson: (_p: unknown, { slug, id }: SlugId, ctx: Ctx) =>
 			asMember(ctx, slug, (tx, org, userId) =>
-				visibleLesson(tx, org, userId, id).catch((error: unknown) => {
+				openLesson(tx, org, userId, id).catch((error: unknown) => {
 					// "not found" is an answer (null); anything else is a real failure
 					if (
 						error instanceof GraphQLError &&
@@ -350,8 +422,9 @@ export const courseResolvers = {
 			args: {
 				slug: string;
 				sectionId: string;
-				kind: "video" | "page";
+				kind: "video" | "page" | "quiz";
 				title: string;
+				quizId?: string | null;
 			},
 			ctx: Ctx,
 		) =>
@@ -361,13 +434,22 @@ export const courseResolvers = {
 					.from(courseSection)
 					.where(eq(courseSection.id, args.sectionId));
 				if (!section) return refuse("That section doesn't exist.", "NOT_FOUND");
+				const kind = parse(z.enum(["video", "page", "quiz"]), args.kind);
+				if (kind === "quiz") {
+					const quiz = args.quizId
+						? await findOne(tx, org, userId, args.quizId)
+						: null;
+					if (quiz?.item.kind !== "quiz")
+						return refuse("Pick a quiz from the library.", "BAD_USER_INPUT");
+				}
 				const [created] = await tx
 					.insert(lesson)
 					.values({
 						orgId: org.id,
 						courseId: section.courseId,
 						sectionId: args.sectionId,
-						kind: parse(z.enum(["video", "page"]), args.kind),
+						kind,
+						quizId: kind === "quiz" ? args.quizId : null,
 						title: parse(title, args.title),
 						position: await countWhere(
 							tx,
@@ -485,7 +567,9 @@ export const courseResolvers = {
 			ctx: Ctx,
 		) =>
 			asMember(ctx, slug, async (tx, org, userId) => {
-				const found = await visibleLesson(tx, org, userId, id);
+				const found = await openLesson(tx, org, userId, id);
+				if (found.kind === "quiz" && !canManageContent(org.role))
+					return refuse("Pass the quiz to finish this lesson.", "FORBIDDEN");
 				const completedAt = complete ? new Date() : null;
 				await tx
 					.insert(lessonProgress)
@@ -508,7 +592,7 @@ export const courseResolvers = {
 			ctx: Ctx,
 		) =>
 			asMember(ctx, slug, async (tx, org, userId) => {
-				const found = await visibleLesson(tx, org, userId, id);
+				const found = await openLesson(tx, org, userId, id);
 				const positionSeconds = Math.max(
 					0,
 					Math.min(Math.floor(seconds), MAX_POSITION_SECONDS),
