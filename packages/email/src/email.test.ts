@@ -112,3 +112,18 @@ test("createMailer needs a key for Resend", () => {
 		"console",
 	);
 });
+
+test("a reminder names the content and escapes what people typed", async () => {
+	const { reminderEmail } = await import("./templates.ts");
+	const m = reminderEmail({
+		kind: "overdue",
+		title: "Safety <b>101</b>",
+		organization: "Acme",
+		from: "Tara",
+		due: "1 Nov 2026",
+		url: "https://acme.ekra.app/library/x",
+	});
+	assert.equal(m.subject, "Safety <b>101</b> is overdue");
+	assert.match(m.html, /Safety &lt;b&gt;101&lt;\/b&gt; is overdue/);
+	assert.match(m.text, /Due: 1 Nov 2026\./);
+});

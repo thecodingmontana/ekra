@@ -12,6 +12,9 @@ export {
 export { createResendProvider } from "./providers/resend.ts";
 export {
 	escapeHtml,
+	REMINDERS,
+	type ReminderKind,
+	reminderEmail,
 	resetPasswordEmail,
 	signInLinkEmail,
 	verifyEmailEmail,

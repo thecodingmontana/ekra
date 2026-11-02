@@ -6,6 +6,7 @@ export {
 	isYoutubeSrc,
 	MAX_DOC_BYTES,
 } from "./doc.ts";
+export { type EnrollmentStatus, enrollmentStatus } from "./enrollment.ts";
 export { safeNextPath } from "./next-path.ts";
 export { isOrgColor, ORG_COLORS } from "./org-color.ts";
 export {

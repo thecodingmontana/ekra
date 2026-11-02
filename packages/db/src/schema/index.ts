@@ -33,6 +33,12 @@ export {
 	lessonProgress,
 } from "./course.ts";
 export {
+	contentCompletion,
+	enrollment,
+	enrollmentSource,
+} from "./enrollment.ts";
+export { pathStage, pathStep } from "./path.ts";
+export {
 	questionKind,
 	quiz,
 	quizAttempt,

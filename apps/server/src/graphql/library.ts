@@ -274,7 +274,12 @@ function select(tx: Tx, userId: string) {
 
 type Selected = Awaited<ReturnType<ReturnType<typeof select>["execute"]>>[0];
 
-const toGraphQL = ({ item, author, favoritedAt, viewedAt }: Selected) => ({
+export const toGraphQL = ({
+	item,
+	author,
+	favoritedAt,
+	viewedAt,
+}: Selected) => ({
 	...item,
 	archivedAt: item.archivedAt?.toISOString() ?? null,
 	bodyUpdatedAt: item.bodyUpdatedAt?.toISOString() ?? null,

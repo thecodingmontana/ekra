@@ -108,3 +108,42 @@ export function resetPasswordEmail(options: {
 		}),
 	};
 }
+
+/** The two reminders a trainer can send about something a learner was given (the reference's message choices). */
+export const REMINDERS = {
+	running_out: {
+		heading: (title: string) => `Time is running out for ${title}`,
+		body: "Just a reminder that this will end soon. Make sure you've finished all of it before the end date.",
+	},
+	overdue: {
+		heading: (title: string) => `${title} is overdue`,
+		body: "It's past its due date. Please finish what's left as soon as you can, so you don't miss out.",
+	},
+} as const;
+export type ReminderKind = keyof typeof REMINDERS;
+
+/** A trainer's reminder to finish something they were given. */
+export function reminderEmail(options: {
+	kind: ReminderKind;
+	title: string;
+	organization: string;
+	from: string;
+	due: string | null;
+	url: string;
+}): Content {
+	const r = REMINDERS[options.kind];
+	return {
+		subject: r.heading(options.title),
+		...layout({
+			heading: r.heading(options.title),
+			paragraphs: [
+				`${options.from} at ${options.organization} sent you this reminder.`,
+				r.body,
+				...(options.due ? [`Due: ${options.due}.`] : []),
+			],
+			button: "Continue learning",
+			url: options.url,
+			footer: `You're getting this because ${options.title} was assigned to you in ${options.organization}.`,
+		}),
+	};
+}

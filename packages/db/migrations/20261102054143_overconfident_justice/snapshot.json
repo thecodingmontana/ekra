@@ -1,0 +1,1551 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "9b4473a5-d4ed-4bc9-82ed-b2f42464b1ec",
+  "prevIds": [
+    "d5e28e19-18a8-4aaf-8473-acaab2bda9ae"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_enum",
+      "statementTarget": [
+        "enum",
+        "public",
+        "enrollment_source"
+      ],
+      "writes": [
+        "s|enum|public.enrollment_source",
+        "n|enum|public.enrollment_source",
+        "e|enum|public.enrollment_source",
+        "n|type|public.enrollment_source"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "content_completion"
+      ],
+      "writes": [
+        "s|tbl|public.content_completion",
+        "n|tbl|public.content_completion",
+        "e|tbl|public.content_completion",
+        "n|rel|public.content_completion",
+        "n|type|public.content_completion",
+        "n|rel|public.content_completion_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "enrollment"
+      ],
+      "writes": [
+        "s|tbl|public.enrollment",
+        "n|tbl|public.enrollment",
+        "e|tbl|public.enrollment",
+        "n|rel|public.enrollment",
+        "n|type|public.enrollment",
+        "n|rel|public.enrollment_pkey",
+        "n|rel|public.enrollment_person_content"
+      ],
+      "reads": [
+        "n|sch|public",
+        "n|enum|public.enrollment_source"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "path_stage"
+      ],
+      "writes": [
+        "s|tbl|public.path_stage",
+        "n|tbl|public.path_stage",
+        "e|tbl|public.path_stage",
+        "n|rel|public.path_stage",
+        "n|type|public.path_stage",
+        "n|rel|public.path_stage_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "path_step"
+      ],
+      "writes": [
+        "s|tbl|public.path_step",
+        "n|tbl|public.path_step",
+        "e|tbl|public.path_step",
+        "n|rel|public.path_step",
+        "n|type|public.path_step",
+        "n|rel|public.path_step_pkey",
+        "n|rel|public.path_step_once"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "enrollment",
+        "enrollment_user_idx"
+      ],
+      "writes": [
+        "s|idx|public.enrollment_user_idx",
+        "n|idx|public.enrollment_user_idx",
+        "e|idx|public.enrollment_user_idx",
+        "n|rel|public.enrollment_user_idx"
+      ],
+      "reads": [
+        "n|tbl|public.enrollment",
+        "n|sch|public",
+        "n|col|public.enrollment.user_id"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "path_stage",
+        "path_stage_path_idx"
+      ],
+      "writes": [
+        "s|idx|public.path_stage_path_idx",
+        "n|idx|public.path_stage_path_idx",
+        "e|idx|public.path_stage_path_idx",
+        "n|rel|public.path_stage_path_idx"
+      ],
+      "reads": [
+        "n|tbl|public.path_stage",
+        "n|sch|public",
+        "n|col|public.path_stage.path_id",
+        "n|col|public.path_stage.position"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "path_step",
+        "path_step_stage_idx"
+      ],
+      "writes": [
+        "s|idx|public.path_step_stage_idx",
+        "n|idx|public.path_step_stage_idx",
+        "e|idx|public.path_step_stage_idx",
+        "n|rel|public.path_step_stage_idx"
+      ],
+      "reads": [
+        "n|tbl|public.path_step",
+        "n|sch|public",
+        "n|col|public.path_step.stage_id",
+        "n|col|public.path_step.position"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "content_completion"
+      ],
+      "writes": [
+        "s|fk|public.content_completion.content_completion_org_id_organization_id_fkey",
+        "n|fk|public.content_completion.content_completion_org_id_organization_id_fkey",
+        "e|fk|public.content_completion.content_completion_org_id_organization_id_fkey",
+        "n|con|public.content_completion.content_completion_org_id_organization_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.content_completion",
+        "n|sch|public",
+        "n|tbl|public.organization",
+        "n|sch|public",
+        "n|col|public.content_completion.org_id",
+        "n|col|public.organization.id",
+        "e|uniqueness|public.organization.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "content_completion"
+      ],
+      "writes": [
+        "s|fk|public.content_completion.content_completion_user_id_user_id_fkey",
+        "n|fk|public.content_completion.content_completion_user_id_user_id_fkey",
+        "e|fk|public.content_completion.content_completion_user_id_user_id_fkey",
+        "n|con|public.content_completion.content_completion_user_id_user_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.content_completion",
+        "n|sch|public",
+        "n|tbl|public.user",
+        "n|sch|public",
+        "n|col|public.content_completion.user_id",
+        "n|col|public.user.id",
+        "e|uniqueness|public.user.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "content_completion"
+      ],
+      "writes": [
+        "s|fk|public.content_completion.content_completion_content_id_content_item_id_fkey",
+        "n|fk|public.content_completion.content_completion_content_id_content_item_id_fkey",
+        "e|fk|public.content_completion.content_completion_content_id_content_item_id_fkey",
+        "n|con|public.content_completion.content_completion_content_id_content_item_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.content_completion",
+        "n|sch|public",
+        "n|tbl|public.content_item",
+        "n|sch|public",
+        "n|col|public.content_completion.content_id",
+        "n|col|public.content_item.id",
+        "e|uniqueness|public.content_item.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "enrollment"
+      ],
+      "writes": [
+        "s|fk|public.enrollment.enrollment_org_id_organization_id_fkey",
+        "n|fk|public.enrollment.enrollment_org_id_organization_id_fkey",
+        "e|fk|public.enrollment.enrollment_org_id_organization_id_fkey",
+        "n|con|public.enrollment.enrollment_org_id_organization_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.enrollment",
+        "n|sch|public",
+        "n|tbl|public.organization",
+        "n|sch|public",
+        "n|col|public.enrollment.org_id",
+        "n|col|public.organization.id",
+        "e|uniqueness|public.organization.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "enrollment"
+      ],
+      "writes": [
+        "s|fk|public.enrollment.enrollment_content_id_content_item_id_fkey",
+        "n|fk|public.enrollment.enrollment_content_id_content_item_id_fkey",
+        "e|fk|public.enrollment.enrollment_content_id_content_item_id_fkey",
+        "n|con|public.enrollment.enrollment_content_id_content_item_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.enrollment",
+        "n|sch|public",
+        "n|tbl|public.content_item",
+        "n|sch|public",
+        "n|col|public.enrollment.content_id",
+        "n|col|public.content_item.id",
+        "e|uniqueness|public.content_item.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "enrollment"
+      ],
+      "writes": [
+        "s|fk|public.enrollment.enrollment_user_id_user_id_fkey",
+        "n|fk|public.enrollment.enrollment_user_id_user_id_fkey",
+        "e|fk|public.enrollment.enrollment_user_id_user_id_fkey",
+        "n|con|public.enrollment.enrollment_user_id_user_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.enrollment",
+        "n|sch|public",
+        "n|tbl|public.user",
+        "n|sch|public",
+        "n|col|public.enrollment.user_id",
+        "n|col|public.user.id",
+        "e|uniqueness|public.user.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "enrollment"
+      ],
+      "writes": [
+        "s|fk|public.enrollment.enrollment_assigned_by_user_id_fkey",
+        "n|fk|public.enrollment.enrollment_assigned_by_user_id_fkey",
+        "e|fk|public.enrollment.enrollment_assigned_by_user_id_fkey",
+        "n|con|public.enrollment.enrollment_assigned_by_user_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.enrollment",
+        "n|sch|public",
+        "n|tbl|public.user",
+        "n|sch|public",
+        "n|col|public.enrollment.assigned_by",
+        "n|col|public.user.id",
+        "e|uniqueness|public.user.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "path_stage"
+      ],
+      "writes": [
+        "s|fk|public.path_stage.path_stage_org_id_organization_id_fkey",
+        "n|fk|public.path_stage.path_stage_org_id_organization_id_fkey",
+        "e|fk|public.path_stage.path_stage_org_id_organization_id_fkey",
+        "n|con|public.path_stage.path_stage_org_id_organization_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.path_stage",
+        "n|sch|public",
+        "n|tbl|public.organization",
+        "n|sch|public",
+        "n|col|public.path_stage.org_id",
+        "n|col|public.organization.id",
+        "e|uniqueness|public.organization.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "path_stage"
+      ],
+      "writes": [
+        "s|fk|public.path_stage.path_stage_path_id_content_item_id_fkey",
+        "n|fk|public.path_stage.path_stage_path_id_content_item_id_fkey",
+        "e|fk|public.path_stage.path_stage_path_id_content_item_id_fkey",
+        "n|con|public.path_stage.path_stage_path_id_content_item_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.path_stage",
+        "n|sch|public",
+        "n|tbl|public.content_item",
+        "n|sch|public",
+        "n|col|public.path_stage.path_id",
+        "n|col|public.content_item.id",
+        "e|uniqueness|public.content_item.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "path_step"
+      ],
+      "writes": [
+        "s|fk|public.path_step.path_step_org_id_organization_id_fkey",
+        "n|fk|public.path_step.path_step_org_id_organization_id_fkey",
+        "e|fk|public.path_step.path_step_org_id_organization_id_fkey",
+        "n|con|public.path_step.path_step_org_id_organization_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.path_step",
+        "n|sch|public",
+        "n|tbl|public.organization",
+        "n|sch|public",
+        "n|col|public.path_step.org_id",
+        "n|col|public.organization.id",
+        "e|uniqueness|public.organization.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "path_step"
+      ],
+      "writes": [
+        "s|fk|public.path_step.path_step_path_id_content_item_id_fkey",
+        "n|fk|public.path_step.path_step_path_id_content_item_id_fkey",
+        "e|fk|public.path_step.path_step_path_id_content_item_id_fkey",
+        "n|con|public.path_step.path_step_path_id_content_item_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.path_step",
+        "n|sch|public",
+        "n|tbl|public.content_item",
+        "n|sch|public",
+        "n|col|public.path_step.path_id",
+        "n|col|public.content_item.id",
+        "e|uniqueness|public.content_item.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "path_step"
+      ],
+      "writes": [
+        "s|fk|public.path_step.path_step_stage_id_path_stage_id_fkey",
+        "n|fk|public.path_step.path_step_stage_id_path_stage_id_fkey",
+        "e|fk|public.path_step.path_step_stage_id_path_stage_id_fkey",
+        "n|con|public.path_step.path_step_stage_id_path_stage_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.path_step",
+        "n|sch|public",
+        "n|tbl|public.path_stage",
+        "n|sch|public",
+        "n|col|public.path_step.stage_id",
+        "n|col|public.path_stage.id",
+        "e|uniqueness|public.path_stage.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "path_step"
+      ],
+      "writes": [
+        "s|fk|public.path_step.path_step_content_id_content_item_id_fkey",
+        "n|fk|public.path_step.path_step_content_id_content_item_id_fkey",
+        "e|fk|public.path_step.path_step_content_id_content_item_id_fkey",
+        "n|con|public.path_step.path_step_content_id_content_item_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.path_step",
+        "n|sch|public",
+        "n|tbl|public.content_item",
+        "n|sch|public",
+        "n|col|public.path_step.content_id",
+        "n|col|public.content_item.id",
+        "e|uniqueness|public.content_item.id"
+      ]
+    },
+    {
+      "statementType": "create_policy",
+      "statementTarget": [
+        "table",
+        "public",
+        "content_completion"
+      ],
+      "writes": [
+        "s|pol|public.content_completion.content_completion_tenant",
+        "n|pol|public.content_completion.content_completion_tenant",
+        "e|pol|public.content_completion.content_completion_tenant"
+      ],
+      "reads": [
+        "n|tbl|public.content_completion",
+        "n|sch|public",
+        "n|role|ekra_app",
+        "e|rls|public.content_completion"
+      ]
+    },
+    {
+      "statementType": "create_policy",
+      "statementTarget": [
+        "table",
+        "public",
+        "enrollment"
+      ],
+      "writes": [
+        "s|pol|public.enrollment.enrollment_tenant",
+        "n|pol|public.enrollment.enrollment_tenant",
+        "e|pol|public.enrollment.enrollment_tenant"
+      ],
+      "reads": [
+        "n|tbl|public.enrollment",
+        "n|sch|public",
+        "n|role|ekra_app",
+        "e|rls|public.enrollment"
+      ]
+    },
+    {
+      "statementType": "create_policy",
+      "statementTarget": [
+        "table",
+        "public",
+        "path_stage"
+      ],
+      "writes": [
+        "s|pol|public.path_stage.path_stage_tenant",
+        "n|pol|public.path_stage.path_stage_tenant",
+        "e|pol|public.path_stage.path_stage_tenant"
+      ],
+      "reads": [
+        "n|tbl|public.path_stage",
+        "n|sch|public",
+        "n|role|ekra_app",
+        "e|rls|public.path_stage"
+      ]
+    },
+    {
+      "statementType": "create_policy",
+      "statementTarget": [
+        "table",
+        "public",
+        "path_step"
+      ],
+      "writes": [
+        "s|pol|public.path_step.path_step_tenant",
+        "n|pol|public.path_step.path_step_tenant",
+        "e|pol|public.path_step.path_step_tenant"
+      ],
+      "reads": [
+        "n|tbl|public.path_step",
+        "n|sch|public",
+        "n|role|ekra_app",
+        "e|rls|public.path_step"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "content_completion",
+        "isRlsEnabled": true,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "enrollment",
+        "isRlsEnabled": true,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "path_stage",
+        "isRlsEnabled": true,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "path_step",
+        "isRlsEnabled": true,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "enrollment_source",
+        "values": [
+          "assigned",
+          "self"
+        ],
+        "entityType": "enums"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "content_completion",
+        "name": "org_id",
+        "type": "varchar(16)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "content_completion",
+        "name": "user_id",
+        "type": "varchar(16)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "content_completion",
+        "name": "content_id",
+        "type": "varchar(16)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "content_completion",
+        "name": "completed_at",
+        "type": "timestamp(3) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "enrollment",
+        "name": "id",
+        "type": "varchar(16)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "enrollment",
+        "name": "org_id",
+        "type": "varchar(16)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "enrollment",
+        "name": "content_id",
+        "type": "varchar(16)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "enrollment",
+        "name": "user_id",
+        "type": "varchar(16)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "enrollment",
+        "name": "source",
+        "type": "enrollment_source",
+        "typeSchema": "public",
+        "notNull": true,
+        "dimensions": 0,
+        "default": "'assigned'",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "enrollment",
+        "name": "assigned_by",
+        "type": "varchar(16)",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "enrollment",
+        "name": "start_at",
+        "type": "timestamp(3) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "enrollment",
+        "name": "due_at",
+        "type": "timestamp(3) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "enrollment",
+        "name": "reminded_at",
+        "type": "timestamp(3) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "enrollment",
+        "name": "created_at",
+        "type": "timestamp(3) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "path_stage",
+        "name": "id",
+        "type": "varchar(16)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "path_stage",
+        "name": "org_id",
+        "type": "varchar(16)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "path_stage",
+        "name": "path_id",
+        "type": "varchar(16)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "path_stage",
+        "name": "title",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "path_stage",
+        "name": "position",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "path_stage",
+        "name": "created_at",
+        "type": "timestamp(3) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "path_stage",
+        "name": "updated_at",
+        "type": "timestamp(3) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "path_step",
+        "name": "id",
+        "type": "varchar(16)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "path_step",
+        "name": "org_id",
+        "type": "varchar(16)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "path_step",
+        "name": "path_id",
+        "type": "varchar(16)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "path_step",
+        "name": "stage_id",
+        "type": "varchar(16)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "path_step",
+        "name": "content_id",
+        "type": "varchar(16)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "path_step",
+        "name": "position",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "path_step",
+        "name": "created_at",
+        "type": "timestamp(3) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "path_step",
+        "name": "updated_at",
+        "type": "timestamp(3) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "enrollment",
+        "name": "enrollment_user_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "user_id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "path_stage",
+        "name": "path_stage_path_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "path_id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "position",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "path_step",
+        "name": "path_step_stage_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "stage_id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "position",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "content_completion",
+        "name": "content_completion_org_id_organization_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "org_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "organization",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "content_completion",
+        "name": "content_completion_user_id_user_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "user_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "user",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "content_completion",
+        "name": "content_completion_content_id_content_item_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "content_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "content_item",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "enrollment",
+        "name": "enrollment_org_id_organization_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "org_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "organization",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "enrollment",
+        "name": "enrollment_content_id_content_item_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "content_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "content_item",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "enrollment",
+        "name": "enrollment_user_id_user_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "user_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "user",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "enrollment",
+        "name": "enrollment_assigned_by_user_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "assigned_by"
+        ],
+        "schemaTo": "public",
+        "tableTo": "user",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "SET NULL",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "path_stage",
+        "name": "path_stage_org_id_organization_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "org_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "organization",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "path_stage",
+        "name": "path_stage_path_id_content_item_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "path_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "content_item",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "path_step",
+        "name": "path_step_org_id_organization_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "org_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "organization",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "path_step",
+        "name": "path_step_path_id_content_item_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "path_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "content_item",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "path_step",
+        "name": "path_step_stage_id_path_stage_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "stage_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "path_stage",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "path_step",
+        "name": "path_step_content_id_content_item_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "content_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "content_item",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "content_completion",
+        "name": "content_completion_pkey",
+        "columns": [
+          "user_id",
+          "content_id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "enrollment",
+        "name": "enrollment_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "path_stage",
+        "name": "path_stage_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "path_step",
+        "name": "path_step_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "enrollment",
+        "name": "enrollment_person_content",
+        "nameExplicit": true,
+        "columns": [
+          "content_id",
+          "user_id"
+        ],
+        "nullsNotDistinct": false,
+        "entityType": "uniques"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "path_step",
+        "name": "path_step_once",
+        "nameExplicit": true,
+        "columns": [
+          "path_id",
+          "content_id"
+        ],
+        "nullsNotDistinct": false,
+        "entityType": "uniques"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "content_completion",
+        "name": "content_completion_tenant",
+        "as": "PERMISSIVE",
+        "for": "ALL",
+        "roles": [
+          "ekra_app"
+        ],
+        "using": "org_id = current_setting('app.org_id', true)",
+        "withCheck": "org_id = current_setting('app.org_id', true)",
+        "entityType": "policies"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "enrollment",
+        "name": "enrollment_tenant",
+        "as": "PERMISSIVE",
+        "for": "ALL",
+        "roles": [
+          "ekra_app"
+        ],
+        "using": "org_id = current_setting('app.org_id', true)",
+        "withCheck": "org_id = current_setting('app.org_id', true)",
+        "entityType": "policies"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "path_stage",
+        "name": "path_stage_tenant",
+        "as": "PERMISSIVE",
+        "for": "ALL",
+        "roles": [
+          "ekra_app"
+        ],
+        "using": "org_id = current_setting('app.org_id', true)",
+        "withCheck": "org_id = current_setting('app.org_id', true)",
+        "entityType": "policies"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "path_step",
+        "name": "path_step_tenant",
+        "as": "PERMISSIVE",
+        "for": "ALL",
+        "roles": [
+          "ekra_app"
+        ],
+        "using": "org_id = current_setting('app.org_id', true)",
+        "withCheck": "org_id = current_setting('app.org_id', true)",
+        "entityType": "policies"
+      }
+    }
+  ]
+}
