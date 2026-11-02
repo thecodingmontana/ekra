@@ -1,10 +1,11 @@
 import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
-import { member, organization, user } from "@ekra/db";
+import { mediaAsset, member, organization, user } from "@ekra/db";
 import { eq, inArray } from "drizzle-orm";
 import sharp from "sharp";
 import { app } from "./app.ts";
 import { db } from "./db.ts";
+import { storage } from "./media.ts";
 import {
 	call,
 	cookieFrom,
@@ -168,4 +169,160 @@ test("files that aren't pictures, and huge files, are refused with a reason", as
 		new Blob([new Uint8Array(21 * 1024 * 1024)]),
 	);
 	assert.equal(huge.status, 413);
+});
+
+const json = (who: string, path: string, body: unknown) =>
+	app.request(path, {
+		method: "POST",
+		headers: {
+			cookie: cookies[who] ?? "",
+			origin: ORIGIN,
+			"content-type": "application/json",
+		},
+		body: JSON.stringify(body),
+	});
+
+test("a video uploads in parts, then waits for the worker", async () => {
+	const start = await json("amina", `/api/media/videos?org=${slugs.amina}`, {
+		size: 9 * 1024 * 1024,
+		type: "video/mp4",
+	});
+	assert.equal(start.status, 200, await start.clone().text());
+	const { id, partBytes, parts } = (await start.json()) as {
+		id: string;
+		partBytes: number;
+		parts: number;
+	};
+	assert.deepEqual([partBytes, parts], [8 * 1024 * 1024, 2]);
+
+	const sent: { part: number; etag: string }[] = [];
+	for (const [part, size] of [
+		[1, partBytes],
+		[2, 1024 * 1024],
+	] as const) {
+		const res = await app.request(
+			`/api/media/videos/${id}/parts/${part}?org=${slugs.amina}`,
+			{
+				method: "PUT",
+				headers: { cookie: cookies.amina ?? "", origin: ORIGIN },
+				body: new Uint8Array(size).fill(part),
+			},
+		);
+		assert.equal(res.status, 200, await res.clone().text());
+		sent.push((await res.json()) as { part: number; etag: string });
+	}
+	const done = await json(
+		"amina",
+		`/api/media/videos/${id}/complete?org=${slugs.amina}`,
+		{ parts: sent },
+	);
+	assert.equal(done.status, 200, await done.clone().text());
+	const [row] = await db.select().from(mediaAsset).where(eq(mediaAsset.id, id));
+	assert.equal(row?.status, "processing");
+	assert.equal(
+		(
+			await json(
+				"amina",
+				`/api/media/videos/${id}/complete?org=${slugs.amina}`,
+				{ parts: sent },
+			)
+		).status,
+		409,
+		"finished once",
+	);
+	// the worker isn't running in tests: take it off the queue
+	await db.delete(mediaAsset).where(eq(mediaAsset.id, id));
+});
+
+test("only people who manage content upload videos, of a sane size", async () => {
+	assert.equal(
+		(await json("carol", `/api/media/videos?org=${slugs.amina}`, { size: 10 }))
+			.status,
+		403,
+	);
+	assert.equal(
+		(await json("brian", `/api/media/videos?org=${slugs.amina}`, { size: 10 }))
+			.status,
+		403,
+	);
+	assert.equal(
+		(
+			await json("amina", `/api/media/videos?org=${slugs.amina}`, {
+				size: 6 * 1024 ** 3,
+			})
+		).status,
+		413,
+	);
+	assert.equal(
+		(
+			await json("amina", `/api/media/videos?org=${slugs.amina}`, {
+				size: "lots",
+			})
+		).status,
+		400,
+	);
+});
+
+test("a playlist signs its segments; segments need that signature, not a session", async () => {
+	const [org] = await db
+		.select({ id: organization.id })
+		.from(organization)
+		.where(eq(organization.slug, slugs.amina));
+	const orgId = org?.id ?? "";
+	const id = "VIDEOTESTAAAAAAA";
+	const put = (name: string, body: string) =>
+		storage.put(
+			`media/${orgId}/${id}/${name}`,
+			new TextEncoder().encode(body),
+			"text/plain",
+		);
+	await put(
+		"360p-m3u8",
+		"#EXTM3U\n#EXTINF:2.0,\n360p_000-ts\n#EXT-X-ENDLIST\n",
+	);
+	await put("360p_000-ts", "segment bytes");
+	const base = `/api/media/${orgId}/${id}`;
+
+	const playlist = await fetchMedia(`${base}/360p-m3u8`, "carol");
+	assert.equal(playlist.status, 200);
+	assert.equal(
+		playlist.headers.get("content-type"),
+		"application/vnd.apple.mpegurl",
+	);
+	const segmentLine = (await playlist.text())
+		.split("\n")
+		.find((l) => l.startsWith("360p_000-ts"));
+	assert.match(segmentLine ?? "", /^360p_000-ts\?t=\d+\.[\w-]+$/);
+
+	const segment = await app.request(`${base}/${segmentLine}`);
+	assert.equal(segment.status, 200, "no cookie needed with the signature");
+	assert.equal(await segment.text(), "segment bytes");
+	assert.equal(
+		(await app.request(`${base}/360p_000-ts`)).status,
+		403,
+		"no signature",
+	);
+	assert.equal(
+		(
+			await app.request(
+				`${base}/360p_000-ts?t=${segmentLine?.split("t=")[1]?.replace(/.$/, "x")}`,
+			)
+		).status,
+		403,
+		"a changed signature",
+	);
+	assert.equal(
+		(
+			await app.request(
+				`/api/media/${orgId}/OTHERVIDEOAAAAAA/360p_000-ts?t=${segmentLine?.split("t=")[1]}`,
+			)
+		).status,
+		403,
+		"another video's signature",
+	);
+	assert.equal(
+		(await fetchMedia(`${base}/360p-m3u8`, "brian")).status,
+		404,
+		"another organization",
+	);
 });

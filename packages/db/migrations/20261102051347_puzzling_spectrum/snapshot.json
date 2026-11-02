@@ -1,0 +1,167 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "b6248c10-d1f1-486b-a57c-42e9af560ef1",
+  "prevIds": [
+    "eb3654ee-8588-4dec-ab77-0f6c6c3ea640"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "media_asset",
+        "upload_id"
+      ],
+      "writes": [
+        "s|col|public.media_asset.upload_id",
+        "n|col|public.media_asset.upload_id",
+        "e|col|public.media_asset.upload_id"
+      ],
+      "reads": [
+        "n|tbl|public.media_asset",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "media_asset",
+        "attempts"
+      ],
+      "writes": [
+        "s|col|public.media_asset.attempts",
+        "n|col|public.media_asset.attempts",
+        "e|col|public.media_asset.attempts"
+      ],
+      "reads": [
+        "n|tbl|public.media_asset",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "media_asset",
+        "locked_until"
+      ],
+      "writes": [
+        "s|col|public.media_asset.locked_until",
+        "n|col|public.media_asset.locked_until",
+        "e|col|public.media_asset.locked_until"
+      ],
+      "reads": [
+        "n|tbl|public.media_asset",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "media_asset",
+        "media_asset_jobs_idx"
+      ],
+      "writes": [
+        "s|idx|public.media_asset_jobs_idx",
+        "n|idx|public.media_asset_jobs_idx",
+        "e|idx|public.media_asset_jobs_idx",
+        "n|rel|public.media_asset_jobs_idx"
+      ],
+      "reads": [
+        "n|tbl|public.media_asset",
+        "n|sch|public",
+        "n|col|public.media_asset.status",
+        "n|col|public.media_asset.locked_until"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "media_asset",
+        "name": "upload_id",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "media_asset",
+        "name": "attempts",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "0",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "media_asset",
+        "name": "locked_until",
+        "type": "timestamp(3) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "media_asset",
+        "name": "media_asset_jobs_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "status",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "locked_until",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    }
+  ]
+}

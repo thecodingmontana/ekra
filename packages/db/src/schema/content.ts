@@ -194,6 +194,11 @@ export const mediaAsset = pgTable(
 		originalKey: text("original_key"),
 		/** why processing failed, in words for the person who uploaded it */
 		error: text("error"),
+		/** while uploading in parts: storage's id for the upload */
+		uploadId: text("upload_id"),
+		/** processing tries so far, and until when the current try holds the job */
+		attempts: integer("attempts").notNull().default(0),
+		lockedUntil: moment("locked_until"),
 		createdBy: idRef("created_by").references(() => user.id, {
 			onDelete: "set null",
 		}),
@@ -205,6 +210,7 @@ export const mediaAsset = pgTable(
 	},
 	(table) => [
 		index("media_asset_org_idx").on(table.orgId),
+		index("media_asset_jobs_idx").on(table.status, table.lockedUntil),
 		tenantPolicy("media_asset"),
 	],
 ).enableRLS();

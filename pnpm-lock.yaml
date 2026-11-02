@@ -361,6 +361,34 @@ importers:
         specifier: ^8.3.5
         version: 8.3.5(@types/node@26.6.6)(jiti@2.7.0)
 
+  apps/worker:
+    dependencies:
+      '@ekra/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@ekra/media':
+        specifier: workspace:*
+        version: link:../../packages/media
+      '@ekra/storage':
+        specifier: workspace:*
+        version: link:../../packages/storage
+      '@t3-oss/env-core':
+        specifier: ^0.13.11
+        version: 0.13.11(typescript@7.0.2)(zod@4.6.7)
+      drizzle-orm:
+        specifier: 1.0.0-rc.5
+        version: 1.0.0-rc.5(postgres@3.4.9)(zod@4.6.7)
+      evlog:
+        specifier: ^2.34.0
+        version: 2.34.0(@tanstack/start-client-core@1.170.39)(hono@4.13.14)(react@19.3.1)(vite@8.3.5(@types/node@26.6.6)(jiti@2.7.0))
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
+    devDependencies:
+      '@types/node':
+        specifier: ^26.6.6
+        version: 26.6.6
+
   packages/core: {}
 
   packages/db:

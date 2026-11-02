@@ -1,4 +1,4 @@
-# Production images for the API (target: server) and the web app (target: web).
+# Production images for the API (target: server), the web app (target: web) and the worker (target: worker).
 # Built on the server by scripts/setup.sh and `ekra update`: the web app's address (BETTER_AUTH_URL) is part of
 # its browser code, so each install builds its own image.
 FROM node:24-bookworm-slim AS base
@@ -25,4 +25,11 @@ FROM base AS server
 ENV NODE_ENV=production SERVER_HOST=0.0.0.0 SERVER_PORT=4000
 WORKDIR /app/apps/server
 EXPOSE 4000
+CMD ["node", "src/index.ts"]
+
+# The background worker: the same workspace, plus ffmpeg for turning uploaded videos into streams
+FROM base AS worker
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg && rm -rf /var/lib/apt/lists/*
+ENV NODE_ENV=production
+WORKDIR /app/apps/worker
 CMD ["node", "src/index.ts"]

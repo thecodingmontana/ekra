@@ -1,0 +1,9 @@
+{
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"types": ["node"],
+		// Node runs the .ts files directly by stripping types, so only erasable syntax is allowed
+		"erasableSyntaxOnly": true
+	},
+	"include": ["src"]
+}

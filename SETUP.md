@@ -25,13 +25,14 @@ nothing here needs a server, a domain or a cloud account.
 
 ## 1. What you need
 
-| Tool                           | Version                            | Why                                 |
-| ------------------------------ | ---------------------------------- | ----------------------------------- |
-| Git                            | any recent                         | source control                      |
-| Node.js                        | 24 (see `.nvmrc`), at least 22     | runs the apps and tooling           |
-| pnpm                           | 12.11.2 (pinned in `package.json`) | package manager for the monorepo    |
-| Docker Engine + Compose plugin | Compose v2 or newer                | runs Postgres and SeaweedFS locally |
-| GitHub CLI (`gh`)              | any recent                         | optional, for repo work             |
+| Tool                           | Version                            | Why                                                                                     |
+| ------------------------------ | ---------------------------------- | --------------------------------------------------------------------------------------- |
+| Git                            | any recent                         | source control                                                                          |
+| Node.js                        | 24 (see `.nvmrc`), at least 22     | runs the apps and tooling                                                               |
+| pnpm                           | 12.11.2 (pinned in `package.json`) | package manager for the monorepo                                                        |
+| Docker Engine + Compose plugin | Compose v2 or newer                | runs Postgres and SeaweedFS locally                                                     |
+| ffmpeg (with ffprobe)          | 6 or newer                         | the worker turns videos into streams (`sudo apt install ffmpeg`, `brew install ffmpeg`) |
+| GitHub CLI (`gh`)              | any recent                         | optional, for repo work                                                                 |
 
 Supported systems: Linux, macOS, and Windows through WSL 2.
 

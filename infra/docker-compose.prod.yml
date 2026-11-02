@@ -54,6 +54,17 @@ services:
       migrate: { condition: service_completed_successfully }
       seaweedfs: { condition: service_started }
 
+  # processes uploaded videos (ffmpeg); a stopped worker's video is picked up again when it's back
+  worker:
+    <<: *app-env
+    build: { context: .., dockerfile: infra/Dockerfile, target: worker }
+    image: ekra-worker
+    restart: unless-stopped
+    stop_grace_period: 2m
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      seaweedfs: { condition: service_started }
+
   web:
     build:
       context: ..

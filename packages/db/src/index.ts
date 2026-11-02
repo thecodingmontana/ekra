@@ -37,15 +37,17 @@ export type Db = ReturnType<typeof createDb>["db"];
 
 /** Apply every pending migration to the database at `url` (tests use this; apps use `pnpm db:migrate`). */
 export async function migrateDatabase(url: string) {
-	const { db, close } = createDb(url);
+	// one connection, holding a lock: two processes migrating at once (parallel test runs) wait for each other
+	const client = postgres(url, { max: 1, onnotice: () => {} });
 	try {
-		await migrate(db, {
+		await client`select pg_advisory_lock(hashtext('ekra-migrate'))`;
+		await migrate(drizzle({ client }), {
 			migrationsFolder: fileURLToPath(
 				new URL("../migrations", import.meta.url),
 			),
 		});
 	} finally {
-		await close();
+		await client.end();
 	}
 }
 
