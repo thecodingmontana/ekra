@@ -25,14 +25,26 @@ export function createStorage(config: S3Config) {
 	const base = config.endpoint.replace(/\/$/, "");
 
 	async function send(
-		method: "GET" | "PUT" | "DELETE" | "HEAD",
+		method: "GET" | "PUT" | "POST" | "DELETE" | "HEAD",
 		key: string,
 		body?: Uint8Array,
 		headers: Record<string, string> = {},
+		query: Record<string, string> = {},
 	) {
 		if (key && (!SAFE_KEY.test(key) || key.includes("..")))
 			throw new Error(`Unsafe storage key: ${key}`);
 		const url = new URL(`${base}/${config.bucket}${key ? `/${key}` : ""}`);
+		// signed query: names sorted, everything percent-encoded the strict (RFC 3986) way
+		const strict = (v: string) =>
+			encodeURIComponent(v).replace(
+				/[!'()*]/g,
+				(c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`,
+			);
+		const canonicalQuery = Object.keys(query)
+			.sort()
+			.map((k) => `${strict(k)}=${strict(query[k] ?? "")}`)
+			.join("&");
+		url.search = canonicalQuery;
 		const amzDate = new Date().toISOString().replace(/[:-]|\.\d{3}/g, "");
 		const day = amzDate.slice(0, 8);
 		const payload = sha256(body ?? "");
@@ -48,7 +60,7 @@ export function createStorage(config: S3Config) {
 		const canonical = [
 			method,
 			url.pathname,
-			"",
+			canonicalQuery,
 			...names.map((n) => `${n}:${signed[n]}`),
 			"",
 			names.join(";"),
@@ -109,6 +121,73 @@ export function createStorage(config: S3Config) {
 		async delete(key: string) {
 			const res = await send("DELETE", key);
 			if (!res.ok && res.status !== 404) await fail(`delete of ${key}`, res);
+		},
+		/** Starts an upload in parts (for big files); returns its upload id. */
+		async startMultipart(key: string, contentType: string) {
+			const res = await send(
+				"POST",
+				key,
+				undefined,
+				{ "content-type": contentType },
+				{ uploads: "" },
+			);
+			if (!res.ok) await fail(`upload start of ${key}`, res);
+			const id = (await res.text()).match(/<UploadId>([^<]+)<\/UploadId>/)?.[1];
+			if (!id) throw new Error(`Storage gave no upload id for ${key}`);
+			return id;
+		},
+		/** One part (numbered from 1; every part but the last at least 5 MB). Returns its ETag. */
+		async uploadPart(
+			key: string,
+			uploadId: string,
+			part: number,
+			body: Uint8Array,
+		) {
+			const res = await send(
+				"PUT",
+				key,
+				body,
+				{},
+				{
+					partNumber: String(part),
+					uploadId,
+				},
+			);
+			if (!res.ok) await fail(`part ${part} of ${key}`, res);
+			const etag = res.headers.get("etag");
+			if (!etag)
+				throw new Error(`Storage gave no ETag for part ${part} of ${key}`);
+			return etag;
+		},
+		async completeMultipart(
+			key: string,
+			uploadId: string,
+			parts: { part: number; etag: string }[],
+		) {
+			const xml = `<CompleteMultipartUpload>${[...parts]
+				.sort((a, b) => a.part - b.part)
+				.map(
+					(p) =>
+						`<Part><PartNumber>${p.part}</PartNumber><ETag>${p.etag.replace(/[<>&]/g, "")}</ETag></Part>`,
+				)
+				.join("")}</CompleteMultipartUpload>`;
+			const res = await send(
+				"POST",
+				key,
+				new TextEncoder().encode(xml),
+				{ "content-type": "application/xml" },
+				{ uploadId },
+			);
+			// S3 can answer 200 with an error inside the body
+			const text = await res.text();
+			if (!res.ok || text.includes("<Error>"))
+				throw new Error(
+					`Storage couldn't finish ${key}: ${text.slice(0, 200)}`,
+				);
+		},
+		async abortMultipart(key: string, uploadId: string) {
+			const res = await send("DELETE", key, undefined, {}, { uploadId });
+			if (!res.ok && res.status !== 404) await fail(`abort of ${key}`, res);
 		},
 	};
 }

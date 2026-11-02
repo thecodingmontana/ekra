@@ -5,3 +5,11 @@ export {
 	type ProcessedImage,
 	processImage,
 } from "./image.ts";
+export {
+	LADDER,
+	MAX_SECONDS,
+	type ProcessedVideo,
+	probeVideo,
+	processVideo,
+	VideoError,
+} from "./video.ts";
