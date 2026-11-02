@@ -161,7 +161,7 @@ async function managedVideo(
 				tx.select().from(mediaAsset).where(eq(mediaAsset.id, id)),
 			)
 		: [];
-	if (!video || video.kind !== "video")
+	if (video?.kind !== "video")
 		throw createError({ message: "That upload doesn't exist.", status: 404 });
 	return { org, video };
 }
