@@ -60,6 +60,10 @@ export const contentItem = pgTable(
 		}),
 		/** a starting point others copy ("Use template"); learners never see templates */
 		isTemplate: boolean("is_template").notNull().default(false),
+		/** categories people filter by ("Onboarding", "Safety"), as typed by trainers */
+		tags: text("tags").array().notNull().default(sql`'{}'::text[]`),
+		/** a cover picture from the image pipeline (/api/media/…), shown on cards */
+		cover: text("cover"),
 		/** the body (Tiptap JSON, checked by checkDoc in @ekra/core); null until someone writes in it */
 		doc: jsonb("doc"),
 		/** the body as plain text, for search and the version history's "what changed" */
@@ -76,6 +80,7 @@ export const contentItem = pgTable(
 	(table) => [
 		index("content_item_org_idx").on(table.orgId, table.updatedAt),
 		index("content_item_parent_idx").on(table.parentId),
+		index("content_item_tags_idx").using("gin", table.tags),
 		tenantPolicy("content_item"),
 	],
 ).enableRLS();

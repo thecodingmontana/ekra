@@ -1,4 +1,4 @@
-import { checkDoc, DocError } from "@ekra/core";
+import { checkDoc, DocError, isImageSrc } from "@ekra/core";
 import {
 	contentFavorite,
 	contentItem,
@@ -104,6 +104,10 @@ export const libraryTypeDefs = /* GraphQL */ `
 		isFavorite: Boolean!
 		"When you last opened it."
 		viewedAt: String
+		"Categories to filter by."
+		tags: [String!]!
+		"A cover picture (/api/media/…) for cards."
+		cover: String
 		"The body as Tiptap JSON text (on content and restoreContentVersion only; null in lists)."
 		doc: String
 		"When the body last changed (send it back when saving)."
@@ -132,6 +136,8 @@ export const libraryTypeDefs = /* GraphQL */ `
 		description: String
 		parentId: ID
 		isTemplate: Boolean
+		tags: [String!]
+		cover: String
 	}
 
 	input UpdateContentInput {
@@ -141,6 +147,10 @@ export const libraryTypeDefs = /* GraphQL */ `
 		"Move into a folder; null moves it to the top."
 		parentId: ID
 		isTemplate: Boolean
+		"Replaces the categories."
+		tags: [String!]
+		"A picture from an upload; null removes it."
+		cover: String
 	}
 `;
 
@@ -155,6 +165,23 @@ const KINDS = [
 ] as const;
 const title = z.string().trim().min(1, "Give it a title.").max(200);
 const description = z.string().trim().max(2000).nullish();
+/** up to 8 categories of up to 30 characters; the same one twice (any case) counts once */
+const tags = z
+	.array(
+		z.string().trim().min(1).max(30, "Keep categories under 30 characters."),
+	)
+	.max(8, "Up to 8 categories.")
+	.transform((list) => {
+		const seen = new Set<string>();
+		return list.filter((t) => {
+			const key = t.toLowerCase();
+			return !seen.has(key) && seen.add(key);
+		});
+	});
+const cover = z
+	.string()
+	.refine(isImageSrc, "Upload the cover picture here.")
+	.nullish();
 
 const createInput = z.object({
 	kind: z.enum(KINDS),
@@ -162,6 +189,8 @@ const createInput = z.object({
 	description,
 	parentId: z.string().max(32).nullish(),
 	isTemplate: z.boolean().nullish(),
+	tags: tags.optional(),
+	cover,
 });
 
 const updateInput = z.object({
@@ -170,6 +199,8 @@ const updateInput = z.object({
 	status: z.enum(["draft", "published"]).optional(),
 	parentId: z.string().max(32).nullish(),
 	isTemplate: z.boolean().optional(),
+	tags: tags.optional(),
+	cover,
 });
 
 export type Ctx = { session: { user: { id: string } } | null };
@@ -554,6 +585,8 @@ export const libraryResolvers = {
 							? item.title
 							: `Copy of ${item.title}`.slice(0, 200),
 						description: item.description,
+						tags: item.tags,
+						cover: item.cover,
 						doc: body?.doc ?? null,
 						bodyText: body?.bodyText ?? null,
 						bodyUpdatedAt: body?.doc ? new Date() : null,

@@ -1,0 +1,125 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "eb3654ee-8588-4dec-ab77-0f6c6c3ea640",
+  "prevIds": [
+    "ae7c79ef-9784-47a5-8295-427a5542e081"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "content_item",
+        "tags"
+      ],
+      "writes": [
+        "s|col|public.content_item.tags",
+        "n|col|public.content_item.tags",
+        "e|col|public.content_item.tags"
+      ],
+      "reads": [
+        "n|tbl|public.content_item",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "content_item",
+        "cover"
+      ],
+      "writes": [
+        "s|col|public.content_item.cover",
+        "n|col|public.content_item.cover",
+        "e|col|public.content_item.cover"
+      ],
+      "reads": [
+        "n|tbl|public.content_item",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "content_item",
+        "content_item_tags_idx"
+      ],
+      "writes": [
+        "s|idx|public.content_item_tags_idx",
+        "n|idx|public.content_item_tags_idx",
+        "e|idx|public.content_item_tags_idx",
+        "n|rel|public.content_item_tags_idx"
+      ],
+      "reads": [
+        "n|tbl|public.content_item",
+        "n|sch|public",
+        "n|col|public.content_item.tags"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "content_item",
+        "name": "tags",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 1,
+        "default": "'{}'",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "content_item",
+        "name": "cover",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "content_item",
+        "name": "content_item_tags_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "tags",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "gin",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    }
+  ]
+}

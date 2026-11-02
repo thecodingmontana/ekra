@@ -635,3 +635,44 @@ test("versions: one per sitting, restore brings an old body back, others see not
 		null,
 	);
 });
+
+test("categories and a cover picture: kept tidy, and only pictures from Ekra", async () => {
+	const ITEM_FIELDS = "id tags cover";
+	const made = await gql(
+		"amina",
+		`mutation ($slug: String!, $input: CreateContentInput!) { r: createContent(slug: $slug, input: $input) { ${ITEM_FIELDS} } }`,
+		{
+			slug: slugs.amina,
+			input: {
+				kind: "course",
+				title: "Tagged",
+				tags: [" Safety ", "safety", "Onboarding"],
+				cover: "/api/media/AAAAAAAAAAAAAAAA/BBBBBBBBBBBBBBBB/640-webp",
+			},
+		},
+	);
+	const item = made.data?.r as { id: string; tags: string[]; cover: string };
+	assert.deepEqual(
+		item.tags,
+		["Safety", "Onboarding"],
+		"trimmed, one per name",
+	);
+	assert.match(item.cover, /640-webp$/);
+
+	const update = (input: object) =>
+		gql(
+			"amina",
+			`mutation ($slug: String!, $id: ID!, $input: UpdateContentInput!) { r: updateContent(slug: $slug, id: $id, input: $input) { ${ITEM_FIELDS} } }`,
+			{ slug: slugs.amina, id: item.id, input },
+		);
+	assert.equal(
+		code(await update({ tags: Array.from({ length: 9 }, (_, i) => `t${i}`) })),
+		"BAD_USER_INPUT",
+	);
+	assert.equal(
+		code(await update({ cover: "https://tracker.example/pixel.gif" })),
+		"BAD_USER_INPUT",
+	);
+	const cleared = await update({ cover: null, tags: [] });
+	assert.deepEqual(cleared.data?.r, { id: item.id, tags: [], cover: null });
+});
