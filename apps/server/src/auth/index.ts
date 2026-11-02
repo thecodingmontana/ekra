@@ -7,6 +7,7 @@ import {
 } from "@ekra/core";
 import { generateId, schema } from "@ekra/db";
 import {
+	invitationEmail,
 	resetPasswordEmail,
 	signInLinkEmail,
 	verifyEmailEmail,
@@ -61,6 +62,8 @@ function assertSlug(slug: string) {
 	const problem = slugProblem(slug);
 	if (problem) throw new APIError("BAD_REQUEST", { message: problem });
 }
+
+const INVITATION_DAYS = 7;
 
 /** Sign-in methods that are switched on, so the sign-in page only offers those. */
 export const signInMethods = [
@@ -239,6 +242,26 @@ export const auth = betterAuth({
 			roles,
 			creatorRole: "owner",
 			teams: { enabled: true },
+			invitationExpiresIn: INVITATION_DAYS * 86_400,
+			// the link opens the invitation page, which asks to sign in (or sign up) with the invited address first
+			sendInvitationEmail: async ({
+				id,
+				email,
+				role,
+				organization,
+				inviter,
+			}) => {
+				await mailer.send({
+					to: email,
+					...invitationEmail({
+						organization: organization.name,
+						from: inviter.user.name,
+						role: role.split(",")[0] ?? "member",
+						url: new URL(`/invite/${id}`, env.BETTER_AUTH_URL).toString(),
+						days: INVITATION_DAYS,
+					}),
+				});
+			},
 			organizationHooks: {
 				// the slug becomes a subdomain, so it must follow hostname rules (packages/core)
 				beforeCreateOrganization: async ({ organization }) => {

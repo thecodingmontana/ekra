@@ -127,3 +127,17 @@ test("a reminder names the content and escapes what people typed", async () => {
 	assert.match(m.html, /Safety &lt;b&gt;101&lt;\/b&gt; is overdue/);
 	assert.match(m.text, /Due: 1 Nov 2026\./);
 });
+
+test("an invitation says who invited you, to what, as which role", async () => {
+	const { invitationEmail } = await import("./templates.ts");
+	const m = invitationEmail({
+		organization: "Acme <Co>",
+		from: "Tara",
+		role: "learner",
+		url: "https://ekra.app/invite/abc",
+		days: 7,
+	});
+	assert.equal(m.subject, "Tara invited you to Acme <Co> on Ekra");
+	assert.match(m.html, /Acme &lt;Co&gt; as a learner/);
+	assert.match(m.text, /Accept invitation: https:\/\/ekra\.app\/invite\/abc/);
+});

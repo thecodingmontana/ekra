@@ -147,3 +147,27 @@ export function reminderEmail(options: {
 		}),
 	};
 }
+
+/** An invitation to join an organization, with the role it gives. */
+export function invitationEmail(options: {
+	organization: string;
+	from: string;
+	role: string;
+	url: string;
+	days: number;
+}): Content {
+	return {
+		subject: `${options.from} invited you to ${options.organization} on ${APP}`,
+		...layout({
+			heading: `Join ${options.organization}`,
+			paragraphs: [
+				`${options.from} invited you to ${options.organization} as ${/^[aeiou]/i.test(options.role) ? "an" : "a"} ${options.role}.`,
+				`The invitation works for ${options.days} days.`,
+			],
+			button: "Accept invitation",
+			url: options.url,
+			footer:
+				"If you weren't expecting this, you can ignore this email; nothing happens until you accept.",
+		}),
+	};
+}
