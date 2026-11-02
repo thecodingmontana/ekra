@@ -32,3 +32,10 @@ export {
 	lessonKind,
 	lessonProgress,
 } from "./course.ts";
+export {
+	questionKind,
+	quiz,
+	quizAttempt,
+	quizQuestion,
+	showAnswers,
+} from "./quiz.ts";

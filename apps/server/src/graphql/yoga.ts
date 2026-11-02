@@ -19,6 +19,7 @@ import { env } from "../env.ts";
 import { announceChange, mutationSlugs } from "../realtime.ts";
 import { courseResolvers, courseTypeDefs } from "./course.ts";
 import { libraryResolvers, libraryTypeDefs } from "./library.ts";
+import { quizResolvers, quizTypeDefs } from "./quiz.ts";
 import { requireOrg } from "./tenant.ts";
 
 /**
@@ -89,10 +90,12 @@ const schema = createSchema<GraphQLContext>({
 	`,
 		libraryTypeDefs,
 		courseTypeDefs,
+		quizTypeDefs,
 	],
 	resolvers: [
 		libraryResolvers,
 		courseResolvers,
+		quizResolvers,
 		{
 			Query: {
 				health: () => "ok",
