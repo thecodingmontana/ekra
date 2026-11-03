@@ -10,6 +10,7 @@ import {
 	MY_LEARNING,
 	type MyEnrollment,
 } from "@/graphql/learning";
+import { STATUS_LABEL } from "@/lib/assignees";
 import { KINDS } from "@/lib/content-kinds";
 import { prime, reloadOnEnter } from "@/lib/routing";
 
@@ -28,11 +29,11 @@ export const Route = createFileRoute("/_authed/o/$slug/")({
 	component: Home,
 });
 
-const STATUS: Record<MyEnrollment["status"], [string, string]> = {
-	not_started: ["Not started", "bg-muted-foreground/50"],
-	in_progress: ["In progress", "bg-tint-amber"],
-	overdue: ["Overdue", "bg-destructive"],
-	completed: ["Completed", "bg-tint-green"],
+const STATUS_DOT: Record<MyEnrollment["status"], string> = {
+	not_started: "bg-muted-foreground/50",
+	in_progress: "bg-tint-amber",
+	overdue: "bg-destructive",
+	completed: "bg-tint-green",
 };
 const CERTIFIED = new Set(["course", "path", "quiz"]);
 const day = (iso: string) =>
@@ -127,7 +128,8 @@ function Row({
 	e: MyEnrollment;
 	certificate: Certificate | undefined;
 }) {
-	const [label, dot] = STATUS[e.status];
+	const label = STATUS_LABEL[e.status];
+	const dot = STATUS_DOT[e.status];
 	return (
 		<div
 			className="flex min-h-[56px] items-center gap-3 border-border/60 border-t px-3.5 py-2 first:border-t-0"

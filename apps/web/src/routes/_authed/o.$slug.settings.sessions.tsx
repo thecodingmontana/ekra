@@ -1,3 +1,4 @@
+import { ago } from "@ekra/core";
 import { Button } from "@ekra/ui/components/button";
 import { Spinner } from "@ekra/ui/components/spinner";
 import { toast } from "@ekra/ui/lib/toast";
@@ -51,19 +52,6 @@ export function describeDevice(ua: string | null | undefined) {
 							? "Linux"
 							: "";
 	return { label: os ? `${browser} on ${os}` : browser, icon };
-}
-
-/** "just now", "5m ago", "3h ago", "2d ago", then the date. */
-function ago(when: string | Date) {
-	const minutes = Math.floor((Date.now() - new Date(when).getTime()) / 60000);
-	if (minutes < 1) return "just now";
-	if (minutes < 60) return `${minutes}m ago`;
-	if (minutes < 1440) return `${Math.floor(minutes / 60)}h ago`;
-	if (minutes < 10080) return `${Math.floor(minutes / 1440)}d ago`;
-	return new Date(when).toLocaleDateString(undefined, {
-		month: "short",
-		day: "numeric",
-	});
 }
 
 function Sessions() {

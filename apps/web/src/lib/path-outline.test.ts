@@ -2,7 +2,13 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { ContentItem, ContentKind } from "../graphql/library.ts";
 import type { LearningPath, PathStep } from "../graphql/path.ts";
-import { nextStep, pickable, stepTarget } from "./path-outline.ts";
+import {
+	allSteps,
+	nextStep,
+	pickable,
+	STEP_KINDS,
+	stepTarget,
+} from "./path-outline.ts";
 
 const item = (
 	id: string,
@@ -66,7 +72,7 @@ test("stepTarget moves within a stage and across stage edges", () => {
 });
 
 test("pickable hides what's in the path, folders, paths, templates and archived items", () => {
-	const p = path([step("a")]);
+	const inPath = new Set(allSteps(path([step("a")])).map((s) => s.content.id));
 	const items = [
 		item("c-a"),
 		item("f", "folder"),
@@ -79,15 +85,19 @@ test("pickable hides what's in the path, folders, paths, templates and archived 
 		item("ok4", "assignment"),
 	];
 	assert.deepEqual(
-		pickable(items, p, "all", "").map((i) => i.id),
+		pickable(items, inPath, STEP_KINDS, "all", "").map((i) => i.id),
 		["ok1", "ok2", "ok3", "ok4"],
 	);
 	assert.deepEqual(
-		pickable(items, p, "quiz", "").map((i) => i.id),
+		pickable(items, inPath, STEP_KINDS, "quiz", "").map((i) => i.id),
 		["ok2"],
 	);
 	assert.deepEqual(
-		pickable(items, p, "all", " SAFETY ").map((i) => i.id),
+		pickable(items, inPath, STEP_KINDS, "all", " SAFETY ").map((i) => i.id),
 		["ok1"],
+	);
+	assert.deepEqual(
+		pickable(items, new Set(), ["quiz"], "all", "").map((i) => i.id),
+		["ok2"],
 	);
 });

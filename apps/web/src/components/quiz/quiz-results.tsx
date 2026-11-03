@@ -1,5 +1,6 @@
 import { Button } from "@ekra/ui/components/button";
 import { cn } from "@ekra/ui/lib/utils";
+import { ProgressRing } from "@/components/progress-ring";
 import type { QuizAttempt } from "@/graphql/quiz";
 import type { Answer } from "@/lib/quiz-player";
 import { AnswerInput, json } from "./answer-input";
@@ -161,35 +162,9 @@ export function QuizResults({
 }
 
 function Ring({ percent, tone }: { percent: number; tone: string }) {
-	const r = 34;
-	const c = 2 * Math.PI * r;
 	return (
 		<span className={cn("relative grid size-24 place-items-center", tone)}>
-			<svg
-				viewBox="0 0 80 80"
-				className="absolute inset-0 -rotate-90"
-				aria-hidden="true"
-			>
-				<circle
-					cx="40"
-					cy="40"
-					r={r}
-					fill="none"
-					stroke="var(--muted)"
-					strokeWidth="7"
-				/>
-				<circle
-					cx="40"
-					cy="40"
-					r={r}
-					fill="none"
-					stroke="currentColor"
-					strokeWidth="7"
-					strokeLinecap="round"
-					strokeDasharray={c}
-					strokeDashoffset={c - (c * percent) / 100}
-				/>
-			</svg>
+			<ProgressRing percent={percent} stroke={7} className="absolute inset-0" />
 			<span className="font-semibold text-foreground text-xl tabular-nums">
 				{percent}%
 			</span>

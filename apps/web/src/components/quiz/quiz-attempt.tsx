@@ -39,26 +39,38 @@ export function QuizAttemptView({
 	const last = index === questions.length - 1;
 	const missing = questions.filter((x) => !isAnswered(a.answers[x.id])).length;
 
+	/** Hands the attempt in; false when it couldn't (time-up keeps retrying). */
 	const handIn = async (timeUp = false) => {
-		if (handedIn.current) return;
+		if (handedIn.current) return false;
 		handedIn.current = true;
 		setBusy(true);
-		await a.flush();
-		try {
-			const res = await submit({ variables: { slug, attemptId: attempt.id } });
-			if (res.data) {
-				if (timeUp)
-					toast.info("Time's up", { desc: "Your answers were handed in." });
-				return onDone(res.data.submitQuizAttempt);
+		if (await a.flush()) {
+			try {
+				const res = await submit({
+					variables: { slug, attemptId: attempt.id },
+				});
+				if (res.data) {
+					if (timeUp)
+						toast.info("Time's up", { desc: "Your answers were handed in." });
+					onDone(res.data.submitQuizAttempt);
+					return true;
+				}
+			} catch (e) {
+				toast.error("Couldn't hand in the quiz", {
+					desc: (e as Error).message,
+				});
+				// "Answer question N first." points at the question to fix
+				const n = /question (\d+)/i.exec((e as Error).message)?.[1];
+				if (n) setIndex(Math.min(questions.length - 1, Number(n) - 1));
 			}
-		} catch (e) {
-			toast.error("Couldn't hand in the quiz", { desc: (e as Error).message });
-			// "Answer question N first." points at the question to fix
-			const n = /question (\d+)/i.exec((e as Error).message)?.[1];
-			if (n) setIndex(Math.min(questions.length - 1, Number(n) - 1));
+		} else {
+			toast.error("Couldn't hand in the quiz", {
+				desc: "Some answers weren't saved. Check your connection and try again.",
+			});
 		}
 		handedIn.current = false;
 		setBusy(false);
+		return false;
 	};
 
 	const needsCheck =
@@ -113,10 +125,7 @@ export function QuizAttemptView({
 					/>
 				</Button>
 				{attempt.deadline && (
-					<Countdown
-						deadline={attempt.deadline}
-						onEnd={() => void handIn(true)}
-					/>
+					<Countdown deadline={attempt.deadline} onEnd={() => handIn(true)} />
 				)}
 				<span className="hidden min-w-0 truncate text-muted-foreground text-sm sm:block">
 					{title}

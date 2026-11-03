@@ -127,7 +127,10 @@ export function PathBuilder({
 
 			<LibraryPicker
 				slug={slug}
-				path={path}
+				excludeIds={new Set(allSteps(path).map((s) => s.content.id))}
+				title="Add content"
+				sub="Courses, pages, quizzes, wikis and assignments from the library. Each goes in the path once."
+				empty="Everything that can go in a path is in it already. Create more in the library, then add it here."
 				open={!!addingTo}
 				onOpenChange={(o) => !o && setAddingTo(null)}
 				onPick={(item) =>

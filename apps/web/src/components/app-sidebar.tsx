@@ -17,6 +17,7 @@ import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import { type ReactElement, type ReactNode, useEffect, useState } from "react";
 import { OrgLogo } from "@/components/org-logo";
 import type { Viewer } from "@/graphql/viewer";
+import { mainRole, ROLE_LABEL } from "@/lib/members";
 import { getTheme, setTheme, type Theme } from "@/lib/theme";
 import { useSignOut } from "@/lib/use-sign-out";
 
@@ -35,14 +36,6 @@ const NAV = [
 		exact: false,
 	},
 ] as const;
-
-const ROLE_LABEL: Record<string, string> = {
-	owner: "Owner",
-	admin: "Admin",
-	trainer: "Trainer",
-	learner: "Learner",
-	guest: "Guest",
-};
 
 const REPO = "https://github.com/thecodingmontana/ekra";
 
@@ -203,7 +196,7 @@ export function AppSidebar({
 									{organization.name}
 								</span>
 								<span className="text-[11px] text-muted-foreground">
-									{ROLE_LABEL[role] ?? role}
+									{ROLE_LABEL[mainRole(role)]}
 								</span>
 							</MenuItem>
 						))}

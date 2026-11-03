@@ -21,23 +21,23 @@ export const nextStep = (path: Stages): PathStep | null =>
 	allSteps(path).find((s) => s.percent < 100 && !s.locked) ?? null;
 
 /**
- * Library items that can still go in this path: courses, pages, quizzes, wikis and assignments that aren't in it
- * yet (each once per path) and aren't templates, matching the kind ("all" for any) and the search.
+ * Library items that can still be picked: of the given kinds, not excluded (e.g. already in the path) and not
+ * templates or archived, matching the kind filter ("all" for any) and the search.
  */
 export function pickable(
 	items: ContentItem[],
-	path: Stages,
+	exclude: ReadonlySet<string>,
+	kinds: readonly ContentKind[],
 	kind: ContentKind | "all",
 	query: string,
 ): ContentItem[] {
-	const inPath = new Set(allSteps(path).map((s) => s.content.id));
 	const q = query.trim().toLowerCase();
 	return items.filter(
 		(i) =>
-			STEP_KINDS.includes(i.kind) &&
+			kinds.includes(i.kind) &&
 			!i.isTemplate &&
 			!i.archivedAt &&
-			!inPath.has(i.id) &&
+			!exclude.has(i.id) &&
 			(kind === "all" || i.kind === kind) &&
 			(!q || i.title.toLowerCase().includes(q)),
 	);

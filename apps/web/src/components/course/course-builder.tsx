@@ -9,11 +9,11 @@ import {
 import { ConfirmModal } from "@ekra/ui/components/modal";
 import { cn } from "@ekra/ui/lib/utils";
 import { useState } from "react";
+import { LibraryPicker } from "@/components/path/library-picker";
 import type { Course, CourseSection, LessonKind } from "@/graphql/course";
 import { dropPosition, stepTarget } from "@/lib/course-outline";
 import { BuilderLessonRow } from "./builder-lesson-row";
 import { InlineTitle } from "./inline-title";
-import { QuizPicker } from "./quiz-picker";
 import { type CourseEdits, useCourseEdits } from "./use-course-edits";
 
 type Over = { sectionId: string; beforeId: string | null };
@@ -125,11 +125,15 @@ export function CourseBuilder({
 				/>
 			))}
 
-			<QuizPicker
+			<LibraryPicker
 				slug={slug}
+				kinds={["quiz"]}
+				title="Add a quiz lesson"
+				sub="Learners finish the lesson by passing the quiz."
+				empty="There are no quizzes in the library yet. Create one with New → Quiz, then add it here."
 				open={!!quizFor}
 				onOpenChange={(o) => !o && setQuizFor(null)}
-				onPick={(quiz) => {
+				onPick={async (quiz) => {
 					const sectionId = quizFor;
 					setQuizFor(null);
 					if (sectionId)

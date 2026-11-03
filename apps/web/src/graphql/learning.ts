@@ -13,7 +13,8 @@ export type MyEnrollment = {
 
 export type Certificate = {
 	id: string;
-	contentId: string;
+	/** null once the content was deleted (the certificate stays) */
+	contentId: string | null;
 	title: string;
 	issuedAt: string;
 };

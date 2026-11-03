@@ -46,15 +46,21 @@ export function quizMap(
 	};
 }
 
-/** Time left as 00:04:55 (hours shown only when there are some). */
-export function clock(ms: number): string {
-	const s = Math.max(0, Math.ceil(ms / 1000));
-	const two = (n: number) => String(n).padStart(2, "0");
-	const h = Math.floor(s / 3600);
-	const m = Math.floor((s % 3600) / 60);
-	return h > 0
-		? `${two(h)}:${two(m)}:${two(s % 60)}`
-		: `${two(m)}:${two(s % 60)}`;
+/**
+ * What a hand-in must still send: answers waiting to be saved, and (with answers after each question) answers
+ * given but never checked, so none is graded blank.
+ */
+export function unsent(
+	answers: Record<string, Answer | undefined>,
+	queued: ReadonlyMap<string, Answer>,
+	saved: ReadonlySet<string>,
+	each: boolean,
+): [string, Answer][] {
+	const out = new Map(queued);
+	if (each)
+		for (const [id, a] of Object.entries(answers))
+			if (a && !saved.has(id) && isAnswered(a)) out.set(id, a);
+	return [...out];
 }
 
 /** The tiles still free to place: every tile minus one per word already in a blank. */

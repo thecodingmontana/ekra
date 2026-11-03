@@ -73,7 +73,9 @@ function CertificatePage() {
 						finished{" "}
 						<span className="font-medium text-foreground">{c.title}</span> at{" "}
 						{c.organization.name} on{" "}
-						{new Date(c.issuedAt).toLocaleDateString(undefined, {
+						{/* fixed locale and zone: the server and the browser render the same text */}
+						{new Date(c.issuedAt).toLocaleDateString("en-GB", {
+							timeZone: "UTC",
 							day: "numeric",
 							month: "long",
 							year: "numeric",

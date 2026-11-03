@@ -2,12 +2,12 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
 	addClick,
-	clock,
 	fillBlank,
 	freeTiles,
 	isAnswered,
 	quizMap,
 	toggleChoice,
+	unsent,
 } from "./quiz-player.ts";
 
 test("isAnswered ignores empty answers", () => {
@@ -37,11 +37,15 @@ test("quizMap counts answered, unanswered and not sure", () => {
 	);
 });
 
-test("clock shows minutes and seconds, hours only when needed", () => {
-	assert.equal(clock(295_000), "04:55");
-	assert.equal(clock(3_725_000), "01:02:05");
-	assert.equal(clock(-5), "00:00");
-	assert.equal(clock(400), "00:01");
+test("unsent sends queued answers, and unchecked ones only with answers after each", () => {
+	const answers = { q1: ["a"], q2: ["b"], q3: [], q4: ["d"] };
+	const queued = new Map([["q2", ["b"]]]);
+	const saved = new Set(["q1"]);
+	assert.deepEqual(unsent(answers, queued, saved, false), [["q2", ["b"]]]);
+	assert.deepEqual(unsent(answers, new Map(), saved, true), [
+		["q2", ["b"]],
+		["q4", ["d"]],
+	]);
 });
 
 test("freeTiles removes one tile per placed word, even with duplicates", () => {

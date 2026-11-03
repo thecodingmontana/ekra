@@ -11,26 +11,34 @@ import {
 	LIBRARY,
 	type LibraryData,
 } from "@/graphql/library";
-import type { LearningPath } from "@/graphql/path";
 import { KINDS } from "@/lib/content-kinds";
 import { pickable, STEP_KINDS } from "@/lib/path-outline";
 
 /**
- * Picks library items for a path's stage: search and filter by kind. It stays open so several can be added; what's
- * added leaves the list.
+ * Picks library items of the given kinds: search, and filter by kind when there are several. It stays open so
+ * several can be added (the caller closes it to take one); excluded items, such as those already added, aren't listed.
  */
 export function LibraryPicker({
 	slug,
-	path,
 	open,
 	onOpenChange,
 	onPick,
+	kinds = STEP_KINDS,
+	excludeIds = new Set(),
+	title,
+	sub,
+	empty,
 }: {
 	slug: string;
-	path: LearningPath;
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 	onPick: (item: ContentItem) => Promise<unknown>;
+	kinds?: readonly ContentKind[];
+	excludeIds?: ReadonlySet<string>;
+	title: string;
+	sub: string;
+	/** shown when the library has nothing left to pick */
+	empty: string;
 }) {
 	const { data } = useQuery<LibraryData>(LIBRARY, {
 		variables: { slug, archived: false },
@@ -39,7 +47,7 @@ export function LibraryPicker({
 	const [kind, setKind] = useState<ContentKind | "all">("all");
 	const [q, setQ] = useState("");
 	const [adding, setAdding] = useState<string | null>(null);
-	const items = pickable(data?.library.items ?? [], path, kind, q);
+	const items = pickable(data?.library.items ?? [], excludeIds, kinds, kind, q);
 
 	const pick = async (item: ContentItem) => {
 		setAdding(item.id);
@@ -51,8 +59,8 @@ export function LibraryPicker({
 		<Modal
 			open={open}
 			onOpenChange={onOpenChange}
-			title="Add content"
-			sub="Courses, pages, quizzes, wikis and assignments from the library. Each goes in the path once."
+			title={title}
+			sub={sub}
 			footer={<Button onClick={() => onOpenChange(false)}>Done</Button>}
 		>
 			<ModalBody className="flex flex-col gap-3 pb-4">
@@ -64,29 +72,31 @@ export function LibraryPicker({
 					onChange={(e) => setQ(e.target.value)}
 					data-testid="picker-search"
 				/>
-				<div className="flex w-fit max-w-full gap-0.5 overflow-x-auto rounded-lg bg-muted p-0.5 text-sm">
-					{(["all", ...STEP_KINDS] as const).map((k) => (
-						<button
-							key={k}
-							type="button"
-							aria-pressed={kind === k}
-							onClick={() => setKind(k)}
-							className={cn(
-								"inline-flex h-7 shrink-0 items-center rounded-md px-2.5 font-medium transition-colors",
-								kind === k
-									? "bg-background text-foreground shadow-xs"
-									: "text-muted-foreground hover:text-foreground",
-							)}
-						>
-							{k === "all" ? "All" : KINDS[k].plural}
-						</button>
-					))}
-				</div>
+				{kinds.length > 1 && (
+					<div className="flex w-fit max-w-full gap-0.5 overflow-x-auto rounded-lg bg-muted p-0.5 text-sm">
+						{(["all", ...kinds] as const).map((k) => (
+							<button
+								key={k}
+								type="button"
+								aria-pressed={kind === k}
+								onClick={() => setKind(k)}
+								className={cn(
+									"inline-flex h-7 shrink-0 items-center rounded-md px-2.5 font-medium transition-colors",
+									kind === k
+										? "bg-background text-foreground shadow-xs"
+										: "text-muted-foreground hover:text-foreground",
+								)}
+							>
+								{k === "all" ? "All" : KINDS[k].plural}
+							</button>
+						))}
+					</div>
+				)}
 				{data && items.length === 0 && (
 					<p className="m-0 py-6 text-center text-muted-foreground text-sm">
 						{q.trim() || kind !== "all"
-							? "Nothing matches. Try another search or kind."
-							: "Everything that can go in a path is in it already. Create more in the library, then add it here."}
+							? `Nothing matches. Try another search${kinds.length > 1 ? " or kind" : ""}.`
+							: empty}
 					</p>
 				)}
 				<ul className="m-0 flex max-h-[360px] list-none flex-col gap-1 overflow-y-auto p-0">

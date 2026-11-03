@@ -30,7 +30,7 @@ test("CSV has a header and escapes commas, quotes and line breaks", () => {
 	]);
 	assert.equal(
 		csv,
-		"Name,Email,Role,Start,Due,Status,Percent\r\n" +
+		"\uFEFFName,Email,Role,Start,Due,Status,Percent\r\n" +
 			'"Leo ""the Lion"", Jr.",leo@example.com,Learner,2026-01-01T09:00:00.000Z,,In progress,40\r\n' +
 			'"Two\nLines",,Trainer,2026-01-02T09:00:00.000Z,2026-02-01T09:00:00.000Z,Completed,100\r\n',
 	);
@@ -39,7 +39,25 @@ test("CSV has a header and escapes commas, quotes and line breaks", () => {
 test("an empty list is just the header", () => {
 	assert.equal(
 		assigneesCsv([]),
-		"Name,Email,Role,Start,Due,Status,Percent\r\n",
+		"\uFEFFName,Email,Role,Start,Due,Status,Percent\r\n",
+	);
+});
+
+test("CSV defuses fields a spreadsheet would run as formulas", () => {
+	const row = (name: string) => ({
+		name,
+		email: "",
+		role: "",
+		startAt: "",
+		dueAt: null,
+		status: "",
+		percent: 0,
+	});
+	const names = ["=1+1", "+1", "-1", "@SUM(A1)", "\tx", "\rx", "Zoë"];
+	const lines = assigneesCsv(names.map(row)).split("\r\n").slice(1, -1);
+	assert.deepEqual(
+		lines.map((l) => l.slice(0, l.indexOf(",,"))),
+		["'=1+1", "'+1", "'-1", "'@SUM(A1)", "'\tx", '"\'\rx"', "Zoë"],
 	);
 });
 

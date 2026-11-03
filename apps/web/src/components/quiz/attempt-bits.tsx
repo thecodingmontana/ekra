@@ -1,15 +1,17 @@
 import { cn } from "@ekra/ui/lib/utils";
 import { useEffect, useRef, useState } from "react";
 import type { AnswerCheck } from "@/graphql/quiz";
-import { clock } from "@/lib/quiz-player";
+import { clock } from "@/lib/course-outline";
 
-/** Time left until `deadline`; calls `onEnd` once when it reaches zero. */
+const RETRY_MS = 5000;
+
+/** Time left until `deadline`; calls `onEnd` when it reaches zero, and again every few seconds while it fails. */
 export function Countdown({
 	deadline,
 	onEnd,
 }: {
 	deadline: string;
-	onEnd: () => void;
+	onEnd: () => Promise<boolean>;
 }) {
 	const end = new Date(deadline).getTime();
 	const [now, setNow] = useState(() => Date.now());
@@ -23,7 +25,12 @@ export function Countdown({
 			setNow(t);
 			if (t >= end && !ended.current) {
 				ended.current = true;
-				onEndRef.current();
+				void onEndRef.current().then((ok) => {
+					if (!ok)
+						setTimeout(() => {
+							ended.current = false;
+						}, RETRY_MS);
+				});
 			}
 		};
 		tick();
@@ -32,6 +39,7 @@ export function Countdown({
 	}, [end]);
 
 	const left = end - now;
+	const shown = clock(Math.ceil(left / 1000));
 	return (
 		<span
 			className={cn(
@@ -39,14 +47,14 @@ export function Countdown({
 				left < 60_000 ? "bg-destructive/10 text-destructive" : "bg-muted",
 			)}
 			role="timer"
-			aria-label={`Time left ${clock(left)}`}
+			aria-label={`Time left ${shown}`}
 			data-testid="quiz-timer"
 		>
 			<span
 				className="icon-[solar--clock-circle-linear] size-3.5"
 				aria-hidden="true"
 			/>
-			{clock(left)}
+			{shown}
 		</span>
 	);
 }

@@ -6,7 +6,7 @@ import {
 	type QuizAttempt,
 	SAVE_QUIZ_ANSWER,
 } from "@/graphql/quiz";
-import { type Answer, isAnswered } from "@/lib/quiz-player";
+import { type Answer, isAnswered, unsent } from "@/lib/quiz-player";
 import { json } from "./answer-input";
 
 const DELAY = 500;
@@ -39,10 +39,11 @@ export function useAttemptAnswers(slug: string, attempt: QuizAttempt) {
 	const saved = useRef(new Set(Object.keys(answers)));
 	const queued = useRef(new Map<string, Answer>());
 	const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+	const inflight = useRef(new Set<Promise<boolean>>());
 
 	useEffect(() => setUnsure(loadUnsure(attempt.id)), [attempt.id]);
 
-	const send = async (questionId: string, answer: Answer) => {
+	const save = async (questionId: string, answer: Answer) => {
 		queued.current.delete(questionId);
 		try {
 			const res = await saveAnswer({
@@ -58,18 +59,37 @@ export function useAttemptAnswers(slug: string, attempt: QuizAttempt) {
 			if (each && check) setChecks((c) => ({ ...c, [questionId]: check }));
 			return true;
 		} catch (error) {
+			// kept to try again on the next save or the hand-in, unless a newer answer is already waiting
+			if (!each && !queued.current.has(questionId))
+				queued.current.set(questionId, answer);
 			toast.error("Couldn't save your answer", {
 				desc: (error as Error).message,
 			});
 			return false;
 		}
 	};
+	const send = (questionId: string, answer: Answer) => {
+		const p = save(questionId, answer);
+		inflight.current.add(p);
+		void p.finally(() => inflight.current.delete(p));
+		return p;
+	};
 	const sendRef = useRef(send);
 	sendRef.current = send;
 
-	const flush = async () => {
+	/**
+	 * Saves what's waiting, after the saves already on their way (on hand-in, unchecked answers too); false when
+	 * one failed.
+	 */
+	const flush = async (handIn = true) => {
 		clearTimeout(timer.current);
-		const waiting = [...queued.current];
+		await Promise.all(inflight.current);
+		const waiting = unsent(
+			answers,
+			queued.current,
+			saved.current,
+			each && handIn,
+		);
 		const results = await Promise.all(
 			waiting.map(([id, a]) => sendRef.current(id, a)),
 		);
@@ -79,7 +99,7 @@ export function useAttemptAnswers(slug: string, attempt: QuizAttempt) {
 	flushRef.current = flush;
 
 	// answers still waiting are saved when the quiz closes
-	useEffect(() => () => void flushRef.current(), []);
+	useEffect(() => () => void flushRef.current(false), []);
 
 	const locked = (id: string) =>
 		each &&
@@ -102,7 +122,7 @@ export function useAttemptAnswers(slug: string, attempt: QuizAttempt) {
 			}
 			queued.current.set(questionId, answer);
 			clearTimeout(timer.current);
-			timer.current = setTimeout(() => void flushRef.current(), DELAY);
+			timer.current = setTimeout(() => void flushRef.current(false), DELAY);
 		},
 		/** with answers after each question: saves and checks this one */
 		check: (questionId: string) => {

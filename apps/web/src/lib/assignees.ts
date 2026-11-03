@@ -16,11 +16,16 @@ export const STATUS_LABEL: Record<string, string> = {
 	in_progress: "In progress",
 };
 
-/** A CSV field: quoted when it holds a comma, quote or line break, with quotes doubled. */
-const field = (value: string) =>
-	/[",\r\n]/.test(value) ? `"${value.replaceAll('"', '""')}"` : value;
+/**
+ * A CSV field: quoted when it holds a comma, quote or line break, with quotes doubled; a leading = + - @, tab or
+ * carriage return gets a ' so spreadsheets don't run it as a formula.
+ */
+const field = (raw: string) => {
+	const value = /^[=+\-@\t\r]/.test(raw) ? `'${raw}` : raw;
+	return /[",\r\n]/.test(value) ? `"${value.replaceAll('"', '""')}"` : value;
+};
 
-/** The assignees as CSV text, one header line then one line per person. */
+/** The assignees as CSV text (with a UTF-8 BOM so spreadsheets read accents), a header line then one per person. */
 export function assigneesCsv(rows: readonly AssigneeRow[]): string {
 	const lines = [
 		["Name", "Email", "Role", "Start", "Due", "Status", "Percent"],
@@ -34,7 +39,7 @@ export function assigneesCsv(rows: readonly AssigneeRow[]): string {
 			String(r.percent),
 		]),
 	];
-	return `${lines.map((l) => l.map(field).join(",")).join("\r\n")}\r\n`;
+	return `\uFEFF${lines.map((l) => l.map(field).join(",")).join("\r\n")}\r\n`;
 }
 
 /** "Send again in 29m" while a reminder must wait (null: it can be sent now). */

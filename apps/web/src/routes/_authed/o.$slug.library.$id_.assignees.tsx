@@ -9,6 +9,7 @@ import { toast } from "@ekra/ui/lib/toast";
 import { cn } from "@ekra/ui/lib/utils";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { type ReactNode, useEffect, useState } from "react";
+import { ProgressRing } from "@/components/progress-ring";
 import {
 	ASSIGNEES,
 	type AssigneesData,
@@ -140,7 +141,8 @@ function AssigneesPage() {
 			e.user.name.toLowerCase().includes(q) ||
 			byUser.get(e.user.id)?.email.toLowerCase().includes(q),
 	);
-	const chosen = enrollments.filter((e) => selected.has(e.id));
+	// only rows the search shows: bulk actions never reach hidden ones
+	const chosen = shown.filter((e) => selected.has(e.id));
 	const allShown = shown.length > 0 && shown.every((e) => selected.has(e.id));
 	const roleOf = (e: Enrollment) => {
 		const m = byUser.get(e.user.id);
@@ -486,36 +488,12 @@ function StatusRing({
 	status: Enrollment["status"];
 	percent: number;
 }) {
-	const r = 8;
-	const c = 2 * Math.PI * r;
 	return (
 		<span className="flex items-center gap-2" data-testid="assignee-status">
-			<svg
-				viewBox="0 0 20 20"
-				className={cn("size-5 shrink-0 -rotate-90", RING_TONE[status])}
-				aria-hidden="true"
-			>
-				<circle
-					cx="10"
-					cy="10"
-					r={r}
-					fill="none"
-					stroke="currentColor"
-					strokeOpacity={0.18}
-					strokeWidth="2.5"
-				/>
-				<circle
-					cx="10"
-					cy="10"
-					r={r}
-					fill="none"
-					stroke="currentColor"
-					strokeWidth="2.5"
-					strokeLinecap="round"
-					strokeDasharray={c}
-					strokeDashoffset={c * (1 - Math.min(100, Math.max(0, percent)) / 100)}
-				/>
-			</svg>
+			<ProgressRing
+				percent={percent}
+				className={cn("size-5 shrink-0", RING_TONE[status])}
+			/>
 			<span className="flex flex-col leading-tight">
 				<span className="whitespace-nowrap text-muted-foreground text-xs">
 					{STATUS_LABEL[status]}
