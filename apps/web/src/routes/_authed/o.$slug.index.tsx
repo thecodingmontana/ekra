@@ -1,4 +1,5 @@
 import { useMutation, useQuery } from "@apollo/client/react";
+import { day } from "@ekra/core";
 import { buttonVariants } from "@ekra/ui/components/button";
 import { toast } from "@ekra/ui/lib/toast";
 import { cn } from "@ekra/ui/lib/utils";
@@ -36,12 +37,6 @@ const STATUS_DOT: Record<MyEnrollment["status"], string> = {
 	completed: "bg-tint-green",
 };
 const CERTIFIED = new Set(["course", "path", "quiz"]);
-const day = (iso: string) =>
-	new Date(iso).toLocaleDateString(undefined, {
-		day: "numeric",
-		month: "short",
-		year: "numeric",
-	});
 
 function Home() {
 	const { viewer, membership } = Route.useRouteContext();

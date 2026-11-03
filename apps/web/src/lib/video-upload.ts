@@ -95,29 +95,37 @@ export async function uploadVideo({
 	);
 	const parts: { part: number; etag: string }[] = [];
 	let sent = 0;
-	// shortcut: progress moves once per 8 MB part (fetch has no upload progress); use XHR if finer steps matter
-	for (let n = 1; n <= started.parts; n++) {
-		const [start, end] = partRange(file.size, started.partBytes, n);
-		const { etag } = await withRetries(
+	try {
+		// shortcut: progress moves once per 8 MB part (fetch has no upload progress); use XHR if finer steps matter
+		for (let n = 1; n <= started.parts; n++) {
+			const [start, end] = partRange(file.size, started.partBytes, n);
+			const { etag } = await withRetries(
+				() =>
+					call<{ etag: string }>(
+						`/api/media/videos/${started.id}/parts/${n}?org=${org}`,
+						{ method: "PUT", body: file.slice(start, end), signal },
+					),
+				signal,
+			);
+			parts.push({ part: n, etag });
+			sent += end - start;
+			onProgress(sent);
+		}
+		await withRetries(
 			() =>
-				call<{ etag: string }>(
-					`/api/media/videos/${started.id}/parts/${n}?org=${org}`,
-					{ method: "PUT", body: file.slice(start, end), signal },
-				),
+				call(`/api/media/videos/${started.id}/complete?org=${org}`, {
+					method: "POST",
+					headers: json,
+					body: JSON.stringify({ parts }),
+					signal,
+				}),
 			signal,
 		);
-		parts.push({ part: n, etag });
-		sent += end - start;
-		onProgress(sent);
+	} catch (error) {
+		// cancelled or failed: drop the unfinished upload so storage doesn't keep its parts (the lesson keeps its old video)
+		void fetch(`/api/media/videos/${started.id}?org=${org}`, {
+			method: "DELETE",
+		}).catch(() => {});
+		throw error;
 	}
-	await withRetries(
-		() =>
-			call(`/api/media/videos/${started.id}/complete?org=${org}`, {
-				method: "POST",
-				headers: json,
-				body: JSON.stringify({ parts }),
-				signal,
-			}),
-		signal,
-	);
 }

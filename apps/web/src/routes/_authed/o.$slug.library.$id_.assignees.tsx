@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "@apollo/client/react";
-import { REMINDERS, type ReminderKind } from "@ekra/core";
+import { dateTime, REMINDERS, type ReminderKind } from "@ekra/core";
 import { Av } from "@ekra/ui/components/av";
 import { Button } from "@ekra/ui/components/button";
 import { InputWithIcon } from "@ekra/ui/components/input-with-icon";
@@ -93,14 +93,7 @@ const fail = (title: string) => (e: unknown) => {
 	toast.error(title, { desc: errorText(e) });
 };
 const people = (n: number) => `${n} ${n === 1 ? "learner" : "learners"}`;
-const when = (iso: string) =>
-	new Date(iso).toLocaleString(undefined, {
-		day: "numeric",
-		month: "short",
-		year: "numeric",
-		hour: "numeric",
-		minute: "2-digit",
-	});
+const when = (iso: string) => dateTime(iso);
 
 /** Re-renders every 30 seconds while something waits on the clock. */
 function useNow(active: boolean) {

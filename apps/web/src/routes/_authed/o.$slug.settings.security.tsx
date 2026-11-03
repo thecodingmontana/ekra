@@ -1,3 +1,4 @@
+import { day } from "@ekra/core";
 import { Button } from "@ekra/ui/components/button";
 import { Field, FieldDescription, FieldLabel } from "@ekra/ui/components/field";
 import { Input } from "@ekra/ui/components/input";
@@ -308,7 +309,7 @@ function Passkeys() {
 							<div className="min-w-0 flex-1">
 								<div className="truncate text-sm">{p.name || "Passkey"}</div>
 								<div className="text-muted-foreground text-xs">
-									Added {new Date(p.createdAt).toLocaleDateString()}
+									Added {day(p.createdAt)}
 								</div>
 							</div>
 							<Button
