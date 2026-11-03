@@ -16,14 +16,9 @@ import {
 	useEditorState,
 } from "@tiptap/react";
 import { BubbleMenu } from "@tiptap/react/menus";
+import type { DocumentNode } from "graphql";
 import { useEffect, useRef, useState } from "react";
-import {
-	CONTENT,
-	type ContentData,
-	type ContentDetail,
-	SAVE_CONTENT_BODY,
-	type SaveContentBodyData,
-} from "@/graphql/library";
+import { CONTENT, SAVE_CONTENT_BODY } from "@/graphql/library";
 import { PICTURE_TYPES, uploadPicture } from "@/lib/upload";
 import { bodyExtensions, parseDoc } from "./extensions";
 import { INSERT_EVENT, type InsertKind, SlashCommands } from "./slash-menu";
@@ -35,9 +30,37 @@ import "./editor.css";
 const SAVE_MS = 800;
 type Status = "saved" | "saving" | "conflict" | "error";
 
-function useAutosave(slug: string, item: ContentDetail) {
+/** What a body belongs to and how it saves: the mutation takes (slug, id, doc, baseBodyUpdatedAt). */
+export type BodySave = {
+	mutation: DocumentNode;
+	/** the mutation's field, whose answer has bodyUpdatedAt */
+	field: string;
+	/** the cached object the body lives on */
+	typename: string;
+	/** a query (slug, id) that reads the newest bodyUpdatedAt, after a conflict */
+	query: DocumentNode;
+	queryField: string;
+};
+
+/** A library item's body (pages, wikis…). */
+export const CONTENT_BODY: BodySave = {
+	mutation: SAVE_CONTENT_BODY,
+	field: "saveContentBody",
+	typename: "ContentItem",
+	query: CONTENT,
+	queryField: "content",
+};
+
+type BodyOwner = {
+	id: string;
+	doc: string | null;
+	bodyUpdatedAt: string | null;
+};
+type Saved = Record<string, { bodyUpdatedAt: string | null } | null>;
+
+function useAutosave(slug: string, item: BodyOwner, target: BodySave) {
 	const client = useApolloClient();
-	const [save] = useMutation<SaveContentBodyData>(SAVE_CONTENT_BODY);
+	const [save] = useMutation<Saved>(target.mutation);
 	const pending = useRef<string | null>(null);
 	const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
 	const base = useRef(item.bodyUpdatedAt);
@@ -61,11 +84,12 @@ function useAutosave(slug: string, item: ContentDetail) {
 				// the cached body follows the save, so reopening the page starts from it
 				update: (cache) =>
 					cache.modify({
-						id: cache.identify({ __typename: "ContentItem", id: item.id }),
+						id: cache.identify({ __typename: target.typename, id: item.id }),
 						fields: { doc: () => doc },
 					}),
 			});
-			if (data) base.current = data.saveContentBody.bodyUpdatedAt;
+			const saved = data?.[target.field];
+			if (saved) base.current = saved.bodyUpdatedAt;
 			setStatus(pending.current === null ? "saved" : "saving");
 		} catch (error) {
 			const code = CombinedGraphQLErrors.is(error)
@@ -97,12 +121,12 @@ function useAutosave(slug: string, item: ContentDetail) {
 	};
 	/** After a conflict: save this tab's text on top of the newer body (that body stays in the version history). */
 	const keepMine = async () => {
-		const { data } = await client.query<ContentData>({
-			query: CONTENT,
+		const { data } = await client.query<Saved>({
+			query: target.query,
 			variables: { slug, id: item.id },
 			fetchPolicy: "network-only",
 		});
-		base.current = data?.content?.bodyUpdatedAt ?? null;
+		base.current = data?.[target.queryField]?.bodyUpdatedAt ?? null;
 		await flush();
 	};
 	const unsaved = useRef(false);
@@ -151,11 +175,14 @@ const isImage = (file: File) => PICTURE_TYPES.split(",").includes(file.type);
 export function BodyEditor({
 	slug,
 	item,
+	save = CONTENT_BODY,
 }: {
 	slug: string;
-	item: ContentDetail;
+	item: BodyOwner;
+	/** where the body saves; a library item's by default */
+	save?: BodySave;
 }) {
-	const { queue, status, keepMine } = useAutosave(slug, item);
+	const { queue, status, keepMine } = useAutosave(slug, item, save);
 	const editable = status !== "conflict";
 	const [youtube, setYoutube] = useState(false);
 	const editor = useEditor({

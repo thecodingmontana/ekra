@@ -77,8 +77,16 @@ function AuthedLayout() {
 		return () => window.removeEventListener("keydown", onKey);
 	}, []);
 
-	// onboarding draws its own header (Exit setup + theme)
-	if (pathname === "/onboarding") return <Outlet />;
+	// onboarding draws its own header (Exit setup + theme); an invitation is a page of its own
+	if (pathname === "/onboarding" || pathname.startsWith("/invite/"))
+		return <Outlet />;
+	// the course player fills the screen (its own top bar and side panel)
+	if (/^\/o\/[^/]+\/learn\//.test(pathname))
+		return (
+			<TooltipProvider>
+				<Outlet />
+			</TooltipProvider>
+		);
 
 	return (
 		<TooltipProvider>
