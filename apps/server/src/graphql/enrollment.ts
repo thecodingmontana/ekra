@@ -1,4 +1,4 @@
-import { enrollmentStatus, tenantUrls } from "@ekra/core";
+import { enrollmentStatus, type ReminderKind, tenantUrls } from "@ekra/core";
 import {
 	contentCompletion,
 	contentItem,
@@ -8,7 +8,7 @@ import {
 	type Tx,
 	user,
 } from "@ekra/db";
-import { type ReminderKind, reminderEmail } from "@ekra/email";
+import { reminderEmail } from "@ekra/email";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../db.ts";

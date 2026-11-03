@@ -1,3 +1,4 @@
+import { REMINDERS, type ReminderKind } from "@ekra/core";
 import type { EmailMessage } from "./types.ts";
 
 type Content = Omit<EmailMessage, "to">;
@@ -108,19 +109,6 @@ export function resetPasswordEmail(options: {
 		}),
 	};
 }
-
-/** The two reminders a trainer can send about something a learner was given (the reference's message choices). */
-export const REMINDERS = {
-	running_out: {
-		heading: (title: string) => `Time is running out for ${title}`,
-		body: "Just a reminder that this will end soon. Make sure you've finished all of it before the end date.",
-	},
-	overdue: {
-		heading: (title: string) => `${title} is overdue`,
-		body: "It's past its due date. Please finish what's left as soon as you can, so you don't miss out.",
-	},
-} as const;
-export type ReminderKind = keyof typeof REMINDERS;
 
 /** A trainer's reminder to finish something they were given. */
 export function reminderEmail(options: {

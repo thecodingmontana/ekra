@@ -317,6 +317,9 @@ importers:
       graphql:
         specifier: ^16.10.0
         version: 16.14.2
+      hls.js:
+        specifier: ^1.7.4
+        version: 1.7.4
       nitro:
         specifier: 3.0.260610-beta
         version: 3.0.260610-beta(chokidar@5.0.0)(dotenv@17.4.2)(jiti@2.7.0)(vite@8.3.5(@types/node@26.6.6)(jiti@2.7.0))
@@ -417,7 +420,11 @@ importers:
         specifier: 1.0.0-rc.5
         version: 1.0.0-rc.5(drizzle-orm@1.0.0-rc.5(postgres@3.4.9)(zod@4.6.7))
 
-  packages/email: {}
+  packages/email:
+    dependencies:
+      '@ekra/core':
+        specifier: workspace:*
+        version: link:../core
 
   packages/fonts: {}
 
@@ -3007,6 +3014,9 @@ packages:
     peerDependenciesMeta:
       crossws:
         optional: true
+
+  hls.js@1.7.4:
+    resolution: {integrity: sha512-3GlxGdPvT2YHvQYOt+yOzT/DEior/qJVNIylHA77kgeoBTdQQqi70GwefNEUmHQeNGyjC8U62+bruqW/Tpm+tg==}
 
   hono@4.13.14:
     resolution: {integrity: sha512-yhRLQ21U6qa9Hsu2N7Qcbh8tE+WKEcoErjIo56LeSGiGXGp9sA7UpE86Ui9uexb61KakiGwuHMn2QdV7w6i6kQ==}
@@ -6374,6 +6384,8 @@ snapshots:
       srvx: 0.11.22
     optionalDependencies:
       crossws: 0.4.17(srvx@0.11.22)
+
+  hls.js@1.7.4: {}
 
   hono@4.13.14: {}
 

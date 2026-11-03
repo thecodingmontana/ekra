@@ -1,0 +1,15 @@
+{
+	"detector": {
+		"ignoreRules": [],
+		"ignoreFiles": [],
+		"ignoreValues": [
+			{
+				"rule": "side-tab",
+				"value": "*",
+				"files": ["apps/web/src/components/editor/editor.css"],
+				"createdAt": "2026-11-02T16:59:33.183Z",
+				"reason": "Claude triage: L72 is a blockquote's left rule in neutral var(--border), the standard quote convention in the document editor, not an accent card"
+			}
+		]
+	}
+}

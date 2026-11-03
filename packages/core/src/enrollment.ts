@@ -17,3 +17,18 @@ export function enrollmentStatus(
 	if (!p.started && p.percent <= 0) return "not_started";
 	return "in_progress";
 }
+
+/** The two reminders a trainer can send about something a learner was given: the picker's label, the email's words. */
+export const REMINDERS = {
+	running_out: {
+		label: "The course time is running out",
+		heading: (title: string) => `Time is running out for ${title}`,
+		body: "Just a reminder that this will end soon. Make sure you've finished all of it before the end date.",
+	},
+	overdue: {
+		label: "Overdue course",
+		heading: (title: string) => `${title} is overdue`,
+		body: "It's past its due date. Please finish what's left as soon as you can, so you don't miss out.",
+	},
+} as const;
+export type ReminderKind = keyof typeof REMINDERS;

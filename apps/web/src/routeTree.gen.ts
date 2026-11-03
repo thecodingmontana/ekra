@@ -19,6 +19,8 @@ import { Route as TwoFactorRouteImport } from './routes/two-factor'
 import { Route as AuthedIndexRouteImport } from './routes/_authed/index'
 import { Route as AuthedOnboardingRouteImport } from './routes/_authed/onboarding'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
+import { Route as CertificatesIdRouteImport } from './routes/certificates.$id'
+import { Route as AuthedInviteIdRouteImport } from './routes/_authed/invite.$id'
 import { Route as AuthedOSlugRouteImport } from './routes/_authed/o.$slug'
 import { Route as AuthedSettingsSplatRouteImport } from './routes/_authed/settings.$'
 import { Route as AuthedOSlugIndexRouteImport } from './routes/_authed/o.$slug.index'
@@ -27,10 +29,14 @@ import { Route as AuthedOSlugLibraryIndexRouteImport } from './routes/_authed/o.
 import { Route as AuthedOSlugLibraryIdRouteImport } from './routes/_authed/o.$slug.library.$id'
 import { Route as AuthedOSlugSettingsIndexRouteImport } from './routes/_authed/o.$slug.settings.index'
 import { Route as AuthedOSlugSettingsAppearanceRouteImport } from './routes/_authed/o.$slug.settings.appearance'
+import { Route as AuthedOSlugSettingsMembersRouteImport } from './routes/_authed/o.$slug.settings.members'
 import { Route as AuthedOSlugSettingsOrganizationRouteImport } from './routes/_authed/o.$slug.settings.organization'
 import { Route as AuthedOSlugSettingsProfileRouteImport } from './routes/_authed/o.$slug.settings.profile'
 import { Route as AuthedOSlugSettingsSecurityRouteImport } from './routes/_authed/o.$slug.settings.security'
 import { Route as AuthedOSlugSettingsSessionsRouteImport } from './routes/_authed/o.$slug.settings.sessions'
+import { Route as AuthedOSlugLearnCourseIdLessonIdRouteImport } from './routes/_authed/o.$slug.learn.$courseId.$lessonId'
+import { Route as AuthedOSlugLibraryIdAssigneesRouteImport } from './routes/_authed/o.$slug.library.$id_.assignees'
+import { Route as AuthedOSlugLibraryIdLessonsLessonIdRouteImport } from './routes/_authed/o.$slug.library.$id_.lessons.$lessonId'
 
 const AuthedRoute = AuthedRouteImport.update({
   id: '/_authed',
@@ -81,6 +87,16 @@ const ApiSplatRoute = ApiSplatRouteImport.update({
   path: '/api/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CertificatesIdRoute = CertificatesIdRouteImport.update({
+  id: '/certificates/$id',
+  path: '/certificates/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthedInviteIdRoute = AuthedInviteIdRouteImport.update({
+  id: '/invite/$id',
+  path: '/invite/$id',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedOSlugRoute = AuthedOSlugRouteImport.update({
   id: '/o/$slug',
   path: '/o/$slug',
@@ -123,6 +139,12 @@ const AuthedOSlugSettingsAppearanceRoute =
     path: '/appearance',
     getParentRoute: () => AuthedOSlugSettingsRoute,
   } as any)
+const AuthedOSlugSettingsMembersRoute =
+  AuthedOSlugSettingsMembersRouteImport.update({
+    id: '/members',
+    path: '/members',
+    getParentRoute: () => AuthedOSlugSettingsRoute,
+  } as any)
 const AuthedOSlugSettingsOrganizationRoute =
   AuthedOSlugSettingsOrganizationRouteImport.update({
     id: '/organization',
@@ -147,6 +169,24 @@ const AuthedOSlugSettingsSessionsRoute =
     path: '/sessions',
     getParentRoute: () => AuthedOSlugSettingsRoute,
   } as any)
+const AuthedOSlugLearnCourseIdLessonIdRoute =
+  AuthedOSlugLearnCourseIdLessonIdRouteImport.update({
+    id: '/learn/$courseId/$lessonId',
+    path: '/learn/$courseId/$lessonId',
+    getParentRoute: () => AuthedOSlugRoute,
+  } as any)
+const AuthedOSlugLibraryIdAssigneesRoute =
+  AuthedOSlugLibraryIdAssigneesRouteImport.update({
+    id: '/library/$id_/assignees',
+    path: '/library/$id/assignees',
+    getParentRoute: () => AuthedOSlugRoute,
+  } as any)
+const AuthedOSlugLibraryIdLessonsLessonIdRoute =
+  AuthedOSlugLibraryIdLessonsLessonIdRouteImport.update({
+    id: '/library/$id_/lessons/$lessonId',
+    path: '/library/$id/lessons/$lessonId',
+    getParentRoute: () => AuthedOSlugRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthedIndexRoute
@@ -158,18 +198,24 @@ export interface FileRoutesByFullPath {
   '/two-factor': typeof TwoFactorRoute
   '/onboarding': typeof AuthedOnboardingRoute
   '/api/$': typeof ApiSplatRoute
+  '/certificates/$id': typeof CertificatesIdRoute
+  '/invite/$id': typeof AuthedInviteIdRoute
   '/o/$slug': typeof AuthedOSlugRouteWithChildren
   '/settings/$': typeof AuthedSettingsSplatRoute
   '/o/$slug/settings': typeof AuthedOSlugSettingsRouteWithChildren
   '/o/$slug/': typeof AuthedOSlugIndexRoute
   '/o/$slug/library/$id': typeof AuthedOSlugLibraryIdRoute
   '/o/$slug/settings/appearance': typeof AuthedOSlugSettingsAppearanceRoute
+  '/o/$slug/settings/members': typeof AuthedOSlugSettingsMembersRoute
   '/o/$slug/settings/organization': typeof AuthedOSlugSettingsOrganizationRoute
   '/o/$slug/settings/profile': typeof AuthedOSlugSettingsProfileRoute
   '/o/$slug/settings/security': typeof AuthedOSlugSettingsSecurityRoute
   '/o/$slug/settings/sessions': typeof AuthedOSlugSettingsSessionsRoute
   '/o/$slug/library/': typeof AuthedOSlugLibraryIndexRoute
   '/o/$slug/settings/': typeof AuthedOSlugSettingsIndexRoute
+  '/o/$slug/learn/$courseId/$lessonId': typeof AuthedOSlugLearnCourseIdLessonIdRoute
+  '/o/$slug/library/$id/assignees': typeof AuthedOSlugLibraryIdAssigneesRoute
+  '/o/$slug/library/$id/lessons/$lessonId': typeof AuthedOSlugLibraryIdLessonsLessonIdRoute
 }
 export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
@@ -180,17 +226,23 @@ export interface FileRoutesByTo {
   '/two-factor': typeof TwoFactorRoute
   '/onboarding': typeof AuthedOnboardingRoute
   '/api/$': typeof ApiSplatRoute
+  '/certificates/$id': typeof CertificatesIdRoute
   '/': typeof AuthedIndexRoute
+  '/invite/$id': typeof AuthedInviteIdRoute
   '/settings/$': typeof AuthedSettingsSplatRoute
   '/o/$slug': typeof AuthedOSlugIndexRoute
   '/o/$slug/library/$id': typeof AuthedOSlugLibraryIdRoute
   '/o/$slug/settings/appearance': typeof AuthedOSlugSettingsAppearanceRoute
+  '/o/$slug/settings/members': typeof AuthedOSlugSettingsMembersRoute
   '/o/$slug/settings/organization': typeof AuthedOSlugSettingsOrganizationRoute
   '/o/$slug/settings/profile': typeof AuthedOSlugSettingsProfileRoute
   '/o/$slug/settings/security': typeof AuthedOSlugSettingsSecurityRoute
   '/o/$slug/settings/sessions': typeof AuthedOSlugSettingsSessionsRoute
   '/o/$slug/library': typeof AuthedOSlugLibraryIndexRoute
   '/o/$slug/settings': typeof AuthedOSlugSettingsIndexRoute
+  '/o/$slug/learn/$courseId/$lessonId': typeof AuthedOSlugLearnCourseIdLessonIdRoute
+  '/o/$slug/library/$id/assignees': typeof AuthedOSlugLibraryIdAssigneesRoute
+  '/o/$slug/library/$id/lessons/$lessonId': typeof AuthedOSlugLibraryIdLessonsLessonIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -203,19 +255,25 @@ export interface FileRoutesById {
   '/two-factor': typeof TwoFactorRoute
   '/_authed/onboarding': typeof AuthedOnboardingRoute
   '/api/$': typeof ApiSplatRoute
+  '/certificates/$id': typeof CertificatesIdRoute
   '/_authed/': typeof AuthedIndexRoute
+  '/_authed/invite/$id': typeof AuthedInviteIdRoute
   '/_authed/o/$slug': typeof AuthedOSlugRouteWithChildren
   '/_authed/settings/$': typeof AuthedSettingsSplatRoute
   '/_authed/o/$slug/settings': typeof AuthedOSlugSettingsRouteWithChildren
   '/_authed/o/$slug/': typeof AuthedOSlugIndexRoute
   '/_authed/o/$slug/library/$id': typeof AuthedOSlugLibraryIdRoute
   '/_authed/o/$slug/settings/appearance': typeof AuthedOSlugSettingsAppearanceRoute
+  '/_authed/o/$slug/settings/members': typeof AuthedOSlugSettingsMembersRoute
   '/_authed/o/$slug/settings/organization': typeof AuthedOSlugSettingsOrganizationRoute
   '/_authed/o/$slug/settings/profile': typeof AuthedOSlugSettingsProfileRoute
   '/_authed/o/$slug/settings/security': typeof AuthedOSlugSettingsSecurityRoute
   '/_authed/o/$slug/settings/sessions': typeof AuthedOSlugSettingsSessionsRoute
   '/_authed/o/$slug/library/': typeof AuthedOSlugLibraryIndexRoute
   '/_authed/o/$slug/settings/': typeof AuthedOSlugSettingsIndexRoute
+  '/_authed/o/$slug/learn/$courseId/$lessonId': typeof AuthedOSlugLearnCourseIdLessonIdRoute
+  '/_authed/o/$slug/library/$id_/assignees': typeof AuthedOSlugLibraryIdAssigneesRoute
+  '/_authed/o/$slug/library/$id_/lessons/$lessonId': typeof AuthedOSlugLibraryIdLessonsLessonIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -229,18 +287,24 @@ export interface FileRouteTypes {
     | '/two-factor'
     | '/onboarding'
     | '/api/$'
+    | '/certificates/$id'
+    | '/invite/$id'
     | '/o/$slug'
     | '/settings/$'
     | '/o/$slug/settings'
     | '/o/$slug/'
     | '/o/$slug/library/$id'
     | '/o/$slug/settings/appearance'
+    | '/o/$slug/settings/members'
     | '/o/$slug/settings/organization'
     | '/o/$slug/settings/profile'
     | '/o/$slug/settings/security'
     | '/o/$slug/settings/sessions'
     | '/o/$slug/library/'
     | '/o/$slug/settings/'
+    | '/o/$slug/learn/$courseId/$lessonId'
+    | '/o/$slug/library/$id/assignees'
+    | '/o/$slug/library/$id/lessons/$lessonId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/privacy'
@@ -251,17 +315,23 @@ export interface FileRouteTypes {
     | '/two-factor'
     | '/onboarding'
     | '/api/$'
+    | '/certificates/$id'
     | '/'
+    | '/invite/$id'
     | '/settings/$'
     | '/o/$slug'
     | '/o/$slug/library/$id'
     | '/o/$slug/settings/appearance'
+    | '/o/$slug/settings/members'
     | '/o/$slug/settings/organization'
     | '/o/$slug/settings/profile'
     | '/o/$slug/settings/security'
     | '/o/$slug/settings/sessions'
     | '/o/$slug/library'
     | '/o/$slug/settings'
+    | '/o/$slug/learn/$courseId/$lessonId'
+    | '/o/$slug/library/$id/assignees'
+    | '/o/$slug/library/$id/lessons/$lessonId'
   id:
     | '__root__'
     | '/_authed'
@@ -273,19 +343,25 @@ export interface FileRouteTypes {
     | '/two-factor'
     | '/_authed/onboarding'
     | '/api/$'
+    | '/certificates/$id'
     | '/_authed/'
+    | '/_authed/invite/$id'
     | '/_authed/o/$slug'
     | '/_authed/settings/$'
     | '/_authed/o/$slug/settings'
     | '/_authed/o/$slug/'
     | '/_authed/o/$slug/library/$id'
     | '/_authed/o/$slug/settings/appearance'
+    | '/_authed/o/$slug/settings/members'
     | '/_authed/o/$slug/settings/organization'
     | '/_authed/o/$slug/settings/profile'
     | '/_authed/o/$slug/settings/security'
     | '/_authed/o/$slug/settings/sessions'
     | '/_authed/o/$slug/library/'
     | '/_authed/o/$slug/settings/'
+    | '/_authed/o/$slug/learn/$courseId/$lessonId'
+    | '/_authed/o/$slug/library/$id_/assignees'
+    | '/_authed/o/$slug/library/$id_/lessons/$lessonId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -297,6 +373,7 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   TwoFactorRoute: typeof TwoFactorRoute
   ApiSplatRoute: typeof ApiSplatRoute
+  CertificatesIdRoute: typeof CertificatesIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -371,6 +448,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/certificates/$id': {
+      id: '/certificates/$id'
+      path: '/certificates/$id'
+      fullPath: '/certificates/$id'
+      preLoaderRoute: typeof CertificatesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authed/invite/$id': {
+      id: '/_authed/invite/$id'
+      path: '/invite/$id'
+      fullPath: '/invite/$id'
+      preLoaderRoute: typeof AuthedInviteIdRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/o/$slug': {
       id: '/_authed/o/$slug'
       path: '/o/$slug'
@@ -427,6 +518,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedOSlugSettingsAppearanceRouteImport
       parentRoute: typeof AuthedOSlugSettingsRoute
     }
+    '/_authed/o/$slug/settings/members': {
+      id: '/_authed/o/$slug/settings/members'
+      path: '/members'
+      fullPath: '/o/$slug/settings/members'
+      preLoaderRoute: typeof AuthedOSlugSettingsMembersRouteImport
+      parentRoute: typeof AuthedOSlugSettingsRoute
+    }
     '/_authed/o/$slug/settings/organization': {
       id: '/_authed/o/$slug/settings/organization'
       path: '/organization'
@@ -455,11 +553,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedOSlugSettingsSessionsRouteImport
       parentRoute: typeof AuthedOSlugSettingsRoute
     }
+    '/_authed/o/$slug/learn/$courseId/$lessonId': {
+      id: '/_authed/o/$slug/learn/$courseId/$lessonId'
+      path: '/learn/$courseId/$lessonId'
+      fullPath: '/o/$slug/learn/$courseId/$lessonId'
+      preLoaderRoute: typeof AuthedOSlugLearnCourseIdLessonIdRouteImport
+      parentRoute: typeof AuthedOSlugRoute
+    }
+    '/_authed/o/$slug/library/$id_/assignees': {
+      id: '/_authed/o/$slug/library/$id_/assignees'
+      path: '/library/$id/assignees'
+      fullPath: '/o/$slug/library/$id/assignees'
+      preLoaderRoute: typeof AuthedOSlugLibraryIdAssigneesRouteImport
+      parentRoute: typeof AuthedOSlugRoute
+    }
+    '/_authed/o/$slug/library/$id_/lessons/$lessonId': {
+      id: '/_authed/o/$slug/library/$id_/lessons/$lessonId'
+      path: '/library/$id/lessons/$lessonId'
+      fullPath: '/o/$slug/library/$id/lessons/$lessonId'
+      preLoaderRoute: typeof AuthedOSlugLibraryIdLessonsLessonIdRouteImport
+      parentRoute: typeof AuthedOSlugRoute
+    }
   }
 }
 
 interface AuthedOSlugSettingsRouteChildren {
   AuthedOSlugSettingsAppearanceRoute: typeof AuthedOSlugSettingsAppearanceRoute
+  AuthedOSlugSettingsMembersRoute: typeof AuthedOSlugSettingsMembersRoute
   AuthedOSlugSettingsOrganizationRoute: typeof AuthedOSlugSettingsOrganizationRoute
   AuthedOSlugSettingsProfileRoute: typeof AuthedOSlugSettingsProfileRoute
   AuthedOSlugSettingsSecurityRoute: typeof AuthedOSlugSettingsSecurityRoute
@@ -469,6 +589,7 @@ interface AuthedOSlugSettingsRouteChildren {
 
 const AuthedOSlugSettingsRouteChildren: AuthedOSlugSettingsRouteChildren = {
   AuthedOSlugSettingsAppearanceRoute: AuthedOSlugSettingsAppearanceRoute,
+  AuthedOSlugSettingsMembersRoute: AuthedOSlugSettingsMembersRoute,
   AuthedOSlugSettingsOrganizationRoute: AuthedOSlugSettingsOrganizationRoute,
   AuthedOSlugSettingsProfileRoute: AuthedOSlugSettingsProfileRoute,
   AuthedOSlugSettingsSecurityRoute: AuthedOSlugSettingsSecurityRoute,
@@ -484,6 +605,9 @@ interface AuthedOSlugRouteChildren {
   AuthedOSlugIndexRoute: typeof AuthedOSlugIndexRoute
   AuthedOSlugLibraryIdRoute: typeof AuthedOSlugLibraryIdRoute
   AuthedOSlugLibraryIndexRoute: typeof AuthedOSlugLibraryIndexRoute
+  AuthedOSlugLearnCourseIdLessonIdRoute: typeof AuthedOSlugLearnCourseIdLessonIdRoute
+  AuthedOSlugLibraryIdAssigneesRoute: typeof AuthedOSlugLibraryIdAssigneesRoute
+  AuthedOSlugLibraryIdLessonsLessonIdRoute: typeof AuthedOSlugLibraryIdLessonsLessonIdRoute
 }
 
 const AuthedOSlugRouteChildren: AuthedOSlugRouteChildren = {
@@ -491,6 +615,10 @@ const AuthedOSlugRouteChildren: AuthedOSlugRouteChildren = {
   AuthedOSlugIndexRoute: AuthedOSlugIndexRoute,
   AuthedOSlugLibraryIdRoute: AuthedOSlugLibraryIdRoute,
   AuthedOSlugLibraryIndexRoute: AuthedOSlugLibraryIndexRoute,
+  AuthedOSlugLearnCourseIdLessonIdRoute: AuthedOSlugLearnCourseIdLessonIdRoute,
+  AuthedOSlugLibraryIdAssigneesRoute: AuthedOSlugLibraryIdAssigneesRoute,
+  AuthedOSlugLibraryIdLessonsLessonIdRoute:
+    AuthedOSlugLibraryIdLessonsLessonIdRoute,
 }
 
 const AuthedOSlugRouteWithChildren = AuthedOSlugRoute._addFileChildren(
@@ -500,6 +628,7 @@ const AuthedOSlugRouteWithChildren = AuthedOSlugRoute._addFileChildren(
 interface AuthedRouteChildren {
   AuthedOnboardingRoute: typeof AuthedOnboardingRoute
   AuthedIndexRoute: typeof AuthedIndexRoute
+  AuthedInviteIdRoute: typeof AuthedInviteIdRoute
   AuthedOSlugRoute: typeof AuthedOSlugRouteWithChildren
   AuthedSettingsSplatRoute: typeof AuthedSettingsSplatRoute
 }
@@ -507,6 +636,7 @@ interface AuthedRouteChildren {
 const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedOnboardingRoute: AuthedOnboardingRoute,
   AuthedIndexRoute: AuthedIndexRoute,
+  AuthedInviteIdRoute: AuthedInviteIdRoute,
   AuthedOSlugRoute: AuthedOSlugRouteWithChildren,
   AuthedSettingsSplatRoute: AuthedSettingsSplatRoute,
 }
@@ -523,6 +653,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   TwoFactorRoute: TwoFactorRoute,
   ApiSplatRoute: ApiSplatRoute,
+  CertificatesIdRoute: CertificatesIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

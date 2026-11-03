@@ -115,7 +115,7 @@ function Members() {
 			/>
 			{canAdmin && <InviteForm viewerRole={membership.role} />}
 			<SBlock title={canAdmin ? "People" : undefined} first={!canAdmin}>
-				<div className="mt-2 overflow-x-auto rounded-[10px] border bg-card">
+				<div className="relative mt-2 overflow-x-auto rounded-[10px] border bg-card">
 					<table className="w-full min-w-[520px] border-collapse text-sm">
 						<thead>
 							<tr>
