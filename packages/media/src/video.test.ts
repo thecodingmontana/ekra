@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, before, test } from "node:test";
 import sharp from "sharp";
-import { processVideo, VideoError } from "./video.ts";
+import { processVideo, run, VideoError } from "./video.ts";
 
 let dir = "";
 before(async () => {
@@ -106,4 +106,10 @@ test("files that aren't videos are refused", async () => {
 			.toBuffer(),
 	);
 	await assert.rejects(processVideo(still, await outDir("still")), VideoError);
+});
+
+test("a command that hangs is stopped after its time limit", async () => {
+	const started = Date.now();
+	await assert.rejects(run("sleep", ["10"], 200), VideoError);
+	assert.ok(Date.now() - started < 5000, "killed, not waited for");
 });

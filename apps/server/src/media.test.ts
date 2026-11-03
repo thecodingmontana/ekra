@@ -1,6 +1,14 @@
 import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
-import { mediaAsset, member, organization, user } from "@ekra/db";
+import {
+	contentItem,
+	courseSection,
+	lesson,
+	mediaAsset,
+	member,
+	organization,
+	user,
+} from "@ekra/db";
 import { eq, inArray } from "drizzle-orm";
 import sharp from "sharp";
 import { app } from "./app.ts";
@@ -345,4 +353,102 @@ test("a playlist signs its segments; segments need that signature, not a session
 		404,
 		"another organization",
 	);
+});
+
+const putPart = (id: string, part: number, size: number) =>
+	app.request(`/api/media/videos/${id}/parts/${part}?org=${slugs.amina}`, {
+		method: "PUT",
+		headers: { cookie: cookies.amina ?? "", origin: ORIGIN },
+		body: new Uint8Array(size).fill(1),
+	});
+
+test("a replacement video is only used once uploaded; cancelling it keeps the old one", async () => {
+	const [org] = await db
+		.select({ id: organization.id })
+		.from(organization)
+		.where(eq(organization.slug, slugs.amina));
+	const orgId = org?.id ?? "";
+	const [old] = await db
+		.insert(mediaAsset)
+		.values({ orgId, kind: "video", status: "ready" })
+		.returning({ id: mediaAsset.id });
+	const [course] = await db
+		.insert(contentItem)
+		.values({ orgId, kind: "course", title: "Videos" })
+		.returning({ id: contentItem.id });
+	const [section] = await db
+		.insert(courseSection)
+		.values({ orgId, courseId: course?.id ?? "", title: "One", position: 0 })
+		.returning({ id: courseSection.id });
+	const [l] = await db
+		.insert(lesson)
+		.values({
+			orgId,
+			courseId: course?.id ?? "",
+			sectionId: section?.id ?? "",
+			kind: "video",
+			title: "Watch",
+			position: 0,
+			mediaId: old?.id,
+		})
+		.returning({ id: lesson.id });
+	const lessonId = l?.id ?? "";
+	const mediaOf = async () =>
+		(
+			await db
+				.select({ mediaId: lesson.mediaId })
+				.from(lesson)
+				.where(eq(lesson.id, lessonId))
+		)[0]?.mediaId;
+
+	const start = async () => {
+		const res = await json(
+			"amina",
+			`/api/media/videos?org=${slugs.amina}&lesson=${lessonId}`,
+			{ size: 1024 },
+		);
+		assert.equal(res.status, 200, await res.clone().text());
+		return ((await res.json()) as { id: string }).id;
+	};
+	const cancelled = await start();
+	assert.equal(await mediaOf(), old?.id, "still the old video while uploading");
+	const cancel = (who: string, id: string) =>
+		app.request(`/api/media/videos/${id}?org=${slugs.amina}`, {
+			method: "DELETE",
+			headers: { cookie: cookies[who] ?? "", origin: ORIGIN },
+		});
+	assert.equal((await cancel("carol", cancelled)).status, 403);
+	assert.equal((await cancel("amina", cancelled)).status, 200);
+	assert.equal(
+		(await db.select().from(mediaAsset).where(eq(mediaAsset.id, cancelled)))
+			.length,
+		0,
+	);
+	assert.equal(await mediaOf(), old?.id);
+
+	const replaced = await start();
+	const part = await putPart(replaced, 1, 1024);
+	const done = await json(
+		"amina",
+		`/api/media/videos/${replaced}/complete?org=${slugs.amina}`,
+		{ parts: [await part.json()] },
+	);
+	assert.equal(done.status, 200);
+	assert.equal(await mediaOf(), replaced, "the lesson moves on once uploaded");
+	assert.equal(
+		(await cancel("amina", replaced)).status,
+		409,
+		"a finished upload isn't cancelled",
+	);
+	await db.delete(mediaAsset).where(eq(mediaAsset.id, replaced));
+});
+
+test("a video can't send more parts than its size needs", async () => {
+	const start = await json("amina", `/api/media/videos?org=${slugs.amina}`, {
+		size: 1024,
+	});
+	const { id } = (await start.json()) as { id: string };
+	assert.equal((await putPart(id, 2, 1024)).status, 400);
+	assert.equal((await putPart(id, 1, 1024)).status, 200);
+	await db.delete(mediaAsset).where(eq(mediaAsset.id, id));
 });

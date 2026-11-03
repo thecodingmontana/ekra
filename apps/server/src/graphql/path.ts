@@ -5,14 +5,17 @@ import { canManageContent } from "../auth/permissions.ts";
 import {
 	asMember,
 	type Ctx,
+	findMany,
 	findOne,
 	manage,
 	parse,
+	place,
 	refuse,
+	renumber,
 	type SlugId,
 	toGraphQL,
 } from "./library.ts";
-import { progressOf } from "./progress.ts";
+import { progressOfAll } from "./progress.ts";
 import type { ActiveOrg } from "./tenant.ts";
 
 /**
@@ -73,22 +76,6 @@ async function visiblePath(tx: Tx, org: ActiveOrg, userId: string, id: string) {
 	return found.item;
 }
 
-/** Rewrites positions 0..n-1 in this order. */
-async function renumber(
-	tx: Tx,
-	table: typeof pathStage | typeof pathStep,
-	ids: string[],
-) {
-	for (const [position, id] of ids.entries())
-		await tx.update(table).set({ position }).where(eq(table.id, id));
-}
-
-/** `list` with `item` put at `position` (clamped). */
-const place = <T>(list: T[], item: T, position: number) => {
-	const at = Math.max(0, Math.min(position, list.length));
-	return [...list.slice(0, at), item, ...list.slice(at)];
-};
-
 type Args<T> = { slug: string } & T;
 
 export const pathResolvers = {
@@ -108,18 +95,28 @@ export const pathResolvers = {
 					.where(eq(pathStep.pathId, id))
 					.orderBy(asc(pathStep.position));
 				const manager = canManageContent(org.role);
+				// a step a learner can't see (a draft, archived) isn't listed to them
+				const items = await findMany(
+					tx,
+					org,
+					userId,
+					steps.map((s) => s.contentId),
+				);
+				const progress = await progressOfAll(
+					tx,
+					[...items.values()].map((i) => i.item),
+					[userId],
+				);
 				let open = true;
 				let total = 0;
 				const outStages = [];
 				for (const stage of stages) {
 					const outSteps = [];
 					for (const step of steps.filter((s) => s.stageId === stage.id)) {
-						// a step a learner can't see (a draft, archived) isn't listed to them
-						const item = await findOne(tx, org, userId, step.contentId);
+						const item = items.get(step.contentId);
 						if (!item) continue;
 						const percent =
-							(await progressOf(tx, item.item, [userId])).get(userId)
-								?.percent ?? 0;
+							progress.get(step.contentId)?.get(userId)?.percent ?? 0;
 						const locked = found.item.sequential && !manager && !open;
 						if (percent < 100) open = false;
 						total += percent;

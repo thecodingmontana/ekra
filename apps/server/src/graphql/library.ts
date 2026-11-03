@@ -4,6 +4,11 @@ import {
 	contentItem,
 	contentVersion,
 	contentView,
+	type courseSection,
+	type lesson,
+	type pathStage,
+	type pathStep,
+	type quizQuestion,
 	type Tx,
 	user,
 	withOrg,
@@ -14,6 +19,7 @@ import {
 	eq,
 	getColumns,
 	gt,
+	inArray,
 	isNotNull,
 	isNull,
 	type SQL,
@@ -216,14 +222,14 @@ export const refuse = (message: string, code = "FORBIDDEN"): never => {
 };
 
 /** what someone who can't manage content may see: published, not a template, not archived */
+export const learnerVisible = () =>
+	and(
+		eq(contentItem.status, "published"),
+		eq(contentItem.isTemplate, false),
+		isNull(contentItem.archivedAt),
+	);
 const visibleTo = (org: ActiveOrg) =>
-	canManageContent(org.role)
-		? undefined
-		: and(
-				eq(contentItem.status, "published"),
-				eq(contentItem.isTemplate, false),
-				isNull(contentItem.archivedAt),
-			);
+	canManageContent(org.role) ? undefined : learnerVisible();
 
 export function parse<T extends z.ZodType>(
 	schema: T,
@@ -303,6 +309,20 @@ export async function findOne(
 	return row ?? null;
 }
 
+/** The pieces of content (of these) the person may see, by id. */
+export async function findMany(
+	tx: Tx,
+	org: ActiveOrg,
+	userId: string,
+	ids: string[],
+) {
+	if (!ids.length) return new Map<string, Selected>();
+	const rows = await select(tx, userId).where(
+		and(inArray(contentItem.id, [...new Set(ids)]), visibleTo(org)),
+	);
+	return new Map(rows.map((r) => [r.item.id, r]));
+}
+
 async function mustFind(tx: Tx, org: ActiveOrg, userId: string, id: string) {
 	return (
 		(await findOne(tx, org, userId, id)) ??
@@ -353,6 +373,27 @@ export async function asMember<T>(
 }
 
 export type SlugId = { slug: string; id: string };
+
+/** Rewrites positions 0..n-1 in the given order (course sections or lessons, path stages or steps, questions). */
+export async function renumber(
+	tx: Tx,
+	table:
+		| typeof courseSection
+		| typeof lesson
+		| typeof pathStage
+		| typeof pathStep
+		| typeof quizQuestion,
+	ids: string[],
+) {
+	for (const [position, id] of ids.entries())
+		await tx.update(table).set({ position }).where(eq(table.id, id));
+}
+
+/** `list` with `item` put at `position` (clamped to the list). */
+export const place = <T>(list: T[], item: T, position: number) => {
+	const at = Math.max(0, Math.min(position, list.length));
+	return [...list.slice(0, at), item, ...list.slice(at)];
+};
 
 /** One item's body as Tiptap JSON text. Only single-item answers carry it; lists answer doc: null. */
 async function docOf(tx: Tx, id: string) {

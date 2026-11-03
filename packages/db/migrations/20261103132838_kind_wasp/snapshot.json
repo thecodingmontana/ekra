@@ -1,0 +1,81 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "6f4a48e5-a666-4fb6-829a-ba6ae5223bc1",
+  "prevIds": [
+    "7fae6148-de87-4d20-894e-3fac774c4d8d"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "media_asset",
+        "upload_parts"
+      ],
+      "writes": [
+        "s|col|public.media_asset.upload_parts",
+        "n|col|public.media_asset.upload_parts",
+        "e|col|public.media_asset.upload_parts"
+      ],
+      "reads": [
+        "n|tbl|public.media_asset",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "media_asset",
+        "lesson_id"
+      ],
+      "writes": [
+        "s|col|public.media_asset.lesson_id",
+        "n|col|public.media_asset.lesson_id",
+        "e|col|public.media_asset.lesson_id"
+      ],
+      "reads": [
+        "n|tbl|public.media_asset",
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "media_asset",
+        "name": "upload_parts",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "media_asset",
+        "name": "lesson_id",
+        "type": "varchar(16)",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}

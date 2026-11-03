@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
-import { member, organization, user } from "@ekra/db";
+import { lesson, mediaAsset, member, organization, user } from "@ekra/db";
 import { eq, inArray } from "drizzle-orm";
 import { db } from "../db.ts";
 import { call, cookieFrom, linkInLatestEmail, post } from "../test-helpers.ts";
@@ -441,4 +441,111 @@ test("a quiz lesson is finished by passing its quiz", async () => {
 		),
 	);
 	assert.equal((await locks("carol", course))[0]?.completed, true);
+});
+
+test("a learner can't read a locked lesson's text or video through the course", async () => {
+	const course = await newCourse("Locked content");
+	const one = await addSection(course, "One");
+	await addLesson(one, "First", "page");
+	const second = await addLesson(one, "Second", "video");
+	data(
+		await gql(
+			"amina",
+			`mutation ($slug: String!, $id: ID!, $doc: String!) { r: saveLessonBody(slug: $slug, id: $id, doc: $doc) { id } }`,
+			{
+				slug: slugs.amina,
+				id: second,
+				doc: JSON.stringify({
+					type: "doc",
+					content: [
+						{ type: "paragraph", content: [{ type: "text", text: "Secret" }] },
+					],
+				}),
+			},
+		),
+	);
+	const [org] = await db
+		.select({ id: organization.id })
+		.from(organization)
+		.where(eq(organization.slug, slugs.amina));
+	const [video] = await db
+		.insert(mediaAsset)
+		.values({ orgId: org?.id ?? "", kind: "video", status: "ready" })
+		.returning({ id: mediaAsset.id });
+	await db
+		.update(lesson)
+		.set({ mediaId: video?.id })
+		.where(eq(lesson.id, second));
+	data(
+		await gql(
+			"amina",
+			`mutation ($slug: String!, $id: ID!) { r: updateContent(slug: $slug, id: $id, input: { sequential: true }) { sequential } }`,
+			{ slug: slugs.amina, id: course },
+		),
+	);
+	await publish(course);
+
+	const seen = data<{
+		sections: {
+			lessons: {
+				id: string;
+				locked: boolean;
+				doc: string | null;
+				video: { playlist: string | null } | null;
+			}[];
+		}[];
+	}>(
+		await gql(
+			"carol",
+			`query ($slug: String!, $id: ID!) { r: course(slug: $slug, id: $id) { sections { lessons { id locked doc video { playlist } } } } }`,
+			{ slug: slugs.amina, id: course },
+		),
+	);
+	const locked = seen.sections[0]?.lessons.find((l) => l.id === second);
+	assert.equal(locked?.locked, true);
+	assert.equal(locked?.doc, null);
+	assert.equal(locked?.video, null);
+	const managed = data<{
+		sections: {
+			lessons: { id: string; video: { playlist: string } | null }[];
+		}[];
+	}>(
+		await gql(
+			"amina",
+			`query ($slug: String!, $id: ID!) { r: course(slug: $slug, id: $id) { sections { lessons { id video { playlist } } } } }`,
+			{ slug: slugs.amina, id: course },
+		),
+	);
+	assert.ok(
+		managed.sections[0]?.lessons.find((l) => l.id === second)?.video?.playlist,
+		"trainers still see the video",
+	);
+});
+
+test("a quiz lesson whose quiz learners can't take doesn't block the course", async () => {
+	const draftQuiz = data<{ id: string }>(
+		await gql(
+			"amina",
+			`mutation ($slug: String!) { r: createContent(slug: $slug, input: { kind: quiz, title: "Unpublished" }) { id } }`,
+			{ slug: slugs.amina },
+		),
+	).id;
+	const course = await newCourse("Stuck quiz");
+	const section = await addSection(course, "Only");
+	const lessonId = data<{ id: string }>(
+		await gql(
+			"amina",
+			`mutation ($slug: String!, $s: ID!, $q: ID!) { r: addLesson(slug: $slug, sectionId: $s, kind: quiz, title: "Check", quizId: $q) { id } }`,
+			{ slug: slugs.amina, s: section, q: draftQuiz },
+		),
+	).id;
+	await publish(course);
+	data(
+		await gql(
+			"carol",
+			`mutation ($slug: String!, $id: ID!) { r: completeLesson(slug: $slug, id: $id, complete: true) { id } }`,
+			{ slug: slugs.amina, id: lessonId },
+		),
+	);
+	assert.equal((await outline("carol", course))?.completedCount, 1);
 });

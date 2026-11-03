@@ -39,24 +39,37 @@ type Probe = {
 	format?: { duration?: string };
 };
 
-/** Runs a command, resolving with its output; rejects with the end of its error output. */
-function run(cmd: string, args: string[]) {
+/** How long ffprobe may take. */
+const PROBE_MS = 60_000;
+/** How long one ffmpeg run may take: 4x the video's length plus 10 minutes, so a hung one can't block the queue. */
+const encodeMs = (durationSeconds: number) =>
+	durationSeconds * 4_000 + 10 * 60_000;
+
+/** Runs a command, resolving with its output; rejects with the end of its error output, or once it runs too long. */
+export function run(cmd: string, args: string[], timeoutMs = PROBE_MS) {
 	return new Promise<string>((resolve, reject) => {
 		const child = spawn(cmd, args, { stdio: ["ignore", "pipe", "pipe"] });
 		let out = "";
 		let err = "";
+		const timer = setTimeout(() => {
+			child.kill("SIGKILL");
+			reject(new VideoError("Processing this video took too long."));
+		}, timeoutMs);
 		child.stdout.on("data", (d) => {
 			out += d;
 		});
 		child.stderr.on("data", (d) => {
 			err = (err + d).slice(-4000);
 		});
-		child.on("error", reject);
-		child.on("close", (code) =>
-			code === 0
-				? resolve(out)
-				: reject(new Error(`${cmd} failed (${code}): ${err.slice(-600)}`)),
-		);
+		child.on("error", (error) => {
+			clearTimeout(timer);
+			reject(error);
+		});
+		child.on("close", (code) => {
+			clearTimeout(timer);
+			if (code === 0) resolve(out);
+			else reject(new Error(`${cmd} failed (${code}): ${err.slice(-600)}`));
+		});
 	});
 }
 
@@ -141,54 +154,58 @@ export async function processVideo(
 		const scale = landscape
 			? `scale=-2:${rung.height}`
 			: `scale=${rung.height}:-2`;
-		await run("ffmpeg", [
-			"-v",
-			"error",
-			"-y",
-			"-i",
-			input,
-			"-vf",
-			scale,
-			"-c:v",
-			"libx264",
-			"-preset",
-			"veryfast",
-			"-crf",
-			"21",
-			"-maxrate",
-			`${rung.maxKbps}k`,
-			"-bufsize",
-			`${rung.maxKbps * 2}k`,
-			"-pix_fmt",
-			"yuv420p",
-			"-g",
-			String(gop),
-			"-keyint_min",
-			String(gop),
-			"-sc_threshold",
-			"0",
-			...(info.hasAudio
-				? [
-						"-c:a",
-						"aac",
-						"-b:a",
-						"128k",
-						"-ac",
-						"2",
-						"-af",
-						"loudnorm=I=-16:TP=-1.5:LRA=11",
-					]
-				: ["-an"]),
-			"-f",
-			"hls",
-			"-hls_time",
-			String(SEGMENT_SECONDS),
-			"-hls_playlist_type",
-			"vod",
-			"-hls_segment_filename",
-			join(outDir, `${name}_%03d-ts`),
-			join(outDir, `${name}-m3u8`),
-		]);
+		await run(
+			"ffmpeg",
+			[
+				"-v",
+				"error",
+				"-y",
+				"-i",
+				input,
+				"-vf",
+				scale,
+				"-c:v",
+				"libx264",
+				"-preset",
+				"veryfast",
+				"-crf",
+				"21",
+				"-maxrate",
+				`${rung.maxKbps}k`,
+				"-bufsize",
+				`${rung.maxKbps * 2}k`,
+				"-pix_fmt",
+				"yuv420p",
+				"-g",
+				String(gop),
+				"-keyint_min",
+				String(gop),
+				"-sc_threshold",
+				"0",
+				...(info.hasAudio
+					? [
+							"-c:a",
+							"aac",
+							"-b:a",
+							"128k",
+							"-ac",
+							"2",
+							"-af",
+							"loudnorm=I=-16:TP=-1.5:LRA=11",
+						]
+					: ["-an"]),
+				"-f",
+				"hls",
+				"-hls_time",
+				String(SEGMENT_SECONDS),
+				"-hls_playlist_type",
+				"vod",
+				"-hls_segment_filename",
+				join(outDir, `${name}_%03d-ts`),
+				join(outDir, `${name}-m3u8`),
+			],
+			encodeMs(info.durationSeconds),
+		);
 		const other =
 			Math.round(
 				(Math.max(info.width, info.height) * rung.height) / short / 2,
@@ -216,18 +233,22 @@ export async function processVideo(
 
 	// the poster: a frame a third of the way in (at most 10 s), as WebP
 	const frame = join(outDir, "poster.png");
-	await run("ffmpeg", [
-		"-v",
-		"error",
-		"-y",
-		"-ss",
-		Math.min(info.durationSeconds / 3, 10).toFixed(2),
-		"-i",
-		input,
-		"-frames:v",
-		"1",
-		frame,
-	]);
+	await run(
+		"ffmpeg",
+		[
+			"-v",
+			"error",
+			"-y",
+			"-ss",
+			Math.min(info.durationSeconds / 3, 10).toFixed(2),
+			"-i",
+			input,
+			"-frames:v",
+			"1",
+			frame,
+		],
+		encodeMs(info.durationSeconds),
+	);
 	await sharp(await readFile(frame))
 		.resize({
 			width: 1280,

@@ -36,4 +36,4 @@ export { SLUG_MAX, SLUG_MIN, slugify, slugProblem } from "./slug.ts";
 export { spaced } from "./spaced.ts";
 export { tenantUrls } from "./tenant-url.ts";
 export { type DiffPart, diffWords } from "./text-diff.ts";
-export { ago } from "./time.ts";
+export { ago, dateTime, day } from "./time.ts";

@@ -1,4 +1,9 @@
-import { enrollmentStatus, type ReminderKind, tenantUrls } from "@ekra/core";
+import {
+	dateTime,
+	enrollmentStatus,
+	type ReminderKind,
+	tenantUrls,
+} from "@ekra/core";
 import {
 	contentCompletion,
 	contentItem,
@@ -9,7 +14,7 @@ import {
 	user,
 } from "@ekra/db";
 import { reminderEmail } from "@ekra/email";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, lt, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../db.ts";
 import { sendInBackground } from "../email.ts";
@@ -17,13 +22,14 @@ import { env } from "../env.ts";
 import {
 	asMember,
 	type Ctx,
+	findMany,
 	findOne,
 	manage,
 	parse,
 	refuse,
 	toGraphQL,
 } from "./library.ts";
-import { markStarted, progressOf } from "./progress.ts";
+import { markStarted, progressOfAll } from "./progress.ts";
 import type { ActiveOrg } from "./tenant.ts";
 
 /**
@@ -142,24 +148,14 @@ async function listEnrollments(
 		.innerJoin(contentItem, eq(contentItem.id, enrollment.contentId))
 		.where(where)
 		.orderBy(desc(enrollment.createdAt));
-	const byContent = new Map<string, typeof rows>();
-	for (const r of rows)
-		byContent.set(r.item.id, [...(byContent.get(r.item.id) ?? []), r]);
-	const progress = new Map<string, { percent: number; started: boolean }>();
-	for (const [, list] of byContent) {
-		const first = list[0];
-		if (!first) continue;
-		const map = await progressOf(
-			tx,
-			first.item,
-			list.map((r) => r.e.userId),
-		);
-		for (const r of list)
-			progress.set(
-				r.e.id,
-				map.get(r.e.userId) ?? { percent: 0, started: false },
-			);
-	}
+	const all = await progressOfAll(
+		tx,
+		rows.map((r) => r.item),
+		[...new Set(rows.map((r) => r.e.userId))],
+	);
+	const progress = new Map(
+		rows.map((r) => [r.e.id, all.get(r.item.id)?.get(r.e.userId)]),
+	);
 	return rows.map((r) => {
 		const p = progress.get(r.e.id) ?? { percent: 0, started: false };
 		const again = r.e.remindedAt
@@ -216,13 +212,17 @@ export const enrollmentResolvers = {
 		myLearning: (_p: unknown, { slug }: { slug: string }, ctx: Ctx) =>
 			asMember(ctx, slug, async (tx, org, userId) => {
 				const mine = await listEnrollments(tx, eq(enrollment.userId, userId));
-				const out = [];
-				for (const e of mine) {
-					// only what this person may see now (a learner: published, not archived)
-					const found = await findOne(tx, org, userId, e.contentId);
-					if (found) out.push({ ...e, content: toGraphQL(found) });
-				}
-				return out;
+				// only what this person may see now (a learner: published, not archived)
+				const visible = await findMany(
+					tx,
+					org,
+					userId,
+					mine.map((e) => e.contentId),
+				);
+				return mine.flatMap((e) => {
+					const found = visible.get(e.contentId);
+					return found ? [{ ...e, content: toGraphQL(found) }] : [];
+				});
 			}),
 	},
 	Mutation: {
@@ -260,24 +260,25 @@ export const enrollmentResolvers = {
 						"Only people in this organization can be assigned.",
 						"BAD_USER_INPUT",
 					);
-				for (const m of members)
-					await tx
-						.insert(enrollment)
-						.values({
+				await tx
+					.insert(enrollment)
+					.values(
+						members.map((m) => ({
 							orgId: org.id,
 							contentId: args.contentId,
 							userId: m.id,
 							assignedBy: userId,
 							...(startAt && { startAt: new Date(startAt) }),
 							dueAt: dueAt ? new Date(dueAt) : null,
-						})
-						.onConflictDoUpdate({
-							target: [enrollment.contentId, enrollment.userId],
-							set: {
-								...(startAt && { startAt: new Date(startAt) }),
-								dueAt: dueAt ? new Date(dueAt) : null,
-							},
-						});
+						})),
+					)
+					.onConflictDoUpdate({
+						target: [enrollment.contentId, enrollment.userId],
+						set: {
+							...(startAt && { startAt: sql.raw("excluded.start_at") }),
+							dueAt: sql.raw("excluded.due_at"),
+						},
+					});
 				return listEnrollments(
 					tx,
 					and(
@@ -311,83 +312,108 @@ export const enrollmentResolvers = {
 					.returning({ id: enrollment.id });
 				return gone.length;
 			}),
-		remindEnrollments: (
+		remindEnrollments: async (
 			_p: unknown,
 			args: Args<{ ids: string[]; kind: ReminderKind }>,
 			ctx: Ctx,
-		) =>
-			manage(ctx, args.slug, async (tx, org) => {
-				const kind = parse(z.enum(["running_out", "overdue"]), args.kind);
-				const rows = await tx
-					.select({
-						e: enrollment,
-						title: contentItem.title,
-					})
-					.from(enrollment)
-					.innerJoin(contentItem, eq(contentItem.id, enrollment.contentId))
-					.where(inArray(enrollment.id, args.ids));
-				const now = Date.now();
-				const due = rows.filter(
-					(r) =>
-						!r.e.remindedAt || now - r.e.remindedAt.getTime() >= REMIND_GAP_MS,
-				);
-				if (!due.length) return { sent: 0, waiting: rows.length };
-				const [orgRow] = await db
-					.select({ name: organization.name, slug: organization.slug })
-					.from(organization)
-					.where(eq(organization.id, org.id));
-				// learners' email addresses aren't visible to the tenant role: read them for these people only
-				const emails = new Map(
-					(
-						await db
-							.select({ id: user.id, email: user.email })
-							.from(user)
-							.where(
-								inArray(
-									user.id,
-									due.map((r) => r.e.userId),
+		) => {
+			const kind = parse(z.enum(["running_out", "overdue"]), args.kind);
+			const from =
+				(ctx.session as { user?: { name?: string } } | null)?.user?.name ??
+				"Your trainer";
+			const { sent, waiting, emails } = await manage(
+				ctx,
+				args.slug,
+				async (tx, org) => {
+					const asked = await tx
+						.select({ id: enrollment.id })
+						.from(enrollment)
+						.where(inArray(enrollment.id, args.ids));
+					// claimed in one statement, so two clicks at once can't both send
+					const claimed = await tx
+						.update(enrollment)
+						.set({ remindedAt: new Date() })
+						.where(
+							and(
+								inArray(enrollment.id, args.ids),
+								or(
+									isNull(enrollment.remindedAt),
+									lt(
+										enrollment.remindedAt,
+										new Date(Date.now() - REMIND_GAP_MS),
+									),
 								),
-							)
-					).map((u) => [u.id, u.email]),
-				);
-				const from =
-					(ctx.session as { user?: { name?: string } } | null)?.user?.name ??
-					"Your trainer";
-				for (const r of due) {
-					const to = emails.get(r.e.userId);
-					if (!to) continue;
-					sendInBackground({
-						to,
-						...reminderEmail({
-							kind,
-							title: r.title,
-							organization: orgRow?.name ?? "",
-							from,
-							due: r.e.dueAt
-								? r.e.dueAt.toLocaleDateString("en-GB", {
-										day: "numeric",
-										month: "short",
-										year: "numeric",
-									})
-								: null,
-							url: orgLink(
-								orgRow?.slug ?? args.slug,
-								`/library/${r.e.contentId}`,
 							),
-						}),
-					});
-				}
-				await tx
-					.update(enrollment)
-					.set({ remindedAt: new Date() })
-					.where(
-						inArray(
-							enrollment.id,
-							due.map((r) => r.e.id),
-						),
+						)
+						.returning({
+							userId: enrollment.userId,
+							contentId: enrollment.contentId,
+							dueAt: enrollment.dueAt,
+						});
+					const result = {
+						sent: claimed.length,
+						waiting: asked.length - claimed.length,
+					};
+					if (!claimed.length) return { ...result, emails: [] };
+					const titles = new Map(
+						(
+							await tx
+								.select({ id: contentItem.id, title: contentItem.title })
+								.from(contentItem)
+								.where(
+									inArray(
+										contentItem.id,
+										claimed.map((r) => r.contentId),
+									),
+								)
+						).map((c) => [c.id, c.title]),
 					);
-				return { sent: due.length, waiting: rows.length - due.length };
-			}),
+					const [orgRow] = await db
+						.select({ name: organization.name, slug: organization.slug })
+						.from(organization)
+						.where(eq(organization.id, org.id));
+					// learners' email addresses aren't visible to the tenant role: read them for these people only
+					const addresses = new Map(
+						(
+							await db
+								.select({ id: user.id, email: user.email })
+								.from(user)
+								.where(
+									inArray(
+										user.id,
+										claimed.map((r) => r.userId),
+									),
+								)
+						).map((u) => [u.id, u.email]),
+					);
+					const emails = claimed.flatMap((r) => {
+						const to = addresses.get(r.userId);
+						if (!to) return [];
+						return [
+							{
+								to,
+								...reminderEmail({
+									kind,
+									title: titles.get(r.contentId) ?? "",
+									organization: orgRow?.name ?? "",
+									from,
+									// shortcut: organizations have no time zone yet, so the email says UTC; use theirs once they do
+									due: r.dueAt ? `${dateTime(r.dueAt, "UTC")} UTC` : null,
+									url: orgLink(
+										orgRow?.slug ?? args.slug,
+										`/library/${r.contentId}`,
+									),
+								}),
+							},
+						];
+					});
+					return { ...result, emails };
+				},
+			);
+			// only once the claim is committed
+			for (const email of emails) sendInBackground(email);
+			return { sent, waiting };
+		},
 		startLearning: (_p: unknown, args: Args<{ contentId: string }>, ctx: Ctx) =>
 			asMember(ctx, args.slug, async (tx, org, userId) => {
 				await takeable(tx, org, userId, args.contentId);

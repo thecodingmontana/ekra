@@ -18,7 +18,8 @@ export const certificateTypeDefs = /* GraphQL */ `
 	type Certificate {
 		"Also the public verification code (/certificates/<id>)."
 		id: ID!
-		contentId: ID!
+		"null once the content was deleted"
+		contentId: ID
 		name: String!
 		title: String!
 		issuedAt: String!

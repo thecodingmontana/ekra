@@ -345,3 +345,33 @@ test("taking something unassigned puts it in your learning: a finished lesson, a
 	assert.equal(status("Self paced"), "completed");
 	assert.equal(status("Read me"), "completed");
 });
+
+test("two reminders at once send one email, with the due date in UTC", async () => {
+	const page = await make("page", "Remind twice");
+	const [row] = data<Row[]>(
+		await gql("amina", ENROLL, {
+			slug: S,
+			c: page,
+			u: [ids.carol],
+			due: "2026-11-04T21:30:00Z",
+		}),
+	);
+	const REMIND = `mutation ($slug: String!, $ids: [ID!]!) { r: remindEnrollments(slug: $slug, ids: $ids, kind: overdue) { sent waiting } }`;
+	const before = emailsTo(emailOf("carol")).length;
+	const results = await Promise.all(
+		[1, 2].map(async () =>
+			data<{ sent: number; waiting: number }>(
+				await gql("amina", REMIND, { slug: S, ids: [row?.id] }),
+			),
+		),
+	);
+	assert.deepEqual(
+		results.map((r) => r.sent).sort(),
+		[0, 1],
+		"only one of them sends",
+	);
+	await new Promise((r) => setTimeout(r, 200));
+	const sent = emailsTo(emailOf("carol"));
+	assert.equal(sent.length, before + 1);
+	assert.match(sent.at(-1)?.text ?? "", /Due: 4 Nov 2026, 21:30 UTC\./);
+});

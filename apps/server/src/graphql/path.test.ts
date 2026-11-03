@@ -215,3 +215,48 @@ test("a path taken in order locks steps for learners; progress adds up; other or
 		"NOT_FOUND",
 	);
 });
+
+test("path progress counts only the steps learners can see", async () => {
+	const path = await make("path", "Hidden steps");
+	const stage = await addStage(path, "Start");
+	const shown = await make("page", "Shown");
+	const draft = data<{ id: string }>(
+		await gql(
+			"amina",
+			'mutation ($slug: String!) { r: createContent(slug: $slug, input: { kind: page, title: "Draft step" }) { id } }',
+			{ slug: S },
+		),
+	).id;
+	for (const c of [shown, draft])
+		data(await gql("amina", ADD_STEP, { slug: S, s: stage.id, c }));
+	data(
+		await gql(
+			"carol",
+			"mutation ($slug: String!, $c: ID!) { r: markDone(slug: $slug, contentId: $c, done: true) }",
+			{ slug: S, c: shown },
+		),
+	);
+	data(
+		await gql(
+			"carol",
+			"mutation ($slug: String!, $c: ID!) { r: startLearning(slug: $slug, contentId: $c) }",
+			{ slug: S, c: path },
+		),
+	);
+	assert.equal(
+		data<Path>(await gql("carol", PATH, { slug: S, id: path })).percent,
+		100,
+	);
+	const mine = data<{ percent: number; content: { id: string } }[]>(
+		await gql(
+			"carol",
+			"query ($slug: String!) { r: myLearning(slug: $slug) { percent content { id } } }",
+			{ slug: S },
+		),
+	);
+	assert.equal(
+		mine.find((e) => e.content.id === path)?.percent,
+		100,
+		"the draft step doesn't count",
+	);
+});

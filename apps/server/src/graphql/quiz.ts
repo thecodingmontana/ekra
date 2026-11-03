@@ -16,7 +16,7 @@ import {
 	quizQuestion,
 	type Tx,
 } from "@ekra/db";
-import { and, asc, eq, ne, sql } from "drizzle-orm";
+import { and, asc, eq, isNull, ne, sql } from "drizzle-orm";
 import { z } from "zod";
 import {
 	asMember,
@@ -24,7 +24,9 @@ import {
 	findOne,
 	manage,
 	parse,
+	place,
 	refuse,
+	renumber,
 	type SlugId,
 } from "./library.ts";
 import { markStarted } from "./progress.ts";
@@ -372,14 +374,77 @@ async function attemptView(tx: Tx, attempt: Attempt, settings: Settings) {
 	};
 }
 
-/** Rewrites a quiz's question positions 0..n-1 in this order. */
-async function renumber(tx: Tx, ids: string[]) {
-	for (const [position, id] of ids.entries())
-		await tx
-			.update(quizQuestion)
-			.set({ position })
-			.where(eq(quizQuestion.id, id));
+/**
+ * Scores an attempt and hands it in. Passing (or finishing a quiz without a pass mark) completes the course lessons
+ * that use it. After the deadline (late) required questions don't apply; before it they must be answered.
+ */
+async function grade(
+	tx: Tx,
+	attempt: Attempt,
+	settings: Settings,
+	late: boolean,
+) {
+	const byId = new Map(
+		(await questionsOf(tx, attempt.quizId)).map((q) => [q.id, q]),
+	);
+	const asked = attempt.questionIds.flatMap((id) => {
+		const q = byId.get(id);
+		return q ? [q] : [];
+	});
+	const missing = asked.findIndex(
+		(q) => q.required && !(q.id in attempt.answers),
+	);
+	if (missing >= 0 && !late)
+		return refuse(`Answer question ${missing + 1} first.`, "BAD_USER_INPUT");
+	const maxScore = asked.reduce((s, q) => s + q.points, 0);
+	const score = asked.reduce(
+		(s, q) =>
+			s +
+			(isCorrect(q.payload as QuestionPayload, attempt.answers[q.id])
+				? q.points
+				: 0),
+		0,
+	);
+	const passed =
+		settings.passPercent == null
+			? null
+			: maxScore > 0 && score * 100 >= settings.passPercent * maxScore;
+	const [done] = await tx
+		.update(quizAttempt)
+		.set({ submittedAt: new Date(), score, maxScore, passed })
+		.where(and(eq(quizAttempt.id, attempt.id), isNull(quizAttempt.submittedAt)))
+		.returning();
+	if (!done) return attempt;
+	if (passed !== false) {
+		const lessons = await tx
+			.select({ id: lesson.id, courseId: lesson.courseId })
+			.from(lesson)
+			.where(eq(lesson.quizId, attempt.quizId));
+		for (const l of lessons)
+			await tx
+				.insert(lessonProgress)
+				.values({
+					orgId: attempt.orgId,
+					userId: attempt.userId,
+					lessonId: l.id,
+					courseId: l.courseId,
+					completedAt: new Date(),
+				})
+				.onConflictDoUpdate({
+					target: [lessonProgress.userId, lessonProgress.lessonId],
+					set: { completedAt: new Date(), updatedAt: new Date() },
+				});
+	}
+	return done;
 }
+
+/** Hands in, graded, the attempts whose time ran out without being handed in. */
+const gradeTimedOut = (tx: Tx, attempts: Attempt[], settings: Settings) =>
+	Promise.all(
+		attempts.map((a) =>
+			!a.submittedAt && timeUp(a, GRACE_MS) ? grade(tx, a, settings, true) : a,
+		),
+	);
 
 type Args<T> = SlugId & T;
 
@@ -397,13 +462,17 @@ export const quizResolvers = {
 		quizOverview: (_p: unknown, { slug, id }: SlugId, ctx: Ctx) =>
 			asMember(ctx, slug, async (tx, org, userId) => {
 				const { settings } = await visibleQuiz(tx, org, userId, id);
-				const attempts = await tx
-					.select()
-					.from(quizAttempt)
-					.where(
-						and(eq(quizAttempt.quizId, id), eq(quizAttempt.userId, userId)),
-					)
-					.orderBy(asc(quizAttempt.startedAt));
+				const attempts = await gradeTimedOut(
+					tx,
+					await tx
+						.select()
+						.from(quizAttempt)
+						.where(
+							and(eq(quizAttempt.quizId, id), eq(quizAttempt.userId, userId)),
+						)
+						.orderBy(asc(quizAttempt.startedAt)),
+					settings,
+				);
 				const count = (await questionsOf(tx, id)).length;
 				const used = attempts.filter(
 					(a) => a.submittedAt || timeUp(a, GRACE_MS),
@@ -436,7 +505,8 @@ export const quizResolvers = {
 					.where(and(eq(quizAttempt.id, id), eq(quizAttempt.userId, userId)));
 				if (!attempt) return null;
 				const { settings } = await visibleQuiz(tx, org, userId, attempt.quizId);
-				return attemptView(tx, attempt, settings);
+				const [graded = attempt] = await gradeTimedOut(tx, [attempt], settings);
+				return attemptView(tx, graded, settings);
 			}),
 	},
 	Mutation: {
@@ -505,6 +575,7 @@ export const quizResolvers = {
 				if (!gone) return refuse("That question doesn't exist.", "NOT_FOUND");
 				await renumber(
 					tx,
+					quizQuestion,
 					(await questionsOf(tx, gone.quizId)).map((q) => q.id),
 				);
 				return true;
@@ -532,8 +603,7 @@ export const quizResolvers = {
 						)
 						.orderBy(asc(quizQuestion.position))
 				).map((q) => q.id);
-				const at = Math.max(0, Math.min(position, others.length));
-				await renumber(tx, [...others.slice(0, at), id, ...others.slice(at)]);
+				await renumber(tx, quizQuestion, place(others, id, position));
 				return true;
 			}),
 		startQuizAttempt: (
@@ -547,12 +617,19 @@ export const quizResolvers = {
 				await tx.execute(
 					sql`select pg_advisory_xact_lock(hashtext(${`${userId}:${quizId}`}))`,
 				);
-				const mine = await tx
-					.select()
-					.from(quizAttempt)
-					.where(
-						and(eq(quizAttempt.quizId, quizId), eq(quizAttempt.userId, userId)),
-					);
+				const mine = await gradeTimedOut(
+					tx,
+					await tx
+						.select()
+						.from(quizAttempt)
+						.where(
+							and(
+								eq(quizAttempt.quizId, quizId),
+								eq(quizAttempt.userId, userId),
+							),
+						),
+					settings,
+				);
 				const open = mine.find((a) => !a.submittedAt && !timeUp(a, GRACE_MS));
 				if (open) return attemptView(tx, open, settings);
 				const used = mine.length;
@@ -643,62 +720,11 @@ export const quizResolvers = {
 				const attempt = await ownAttempt(tx, userId, attemptId);
 				const { settings } = await visibleQuiz(tx, org, userId, attempt.quizId);
 				if (attempt.submittedAt) return attemptView(tx, attempt, settings);
-				const byId = new Map(
-					(await questionsOf(tx, attempt.quizId)).map((q) => [q.id, q]),
+				return attemptView(
+					tx,
+					await grade(tx, attempt, settings, timeUp(attempt)),
+					settings,
 				);
-				const asked = attempt.questionIds.flatMap((id) => {
-					const q = byId.get(id);
-					return q ? [q] : [];
-				});
-				// required questions must be answered, unless the time ran out
-				const missing = asked.findIndex(
-					(q) => q.required && !(q.id in attempt.answers),
-				);
-				if (missing >= 0 && !timeUp(attempt))
-					return refuse(
-						`Answer question ${missing + 1} first.`,
-						"BAD_USER_INPUT",
-					);
-				const maxScore = asked.reduce((s, q) => s + q.points, 0);
-				const score = asked.reduce(
-					(s, q) =>
-						s +
-						(isCorrect(q.payload as QuestionPayload, attempt.answers[q.id])
-							? q.points
-							: 0),
-					0,
-				);
-				const passed =
-					settings.passPercent == null
-						? null
-						: maxScore > 0 && score * 100 >= settings.passPercent * maxScore;
-				const [done] = await tx
-					.update(quizAttempt)
-					.set({ submittedAt: new Date(), score, maxScore, passed })
-					.where(eq(quizAttempt.id, attempt.id))
-					.returning();
-				// passing (or finishing a quiz without a pass mark) completes the course lessons that use it
-				if (passed !== false) {
-					const lessons = await tx
-						.select({ id: lesson.id, courseId: lesson.courseId })
-						.from(lesson)
-						.where(eq(lesson.quizId, attempt.quizId));
-					for (const l of lessons)
-						await tx
-							.insert(lessonProgress)
-							.values({
-								orgId: org.id,
-								userId,
-								lessonId: l.id,
-								courseId: l.courseId,
-								completedAt: new Date(),
-							})
-							.onConflictDoUpdate({
-								target: [lessonProgress.userId, lessonProgress.lessonId],
-								set: { completedAt: new Date(), updatedAt: new Date() },
-							});
-				}
-				return attemptView(tx, done ?? attempt, settings);
 			}),
 	},
 };

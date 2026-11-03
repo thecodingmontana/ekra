@@ -175,7 +175,8 @@ async function managedVideo(
 /**
  * Videos upload through the API in parts (storage stays private; a failed part is simply sent again):
  * POST /videos?org=&lesson= starts one, PUT /videos/:id/parts/:n?org= sends part n, POST
- * /videos/:id/complete?org= finishes it and hands it to the worker (apps/worker) for processing.
+ * /videos/:id/complete?org= finishes it and hands it to the worker (apps/worker) for processing; DELETE
+ * /videos/:id?org= cancels one not yet complete. A lesson moves to the new video only on complete.
  */
 media.post("/videos", async (c) => {
 	const session = await auth.api.getSession({ headers: c.req.raw.headers });
@@ -206,6 +207,7 @@ media.post("/videos", async (c) => {
 			status: 413,
 		});
 	const lessonId = c.req.query("lesson");
+	const parts = Math.ceil(size / PART_BYTES);
 	const id = generateId();
 	const originalKey = key(org.id, id, "original");
 	await bucketReady();
@@ -232,19 +234,16 @@ media.post("/videos", async (c) => {
 			status: "uploading",
 			originalKey,
 			uploadId,
+			uploadParts: parts,
+			lessonId: lessonId || null,
 			createdBy: session.user.id,
 		});
-		if (lessonId)
-			await tx
-				.update(lesson)
-				.set({ mediaId: id })
-				.where(eq(lesson.id, lessonId));
 	});
 	c.get("log").set({ media: { id, kind: "video", size } });
 	return c.json({
 		id,
 		partBytes: PART_BYTES,
-		parts: Math.ceil(size / PART_BYTES),
+		parts,
 	});
 });
 
@@ -262,7 +261,11 @@ media.put(
 	async (c) => {
 		const { video } = await managedVideo(c, c.req.param("id"));
 		const part = Number(c.req.param("part"));
-		if (!Number.isInteger(part) || part < 1 || part > 10_000)
+		if (
+			!Number.isInteger(part) ||
+			part < 1 ||
+			part > (video.uploadParts ?? 10_000)
+		)
 			throw createError({
 				message: "That part number isn't right.",
 				status: 400,
@@ -305,14 +308,36 @@ media.post("/videos/:id/complete", async (c) => {
 	if (!parts.length)
 		throw createError({ message: "No parts were sent.", status: 400 });
 	await storage.completeMultipart(video.originalKey, video.uploadId, parts);
-	await withOrg(db, org.id, (tx) =>
-		tx
+	await withOrg(db, org.id, async (tx) => {
+		await tx
 			.update(mediaAsset)
-			.set({ status: "processing", uploadId: null })
-			.where(eq(mediaAsset.id, video.id)),
-	);
+			.set({ status: "processing", uploadId: null, lessonId: null })
+			.where(eq(mediaAsset.id, video.id));
+		// only now does the lesson move to the new video; a cancelled or broken upload leaves the old one
+		if (video.lessonId)
+			await tx
+				.update(lesson)
+				.set({ mediaId: video.id })
+				.where(eq(lesson.id, video.lessonId));
+	});
 	await notify(JOBS_CHANNEL, video.id);
 	return c.json({ id: video.id, status: "processing" });
+});
+
+/** DELETE /videos/:id?org= cancels an upload that hasn't completed: storage drops its parts, the row goes. */
+media.delete("/videos/:id", async (c) => {
+	const { org, video } = await managedVideo(c, c.req.param("id"));
+	if (video.status !== "uploading")
+		throw createError({
+			message: "That upload is already finished.",
+			status: 409,
+		});
+	if (video.uploadId && video.originalKey)
+		await storage.abortMultipart(video.originalKey, video.uploadId);
+	await withOrg(db, org.id, (tx) =>
+		tx.delete(mediaAsset).where(eq(mediaAsset.id, video.id)),
+	);
+	return c.json({ id: video.id, cancelled: true });
 });
 
 /** How long a playlist's signed segment addresses work (a long lesson is watched in one go). */

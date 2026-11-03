@@ -16,3 +16,21 @@ export function ago(iso: string | Date, now = new Date()): string {
 		...(date.getFullYear() !== now.getFullYear() && { year: "numeric" }),
 	});
 }
+
+const DAY_PARTS = { day: "numeric", month: "short", year: "numeric" } as const;
+
+/** "5 Nov 2026": the same wording on every machine, in `timeZone` (the runtime's own when left out). */
+export function day(iso: string | Date, timeZone?: string): string {
+	return new Date(iso).toLocaleDateString("en-GB", { ...DAY_PARTS, timeZone });
+}
+
+/** "5 Nov 2026, 00:30" (24-hour clock), in `timeZone` (the runtime's own when left out). */
+export function dateTime(iso: string | Date, timeZone?: string): string {
+	return new Date(iso).toLocaleString("en-GB", {
+		...DAY_PARTS,
+		hour: "2-digit",
+		minute: "2-digit",
+		hourCycle: "h23",
+		timeZone,
+	});
+}

@@ -87,9 +87,10 @@ export const certificate = pgTable(
 		userId: idRef("user_id")
 			.notNull()
 			.references(() => user.id, { onDelete: "cascade" }),
-		contentId: idRef("content_id")
-			.notNull()
-			.references(() => contentItem.id, { onDelete: "cascade" }),
+		/** null once the content is deleted: the certificate still checks */
+		contentId: idRef("content_id").references(() => contentItem.id, {
+			onDelete: "set null",
+		}),
 		/** the name and title as they were when issued, so the certificate reads the same later */
 		name: text("name").notNull(),
 		title: text("title").notNull(),

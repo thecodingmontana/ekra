@@ -156,3 +156,70 @@ test("a certificate comes after finishing, once, and anyone can check it by its 
 		"another organization's course",
 	);
 });
+
+test("deleting the content keeps its certificates", async () => {
+	const course = data<{ id: string }>(
+		await gql(
+			"amina",
+			'mutation ($slug: String!) { r: createContent(slug: $slug, input: { kind: course, title: "Gone soon" }) { id } }',
+			{ slug: S },
+		),
+	).id;
+	const section = data<{ id: string }>(
+		await gql(
+			"amina",
+			'mutation ($slug: String!, $c: ID!) { r: addSection(slug: $slug, courseId: $c, title: "One") { id } }',
+			{ slug: S, c: course },
+		),
+	).id;
+	const lesson = data<{ id: string }>(
+		await gql(
+			"amina",
+			'mutation ($slug: String!, $s: ID!) { r: addLesson(slug: $slug, sectionId: $s, kind: page, title: "Read") { id } }',
+			{ slug: S, s: section },
+		),
+	).id;
+	data(
+		await gql(
+			"amina",
+			"mutation ($slug: String!, $id: ID!) { r: updateContent(slug: $slug, id: $id, input: { status: published }) { id } }",
+			{ slug: S, id: course },
+		),
+	);
+	data(
+		await gql(
+			"carol",
+			"mutation ($slug: String!, $id: ID!) { r: completeLesson(slug: $slug, id: $id, complete: true) { id } }",
+			{ slug: S, id: lesson },
+		),
+	);
+	const cert = data<{ id: string }>(
+		await gql("carol", CLAIM, { slug: S, c: course }),
+	);
+	data(
+		await gql(
+			"amina",
+			"mutation ($slug: String!, $id: ID!) { r: archiveContent(slug: $slug, id: $id, archived: true) { id } }",
+			{ slug: S, id: course },
+		),
+	);
+	data(
+		await gql(
+			"amina",
+			"mutation ($slug: String!, $id: ID!) { r: deleteContent(slug: $slug, id: $id) }",
+			{ slug: S, id: course },
+		),
+	);
+	assert.equal((await call(`/api/certificates/${cert.id}`)).status, 200);
+	const mine = data<{ id: string; contentId: string | null; title: string }[]>(
+		await gql(
+			"carol",
+			"query ($slug: String!) { r: myCertificates(slug: $slug) { id contentId title } }",
+			{ slug: S },
+		),
+	);
+	assert.deepEqual(
+		mine.find((c) => c.id === cert.id),
+		{ id: cert.id, contentId: null, title: "Gone soon" },
+	);
+});

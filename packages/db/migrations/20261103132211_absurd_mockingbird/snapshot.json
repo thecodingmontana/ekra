@@ -1,0 +1,69 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "7fae6148-de87-4d20-894e-3fac774c4d8d",
+  "prevIds": [
+    "b9636a9e-95c3-4b36-89fc-37c0d5d2e086"
+  ],
+  "footprints": [
+    {
+      "statementType": "alter_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "certificate",
+        "content_id"
+      ],
+      "writes": [
+        "s|colprop|public.certificate.content_id.notNull"
+      ],
+      "reads": [
+        "n|tbl|public.certificate",
+        "n|sch|public",
+        "n|col|public.certificate.content_id"
+      ],
+      "sqlHash": "b73eea90ff867a42"
+    },
+    {
+      "statementType": "recreate_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "certificate"
+      ],
+      "writes": [
+        "s|fk|public.certificate.certificate_content_id_content_item_id_fkey",
+        "n|fk|public.certificate.certificate_content_id_content_item_id_fkey",
+        "e|fk|public.certificate.certificate_content_id_content_item_id_fkey",
+        "n|con|public.certificate.certificate_content_id_content_item_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.certificate",
+        "n|sch|public",
+        "n|tbl|public.content_item",
+        "n|sch|public",
+        "n|col|public.certificate.content_id",
+        "n|col|public.content_item.id",
+        "e|uniqueness|public.content_item.id"
+      ],
+      "sqlHash": "61f81d2241e2be2d"
+    }
+  ],
+  "deltas": [
+    {
+      "op": "alter",
+      "key": "columns\u0000[\"public\",\"certificate\",\"content_id\"]",
+      "set": {
+        "notNull": false
+      }
+    },
+    {
+      "op": "alter",
+      "key": "fks\u0000[\"public\",\"certificate\",\"certificate_content_id_content_item_id_fkey\"]",
+      "set": {
+        "onDelete": "SET NULL"
+      }
+    }
+  ]
+}

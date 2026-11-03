@@ -1,0 +1,2 @@
+ALTER TABLE "certificate" ALTER COLUMN "content_id" DROP NOT NULL;--> statement-breakpoint
+ALTER TABLE "certificate" DROP CONSTRAINT "certificate_content_id_content_item_id_fkey", ADD CONSTRAINT "certificate_content_id_content_item_id_fkey" FOREIGN KEY ("content_id") REFERENCES "content_item"("id") ON DELETE SET NULL;

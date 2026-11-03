@@ -198,6 +198,10 @@ export const mediaAsset = pgTable(
 		error: text("error"),
 		/** while uploading in parts: storage's id for the upload */
 		uploadId: text("upload_id"),
+		/** while uploading in parts: how many parts the upload's size needs */
+		uploadParts: integer("upload_parts"),
+		/** while uploading: the lesson this video goes to once the upload completes */
+		lessonId: idRef("lesson_id"),
 		/** processing tries so far, and until when the current try holds the job */
 		attempts: integer("attempts").notNull().default(0),
 		lockedUntil: moment("locked_until"),

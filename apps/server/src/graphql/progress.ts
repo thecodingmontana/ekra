@@ -10,6 +10,7 @@ import {
 	type Tx,
 } from "@ekra/db";
 import { and, eq, inArray, isNotNull, sql } from "drizzle-orm";
+import { learnerVisible } from "./library.ts";
 
 /**
  * Taking something counts as starting it: it then shows in the person's learning. An assignment they already have
@@ -47,40 +48,75 @@ export async function progressOf(
 	item: { id: string; kind: string },
 	userIds: string[],
 ): Promise<Map<string, Progress>> {
-	const out = new Map<string, Progress>(userIds.map((u) => [u, NONE]));
-	if (!userIds.length) return out;
+	return (
+		(await progressOfAll(tx, [item], userIds)).get(item.id) ??
+		new Map(userIds.map((u) => [u, NONE]))
+	);
+}
 
-	if (item.kind === "course") {
-		const [{ total = 0 } = {}] = await tx
-			.select({ total: sql<number>`count(*)::int` })
-			.from(lesson)
-			.where(eq(lesson.courseId, item.id));
+/** The same for many pieces of content at once, a few queries per kind: item id → person → progress. */
+export async function progressOfAll(
+	tx: Tx,
+	items: { id: string; kind: string }[],
+	userIds: string[],
+): Promise<Map<string, Map<string, Progress>>> {
+	const out = new Map(
+		items.map((i) => [
+			i.id,
+			new Map<string, Progress>(userIds.map((u) => [u, NONE])),
+		]),
+	);
+	if (!userIds.length || !items.length) return out;
+	const set = (itemId: string, userId: string, p: Progress) =>
+		out.get(itemId)?.set(userId, p);
+	const ofKind = (...kinds: string[]) => [
+		...new Set(items.filter((i) => kinds.includes(i.kind)).map((i) => i.id)),
+	];
+
+	const courses = ofKind("course");
+	if (courses.length) {
+		const totals = new Map(
+			(
+				await tx
+					.select({
+						courseId: lesson.courseId,
+						total: sql<number>`count(*)::int`,
+					})
+					.from(lesson)
+					.where(inArray(lesson.courseId, courses))
+					.groupBy(lesson.courseId)
+			).map((r) => [r.courseId, r.total]),
+		);
 		const rows = await tx
 			.select({
+				courseId: lessonProgress.courseId,
 				userId: lessonProgress.userId,
 				done: sql<number>`count(${lessonProgress.completedAt})::int`,
 			})
 			.from(lessonProgress)
 			.where(
 				and(
-					eq(lessonProgress.courseId, item.id),
+					inArray(lessonProgress.courseId, courses),
 					inArray(lessonProgress.userId, userIds),
 				),
 			)
-			.groupBy(lessonProgress.userId);
-		for (const r of rows)
-			out.set(r.userId, {
+			.groupBy(lessonProgress.courseId, lessonProgress.userId);
+		for (const r of rows) {
+			const total = totals.get(r.courseId) ?? 0;
+			set(r.courseId, r.userId, {
 				percent: total
 					? Math.round((Math.min(r.done, total) / total) * 100)
 					: 0,
 				started: true,
 			});
-		return out;
+		}
 	}
 
-	if (item.kind === "quiz") {
+	const quizzes = ofKind("quiz");
+	if (quizzes.length) {
 		const rows = await tx
 			.select({
+				quizId: quizAttempt.quizId,
 				userId: quizAttempt.userId,
 				// passed, or finished a quiz that has no pass mark
 				done: sql<boolean>`bool_or(${quizAttempt.passed} or (${quizAttempt.passed} is null and ${quizAttempt.submittedAt} is not null))`,
@@ -88,62 +124,84 @@ export async function progressOf(
 			.from(quizAttempt)
 			.where(
 				and(
-					eq(quizAttempt.quizId, item.id),
+					inArray(quizAttempt.quizId, quizzes),
 					inArray(quizAttempt.userId, userIds),
 				),
 			)
-			.groupBy(quizAttempt.userId);
+			.groupBy(quizAttempt.quizId, quizAttempt.userId);
 		for (const r of rows)
-			out.set(r.userId, { percent: r.done ? 100 : 0, started: true });
-		return out;
+			set(r.quizId, r.userId, { percent: r.done ? 100 : 0, started: true });
 	}
 
-	if (item.kind === "path") {
+	const paths = ofKind("path");
+	if (paths.length) {
 		const steps = await tx
-			.select({ id: contentItem.id, kind: contentItem.kind })
+			.select({
+				pathId: pathStep.pathId,
+				id: contentItem.id,
+				kind: contentItem.kind,
+			})
 			.from(pathStep)
 			.innerJoin(contentItem, eq(contentItem.id, pathStep.contentId))
-			// a path inside a path isn't followed (no loops)
 			.where(
-				and(eq(pathStep.pathId, item.id), sql`${contentItem.kind} <> 'path'`),
-			);
-		if (!steps.length) return out;
-		const perStep = await Promise.all(
-			steps.map((s) => progressOf(tx, s, userIds)),
-		);
-		for (const u of userIds) {
-			const each = perStep.map((m) => m.get(u) ?? NONE);
-			out.set(u, {
-				percent: Math.round(
-					each.reduce((sum, p) => sum + p.percent, 0) / each.length,
+				and(
+					inArray(pathStep.pathId, paths),
+					// a path inside a path isn't followed (no loops)
+					sql`${contentItem.kind} <> 'path'`,
+					// only steps learners can see count
+					learnerVisible(),
 				),
-				started: each.some((p) => p.started),
-			});
+			);
+		const perStep = await progressOfAll(tx, steps, userIds);
+		for (const pathId of paths) {
+			const mine = steps.filter((s) => s.pathId === pathId);
+			if (!mine.length) continue;
+			for (const u of userIds) {
+				const each = mine.map((s) => perStep.get(s.id)?.get(u) ?? NONE);
+				set(pathId, u, {
+					percent: Math.round(
+						each.reduce((sum, p) => sum + p.percent, 0) / each.length,
+					),
+					started: each.some((p) => p.started),
+				});
+			}
 		}
-		return out;
 	}
 
 	// pages, wikis, assignments: done when marked done; started once opened
+	const marked = [
+		...new Set(
+			items
+				.filter((i) => !["course", "quiz", "path"].includes(i.kind))
+				.map((i) => i.id),
+		),
+	];
+	if (!marked.length) return out;
 	const done = await tx
-		.select({ userId: contentCompletion.userId })
+		.select({
+			contentId: contentCompletion.contentId,
+			userId: contentCompletion.userId,
+		})
 		.from(contentCompletion)
 		.where(
 			and(
-				eq(contentCompletion.contentId, item.id),
+				inArray(contentCompletion.contentId, marked),
 				inArray(contentCompletion.userId, userIds),
 			),
 		);
 	const opened = await tx
-		.select({ userId: contentView.userId })
+		.select({ contentId: contentView.contentId, userId: contentView.userId })
 		.from(contentView)
 		.where(
 			and(
-				eq(contentView.contentId, item.id),
+				inArray(contentView.contentId, marked),
 				inArray(contentView.userId, userIds),
 				isNotNull(contentView.viewedAt),
 			),
 		);
-	for (const r of opened) out.set(r.userId, { percent: 0, started: true });
-	for (const r of done) out.set(r.userId, { percent: 100, started: true });
+	for (const r of opened)
+		set(r.contentId, r.userId, { percent: 0, started: true });
+	for (const r of done)
+		set(r.contentId, r.userId, { percent: 100, started: true });
 	return out;
 }

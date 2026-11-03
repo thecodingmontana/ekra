@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
-import { member, organization, quizAttempt, user } from "@ekra/db";
+import {
+	lessonProgress,
+	member,
+	organization,
+	quizAttempt,
+	user,
+} from "@ekra/db";
 import { eq, inArray } from "drizzle-orm";
 import { db } from "../db.ts";
 import { call, cookieFrom, linkInLatestEmail, post } from "../test-helpers.ts";
@@ -347,4 +353,62 @@ test("when time runs out, answers stop and handing in still works", async () => 
 	);
 	const done = data<Attempt>(await submit("dan", attempt.id));
 	assert.equal(done.result?.score, 0, "handed in with nothing answered");
+});
+
+test("a timed-out attempt is graded with the answers saved so far, and completes its lesson", async () => {
+	const id = await newQuiz("Late", {
+		timeLimitSeconds: 60,
+		maxAttempts: 1,
+		passPercent: 50,
+	});
+	const course = data<{ id: string }>(
+		await gql(
+			"amina",
+			`mutation ($slug: String!) { r: createContent(slug: $slug, input: { kind: course, title: "Late course" }) { id } }`,
+			{ slug: S },
+		),
+	).id;
+	const section = data<{ id: string }>(
+		await gql(
+			"amina",
+			`mutation ($slug: String!, $c: ID!) { r: addSection(slug: $slug, courseId: $c, title: "Only") { id } }`,
+			{ slug: S, c: course },
+		),
+	).id;
+	const lessonId = data<{ id: string }>(
+		await gql(
+			"amina",
+			`mutation ($slug: String!, $s: ID!, $q: ID!) { r: addLesson(slug: $slug, sectionId: $s, kind: quiz, title: "Check", quizId: $q) { id } }`,
+			{ slug: S, s: section, q: id },
+		),
+	).id;
+	const attempt = data<Attempt>(await start("carol", id));
+	const mc = attempt.questions.find((q) => q.kind === "multiple_choice");
+	// the required fill-in-the-blank stays empty: it doesn't matter after the deadline
+	await answer("carol", attempt.id, mc?.id ?? "", RIGHT.multiple_choice);
+	await db
+		.update(quizAttempt)
+		.set({ deadline: new Date(Date.now() - 120_000) })
+		.where(eq(quizAttempt.id, attempt.id));
+
+	const overview = data<{
+		attempts: { score: number | null; passed: boolean | null }[];
+		attemptsLeft: number;
+		openAttemptId: string | null;
+	}>(
+		await gql(
+			"carol",
+			"query ($slug: String!, $id: ID!) { r: quizOverview(slug: $slug, id: $id) { attempts { score passed } attemptsLeft openAttemptId } }",
+			{ slug: S, id },
+		),
+	);
+	assert.deepEqual(overview.attempts, [{ score: 2, passed: true }]);
+	assert.equal(overview.attemptsLeft, 0);
+	assert.equal(overview.openAttemptId, null);
+	const [done] = await db
+		.select({ completedAt: lessonProgress.completedAt })
+		.from(lessonProgress)
+		.where(eq(lessonProgress.lessonId, lessonId));
+	assert.ok(done?.completedAt, "passing late still completes the lesson");
+	assert.equal(code(await start("carol", id)), "FORBIDDEN");
 });

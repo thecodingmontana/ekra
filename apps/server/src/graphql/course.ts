@@ -5,7 +5,7 @@ import {
 	mediaAsset,
 	type Tx,
 } from "@ekra/db";
-import { and, asc, eq, ne, type SQL, sql } from "drizzle-orm";
+import { and, asc, eq, getColumns, ne, type SQL, sql } from "drizzle-orm";
 import { GraphQLError } from "graphql";
 import { z } from "zod";
 import { canManageContent } from "../auth/permissions.ts";
@@ -16,7 +16,9 @@ import {
 	findOne,
 	manage,
 	parse,
+	place,
 	refuse,
+	renumber,
 	type SlugId,
 } from "./library.ts";
 import { markStarted } from "./progress.ts";
@@ -140,13 +142,13 @@ const videoOf = (v: VideoRow | null) =>
 	};
 
 const toLesson = (
-	l: LessonRow,
+	l: Omit<LessonRow, "doc" | "bodyText">,
 	video: VideoRow | null,
 	progress: { completedAt: Date | null; positionSeconds: number | null },
 ) => ({
 	...l,
 	bodyUpdatedAt: l.bodyUpdatedAt?.toISOString() ?? null,
-	doc: l.doc ? JSON.stringify(l.doc) : null,
+	doc: null as string | null,
 	video: videoOf(video),
 	locked: false,
 	completed: !!progress.completedAt,
@@ -166,11 +168,14 @@ async function visibleCourse(
 	return found.item;
 }
 
-/** Lessons with their video and this person's progress, in outline order. */
+/** A lesson's columns without its body: outlines never carry the text (only lesson(id) does). */
+const { doc: _doc, bodyText: _bodyText, ...lessonHead } = getColumns(lesson);
+
+/** Lessons with their video and this person's progress, in outline order, without their bodies. */
 async function lessonsWhere(tx: Tx, userId: string, where: SQL | undefined) {
 	const rows = await tx
 		.select({
-			lesson,
+			lesson: lessonHead,
 			video: mediaAsset,
 			completedAt: lessonProgress.completedAt,
 			positionSeconds: lessonProgress.positionSeconds,
@@ -237,12 +242,15 @@ async function outline(
 	);
 	return {
 		sections,
-		lessons: lessons.map((l) => ({ ...l, locked: locked.has(l.id) })),
+		// a locked lesson's video isn't sent to the learner yet
+		lessons: lessons.map((l) =>
+			locked.has(l.id) ? { ...l, locked: true, video: null } : l,
+		),
 	};
 }
 
-/** A lesson this person may see (its course is visible to them), else NOT_FOUND. */
-export async function visibleLesson(
+/** A lesson this person may see (its course is visible to them), without its body, else NOT_FOUND. */
+async function outlineLesson(
 	tx: Tx,
 	org: ActiveOrg,
 	userId: string,
@@ -260,29 +268,32 @@ export async function visibleLesson(
 	return found ?? refuse("That lesson doesn't exist.", "NOT_FOUND");
 }
 
-/** A lesson this person may take now: visible and not locked. */
+/** The lesson with its body (Tiptap JSON text). */
+async function withBody<T extends { id: string }>(tx: Tx, l: T) {
+	const [row] = await tx
+		.select({ doc: lesson.doc })
+		.from(lesson)
+		.where(eq(lesson.id, l.id));
+	return { ...l, doc: row?.doc ? JSON.stringify(row.doc) : null };
+}
+
+/** A lesson this person may see (its course is visible to them), with its body, else NOT_FOUND. */
+export async function visibleLesson(
+	tx: Tx,
+	org: ActiveOrg,
+	userId: string,
+	id: string,
+) {
+	return withBody(tx, await outlineLesson(tx, org, userId, id));
+}
+
+/** A lesson this person may take now: visible and not locked (no body). */
 async function openLesson(tx: Tx, org: ActiveOrg, userId: string, id: string) {
-	const found = await visibleLesson(tx, org, userId, id);
+	const found = await outlineLesson(tx, org, userId, id);
 	if (found.locked)
 		return refuse("Finish the lessons before this one first.", "FORBIDDEN");
 	return found;
 }
-
-/** Rewrites positions 0..n-1 in the given order (sections of a course, or lessons of a section). */
-async function renumber(
-	tx: Tx,
-	table: typeof lesson | typeof courseSection,
-	ids: string[],
-) {
-	for (const [position, id] of ids.entries())
-		await tx.update(table).set({ position }).where(eq(table.id, id));
-}
-
-/** `list` with `item` put at `position` (clamped to the list). */
-const place = <T>(list: T[], item: T, position: number) => {
-	const at = Math.max(0, Math.min(position, list.length));
-	return [...list.slice(0, at), item, ...list.slice(at)];
-};
 
 const countWhere = async (
 	tx: Tx,
@@ -322,15 +333,17 @@ export const courseResolvers = {
 			}),
 		lesson: (_p: unknown, { slug, id }: SlugId, ctx: Ctx) =>
 			asMember(ctx, slug, (tx, org, userId) =>
-				openLesson(tx, org, userId, id).catch((error: unknown) => {
-					// "not found" is an answer (null); anything else is a real failure
-					if (
-						error instanceof GraphQLError &&
-						error.extensions.code === "NOT_FOUND"
-					)
-						return null;
-					throw error;
-				}),
+				openLesson(tx, org, userId, id)
+					.then((l) => withBody(tx, l))
+					.catch((error: unknown) => {
+						// "not found" is an answer (null); anything else is a real failure
+						if (
+							error instanceof GraphQLError &&
+							error.extensions.code === "NOT_FOUND"
+						)
+							return null;
+						throw error;
+					}),
 			),
 	},
 	Mutation: {
@@ -569,7 +582,13 @@ export const courseResolvers = {
 		) =>
 			asMember(ctx, slug, async (tx, org, userId) => {
 				const found = await openLesson(tx, org, userId, id);
-				if (found.kind === "quiz" && !canManageContent(org.role))
+				// a quiz that's gone, a draft or archived can't be passed: then the lesson can be ticked off
+				if (
+					found.kind === "quiz" &&
+					!canManageContent(org.role) &&
+					found.quizId &&
+					(await findOne(tx, org, userId, found.quizId))
+				)
 					return refuse("Pass the quiz to finish this lesson.", "FORBIDDEN");
 				const completedAt = complete ? new Date() : null;
 				await tx
