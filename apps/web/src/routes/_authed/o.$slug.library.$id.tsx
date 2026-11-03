@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from "@apollo/client/react";
 import { ago } from "@ekra/core";
 import { Av } from "@ekra/ui/components/av";
-import { Button } from "@ekra/ui/components/button";
+import { Button, buttonVariants } from "@ekra/ui/components/button";
 import { cn } from "@ekra/ui/lib/utils";
 import {
 	createFileRoute,
@@ -21,17 +21,29 @@ import {
 	ContentMenu,
 	useContentActions,
 } from "@/components/library/content-menu";
+import { PathArea } from "@/components/path/path-area";
 import { QuizPage } from "@/components/quiz/quiz-page";
 import {
 	CONTENT,
 	type ContentData,
 	type ContentItem,
+	type ContentKind,
 	LIBRARY,
 	type LibraryData,
 	VIEW_CONTENT,
 } from "@/graphql/library";
 import { KINDS } from "@/lib/content-kinds";
 import { prime, reloadOnEnter } from "@/lib/routing";
+
+/** Kinds learners can be assigned to. */
+const ASSIGNABLE: ContentKind[] = [
+	"course",
+	"path",
+	"quiz",
+	"page",
+	"wiki",
+	"assignment",
+];
 
 export const Route = createFileRoute("/_authed/o/$slug/library/$id")({
 	shouldReload: reloadOnEnter,
@@ -211,7 +223,7 @@ function ContentPage() {
 					</Button>
 					{canManage && !archived && (
 						<>
-							{!["folder", "course", "quiz"].includes(item.kind) && (
+							{!["folder", "course", "quiz", "path"].includes(item.kind) && (
 								<Button
 									variant="outline"
 									onClick={() => setHistory(true)}
@@ -223,6 +235,20 @@ function ContentPage() {
 									/>
 									History
 								</Button>
+							)}
+							{ASSIGNABLE.includes(item.kind) && !item.isTemplate && (
+								<Link
+									to="/o/$slug/library/$id/assignees"
+									params={{ slug, id: item.id }}
+									className={buttonVariants({ variant: "outline" })}
+									data-testid="assign"
+								>
+									<span
+										className="icon-[solar--users-group-rounded-linear] size-3.5"
+										aria-hidden="true"
+									/>
+									Assign
+								</Link>
 							)}
 							<Button variant="outline" onClick={() => setEditing(true)}>
 								<span
@@ -292,6 +318,12 @@ function ContentPage() {
 							slug={slug}
 							id={item.id}
 							cover={item.cover}
+							canManage={canManage && !archived}
+						/>
+					) : item.kind === "path" ? (
+						<PathArea
+							slug={slug}
+							id={item.id}
 							canManage={canManage && !archived}
 						/>
 					) : item.kind === "quiz" ? (
@@ -368,7 +400,7 @@ function ContentPage() {
 
 			{canManage &&
 				!archived &&
-				!["folder", "course", "quiz"].includes(item.kind) && (
+				!["folder", "course", "quiz", "path"].includes(item.kind) && (
 					<VersionHistory
 						slug={slug}
 						id={item.id}
