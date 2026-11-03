@@ -20,6 +20,7 @@ import { announceChange, mutationSlugs } from "../realtime.ts";
 import { certificateResolvers, certificateTypeDefs } from "./certificate.ts";
 import { courseResolvers, courseTypeDefs } from "./course.ts";
 import { enrollmentResolvers, enrollmentTypeDefs } from "./enrollment.ts";
+import { invitationResolvers, invitationTypeDefs } from "./invitation.ts";
 import { libraryResolvers, libraryTypeDefs } from "./library.ts";
 import { pathResolvers, pathTypeDefs } from "./path.ts";
 import { quizResolvers, quizTypeDefs } from "./quiz.ts";
@@ -97,6 +98,7 @@ const schema = createSchema<GraphQLContext>({
 		enrollmentTypeDefs,
 		pathTypeDefs,
 		certificateTypeDefs,
+		invitationTypeDefs,
 	],
 	resolvers: [
 		libraryResolvers,
@@ -105,6 +107,7 @@ const schema = createSchema<GraphQLContext>({
 		enrollmentResolvers,
 		pathResolvers,
 		certificateResolvers,
+		invitationResolvers,
 		{
 			Query: {
 				health: () => "ok",

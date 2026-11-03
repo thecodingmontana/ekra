@@ -1,5 +1,11 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { generateId, lesson, mediaAsset, withOrg } from "@ekra/db";
+import {
+	generateId,
+	lesson,
+	mediaAsset,
+	organization,
+	withOrg,
+} from "@ekra/db";
 import { ImageError, processImage } from "@ekra/media";
 import { createStorage } from "@ekra/storage";
 import { eq } from "drizzle-orm";
@@ -347,6 +353,15 @@ const TYPE = (file: string) =>
 				? "image/avif"
 				: "image/webp";
 
+/** An organization's logo is public: invitations, its sign-in page and certificates show it to people outside. */
+async function isOrgLogo(orgId: string, mediaId: string) {
+	const [org] = await db
+		.select({ logo: organization.logo })
+		.from(organization)
+		.where(eq(organization.id, orgId));
+	return !!org?.logo?.startsWith(`/api/media/${orgId}/${mediaId}/`);
+}
+
 media.get("/:orgId/:mediaId/:file", async (c) => {
 	const { orgId, mediaId, file } = c.req.param();
 	const notFound = () =>
@@ -359,7 +374,7 @@ media.get("/:orgId/:mediaId/:file", async (c) => {
 		// segments carry their playlist's token instead of a session
 		if (!segmentTokenValid(orgId, mediaId, c.req.query("t") ?? ""))
 			throw createError({ message: "Open the lesson again.", status: 403 });
-	} else {
+	} else if (!(picture && (await isOrgLogo(orgId, mediaId)))) {
 		const session = await auth.api.getSession({ headers: c.req.raw.headers });
 		if (!session) throw createError({ message: "Sign in first.", status: 401 });
 		// another organization's file answers like one that doesn't exist

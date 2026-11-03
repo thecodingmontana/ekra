@@ -135,6 +135,26 @@ test("a trainer's picture is stored as sizes and served to members only", async 
 	);
 });
 
+test("an organization's logo is public; its other pictures aren't", async () => {
+	const logo = (await (
+		await upload("amina", slugs.amina, await png(400, 400))
+	).json()) as { src: string };
+	const other = (await (
+		await upload("amina", slugs.amina, await png(400, 400))
+	).json()) as { src: string };
+	await db
+		.update(organization)
+		.set({ logo: logo.src })
+		.where(eq(organization.slug, slugs.amina));
+	assert.equal((await fetchMedia(logo.src)).status, 200, "signed out");
+	assert.equal(
+		(await fetchMedia(logo.src.replace("1280-webp", "320-webp"))).status,
+		200,
+		"any of its sizes",
+	);
+	assert.equal((await fetchMedia(other.src)).status, 401);
+});
+
 test("only people who manage content upload, into their own organization", async () => {
 	assert.equal(
 		(await upload("carol", slugs.amina, await png(10, 10))).status,

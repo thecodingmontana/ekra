@@ -25,6 +25,27 @@ async function signIn(name: string) {
 	cookies[name] = cookieFrom(await call(linkInLatestEmail(emailOf(name))));
 }
 
+const PREVIEW =
+	"query ($id: ID!) { invitationPreview(id: $id) { email role inviterName forYou joinedSlug organization { name slug } } }";
+type Preview = {
+	email: string;
+	role: string;
+	inviterName: string;
+	forYou: boolean;
+	joinedSlug: string | null;
+	organization: { name: string };
+} | null;
+const preview = async (who: string, id: string) =>
+	(
+		(await (
+			await post(
+				"/api/graphql",
+				{ query: PREVIEW, variables: { id } },
+				cookies[who],
+			)
+		).json()) as { data: { invitationPreview: Preview } }
+	).data.invitationPreview;
+
 const invite = (who: string, email: string, role: string) =>
 	post(
 		"/api/auth/organization/invite-member",
@@ -67,6 +88,12 @@ test("an invited learner gets an email with the invitation page, accepts, and jo
 	assert.match(sent?.text ?? "", /as a learner/);
 
 	await signIn("leo");
+	const before = await preview("leo", id);
+	assert.equal(before?.forYou, true);
+	assert.equal(before?.role, "learner");
+	assert.equal(before?.organization.name, "Northwind");
+	assert.equal(before?.joinedSlug, null);
+	assert.ok(before?.inviterName);
 	const accepted = await post(
 		"/api/auth/organization/accept-invitation",
 		{ invitationId: id },
@@ -84,6 +111,7 @@ test("an invited learner gets an email with the invitation page, accepts, and jo
 			and(eq(member.organizationId, orgId), eq(member.userId, u?.id ?? "")),
 		);
 	assert.equal(m?.role, "learner");
+	assert.equal(await preview("leo", id), null, "used: nothing to accept");
 });
 
 test("only the invited address can accept, and learners can't invite", async () => {
@@ -96,6 +124,15 @@ test("only the invited address can accept, and learners can't invite", async () 
 		cookies.leo,
 	);
 	assert.notEqual(wrong.status, 200);
+	const other = await preview("leo", id);
+	assert.equal(other?.forYou, false);
+	assert.equal(
+		other?.email,
+		emailOf("mia"),
+		"says which address to sign in with",
+	);
+	assert.equal(other?.joinedSlug, slug, "leo is in it already");
+	assert.equal(await preview("leo", "nope"), null);
 
 	const byLearner = await invite("leo", `someone-${stamp}@test.ekra`, "admin");
 	assert.notEqual(byLearner.status, 200);
