@@ -42,5 +42,7 @@ jobs:
       - run: pnpm check
       - run: pnpm typecheck
       - run: pnpm db:migrate
+      # the video pipeline's tests run the real ffmpeg (the worker needs it in production too)
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
       - run: pnpm test
       - run: pnpm build
