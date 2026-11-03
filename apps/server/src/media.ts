@@ -314,6 +314,8 @@ media.post("/videos/:id/complete", async (c) => {
 			.set({ status: "processing", uploadId: null, lessonId: null })
 			.where(eq(mediaAsset.id, video.id));
 		// only now does the lesson move to the new video; a cancelled or broken upload leaves the old one
+		// shortcut: a replacement that uploads but then fails processing leaves the lesson on the failed video
+		// (the trainer sees "failed" and uploads again); keep the old one until ready if that turns up in practice
 		if (video.lessonId)
 			await tx
 				.update(lesson)

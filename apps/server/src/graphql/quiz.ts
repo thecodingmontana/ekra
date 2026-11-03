@@ -16,7 +16,7 @@ import {
 	quizQuestion,
 	type Tx,
 } from "@ekra/db";
-import { and, asc, eq, isNull, ne, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull, lt, ne, sql } from "drizzle-orm";
 import { z } from "zod";
 import {
 	asMember,
@@ -445,6 +445,28 @@ const gradeTimedOut = (tx: Tx, attempts: Attempt[], settings: Settings) =>
 			!a.submittedAt && timeUp(a, GRACE_MS) ? grade(tx, a, settings, true) : a,
 		),
 	);
+
+/** Grades every attempt by these people whose time ran out unsubmitted, so progress lists show its result. */
+export async function gradeOverdue(tx: Tx, userIds: string[]) {
+	if (!userIds.length) return;
+	const overdue = await tx
+		.select()
+		.from(quizAttempt)
+		.where(
+			and(
+				inArray(quizAttempt.userId, userIds),
+				isNull(quizAttempt.submittedAt),
+				lt(quizAttempt.deadline, new Date(Date.now() - GRACE_MS)),
+			),
+		);
+	for (const a of overdue) {
+		const [settings] = await tx
+			.select()
+			.from(quiz)
+			.where(eq(quiz.contentId, a.quizId));
+		await grade(tx, a, settings ?? DEFAULTS, true);
+	}
+}
 
 type Args<T> = SlugId & T;
 

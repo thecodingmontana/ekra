@@ -412,3 +412,26 @@ test("a timed-out attempt is graded with the answers saved so far, and completes
 	assert.ok(done?.completedAt, "passing late still completes the lesson");
 	assert.equal(code(await start("carol", id)), "FORBIDDEN");
 });
+
+test("a timed-out attempt shows in your learning as handed in, without opening the quiz again", async () => {
+	const id = await newQuiz("Late on Home", {
+		timeLimitSeconds: 60,
+		passPercent: 50,
+	});
+	const attempt = data<Attempt>(await start("carol", id));
+	const mc = attempt.questions.find((q) => q.kind === "multiple_choice");
+	await answer("carol", attempt.id, mc?.id ?? "", RIGHT.multiple_choice);
+	await db
+		.update(quizAttempt)
+		.set({ deadline: new Date(Date.now() - 120_000) })
+		.where(eq(quizAttempt.id, attempt.id));
+
+	const mine = data<{ status: string; content: { id: string } }[]>(
+		await gql(
+			"carol",
+			"query ($slug: String!) { r: myLearning(slug: $slug) { status content { id } } }",
+			{ slug: S },
+		),
+	);
+	assert.equal(mine.find((m) => m.content.id === id)?.status, "completed");
+});

@@ -30,6 +30,7 @@ import {
 	toGraphQL,
 } from "./library.ts";
 import { markStarted, progressOfAll } from "./progress.ts";
+import { gradeOverdue } from "./quiz.ts";
 import type { ActiveOrg } from "./tenant.ts";
 
 /**
@@ -148,6 +149,8 @@ async function listEnrollments(
 		.innerJoin(contentItem, eq(contentItem.id, enrollment.contentId))
 		.where(where)
 		.orderBy(desc(enrollment.createdAt));
+	// a quiz whose time ran out counts as handed in, even if nobody opened it since
+	await gradeOverdue(tx, [...new Set(rows.map((r) => r.e.userId))]);
 	const all = await progressOfAll(
 		tx,
 		rows.map((r) => r.item),
