@@ -41,6 +41,20 @@ export const MY_LEARNING = gql`
 	${ITEM}
 `;
 
+/** Start something from the catalog yourself (an assignment you already have stays as it is). */
+export const START_LEARNING = gql`
+	mutation StartLearning($slug: String!, $contentId: ID!) {
+		startLearning(slug: $slug, contentId: $contentId)
+	}
+`;
+
+/** Mark a page, wiki or assignment done (or not) for yourself. */
+export const MARK_DONE = gql`
+	mutation MarkDone($slug: String!, $contentId: ID!, $done: Boolean!) {
+		markDone(slug: $slug, contentId: $contentId, done: $done)
+	}
+`;
+
 export const CLAIM_CERTIFICATE = gql`
 	mutation ClaimCertificate($slug: String!, $contentId: ID!) {
 		claimCertificate(slug: $slug, contentId: $contentId) {

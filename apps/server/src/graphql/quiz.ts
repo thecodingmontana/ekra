@@ -27,6 +27,7 @@ import {
 	refuse,
 	type SlugId,
 } from "./library.ts";
+import { markStarted } from "./progress.ts";
 import type { ActiveOrg } from "./tenant.ts";
 
 /**
@@ -581,9 +582,9 @@ export const quizResolvers = {
 							: null,
 					})
 					.returning();
-				return attempt
-					? attemptView(tx, attempt, settings)
-					: refuse("Couldn't start the quiz.", "INTERNAL");
+				if (!attempt) return refuse("Couldn't start the quiz.", "INTERNAL");
+				await markStarted(tx, org.id, userId, quizId);
+				return attemptView(tx, attempt, settings);
 			}),
 		saveQuizAnswer: (
 			_p: unknown,

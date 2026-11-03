@@ -21,6 +21,7 @@ import {
 	ContentMenu,
 	useContentActions,
 } from "@/components/library/content-menu";
+import { MarkDone } from "@/components/library/mark-done";
 import { PathArea } from "@/components/path/path-area";
 import { QuizPage } from "@/components/quiz/quiz-page";
 import {
@@ -347,6 +348,10 @@ function ContentPage() {
 									: "Its trainers are still putting it together. Check back soon."
 							}
 						/>
+					)}
+					{/* published, so finishable even when empty; otherwise a path taken in order would stall on it */}
+					{!canManage && ["page", "wiki", "assignment"].includes(item.kind) && (
+						<MarkDone slug={slug} contentId={item.id} />
 					)}
 				</section>
 

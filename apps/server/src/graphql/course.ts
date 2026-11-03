@@ -19,6 +19,7 @@ import {
 	refuse,
 	type SlugId,
 } from "./library.ts";
+import { markStarted } from "./progress.ts";
 import type { ActiveOrg } from "./tenant.ts";
 
 /**
@@ -584,6 +585,7 @@ export const courseResolvers = {
 						target: [lessonProgress.userId, lessonProgress.lessonId],
 						set: { completedAt, updatedAt: new Date() },
 					});
+				if (complete) await markStarted(tx, org.id, userId, found.courseId);
 				return visibleLesson(tx, org, userId, id);
 			}),
 		saveLessonPosition: (

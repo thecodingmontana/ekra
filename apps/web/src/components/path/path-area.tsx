@@ -1,9 +1,11 @@
-import { useQuery } from "@apollo/client/react";
+import { useMutation, useQuery } from "@apollo/client/react";
 import { buttonVariants } from "@ekra/ui/components/button";
 import { cn } from "@ekra/ui/lib/utils";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { MY_LEARNING, START_LEARNING } from "@/graphql/learning";
 import { PATH, type PathData } from "@/graphql/path";
+import { reportError } from "@/lib/report-error";
 import { PathBuilder } from "./path-builder";
 import { PathLanding } from "./path-landing";
 
@@ -21,6 +23,9 @@ export function PathArea({
 		variables: { slug, id },
 	});
 	const [preview, setPreview] = useState(false);
+	const [start] = useMutation(START_LEARNING, {
+		refetchQueries: [MY_LEARNING],
+	});
 	const path = data?.path;
 	if (error && !path)
 		return (
@@ -29,7 +34,17 @@ export function PathArea({
 			</p>
 		);
 	if (!path) return null;
-	if (!canManage) return <PathLanding slug={slug} path={path} />;
+	if (!canManage)
+		return (
+			<PathLanding
+				slug={slug}
+				path={path}
+				// a learner starting the path keeps it in their learning; failing that never blocks opening the step
+				onStart={() =>
+					void start({ variables: { slug, contentId: id } }).catch(reportError)
+				}
+			/>
+		);
 
 	return (
 		<div className="flex flex-col gap-4">

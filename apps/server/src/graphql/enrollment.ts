@@ -23,7 +23,7 @@ import {
 	refuse,
 	toGraphQL,
 } from "./library.ts";
-import { progressOf } from "./progress.ts";
+import { markStarted, progressOf } from "./progress.ts";
 import type { ActiveOrg } from "./tenant.ts";
 
 /**
@@ -412,12 +412,13 @@ export const enrollmentResolvers = {
 				const found = await findOne(tx, org, userId, args.contentId);
 				if (!found || !["page", "wiki", "assignment"].includes(found.item.kind))
 					return refuse("That can't be marked done.", "NOT_FOUND");
-				if (args.done)
+				if (args.done) {
 					await tx
 						.insert(contentCompletion)
 						.values({ orgId: org.id, userId, contentId: args.contentId })
 						.onConflictDoNothing();
-				else
+					await markStarted(tx, org.id, userId, args.contentId);
+				} else
 					await tx
 						.delete(contentCompletion)
 						.where(

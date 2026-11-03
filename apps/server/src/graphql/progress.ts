@@ -2,6 +2,7 @@ import {
 	contentCompletion,
 	contentItem,
 	contentView,
+	enrollment,
 	lesson,
 	lessonProgress,
 	pathStep,
@@ -9,6 +10,28 @@ import {
 	type Tx,
 } from "@ekra/db";
 import { and, eq, inArray, isNotNull, sql } from "drizzle-orm";
+
+/**
+ * Taking something counts as starting it: it then shows in the person's learning. An assignment they already have
+ * stays as it is. A quiz that's a lesson in a course isn't added on its own (the course shows instead).
+ */
+export async function markStarted(
+	tx: Tx,
+	orgId: string,
+	userId: string,
+	contentId: string,
+) {
+	const [inCourse] = await tx
+		.select({ id: lesson.id })
+		.from(lesson)
+		.where(eq(lesson.quizId, contentId))
+		.limit(1);
+	if (inCourse) return;
+	await tx
+		.insert(enrollment)
+		.values({ orgId, contentId, userId, source: "self" })
+		.onConflictDoNothing();
+}
 
 /** How far one person is with one piece of content. */
 export type Progress = { percent: number; started: boolean };

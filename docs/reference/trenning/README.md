@@ -19,18 +19,18 @@ Status: ✅ done · 🟡 partly · ⬜ not yet (with the phase in PLAN.md that b
 
 ### Library (learning content)
 
-| Trenning                                                                                          | Ekra                                                                                | Status                                |
-| ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------- |
-| Kinds: Folder, Page, Course, Quiz, Assignment, Learning Path, Wiki (tabs)                         | Same seven kinds, one tab each                                                      | ✅                                    |
-| Side list: Recents, Shared Content, Archived, Templates                                           | Show menu: Recently opened, Archived, Templates. Shared waits for sharing (Phase 6) | 🟡                                    |
-| Favorites listed in the side panel                                                                | Favorites view and stars                                                            | 🟡 side list ⬜                       |
-| Projects (groupings in the side panel)                                                            | Folders                                                                             | 🟡                                    |
-| "Create new content" dialog: a card per kind with a line about it, "AI Powered" / "New" badges    | Kind picker in New content, lead line per kind                                      | ✅ (AI: Phase 9)                      |
-| Category tags and filter chips ("Category: Prototyping, Not Urgent", Add Filter, Reset)           | Status filter, search, sort                                                         | ⬜ categories                         |
-| Sort (Date Created), grid / list                                                                  | Last updated, Newest, Name; grid and list                                           | ✅                                    |
-| Row: thumbnail, title, "by author · created", tags, path count, assigned avatars, completion ring | Kind icon, title, status, author, updated                                           | 🟡 thumbnail, assigned, completion ⬜ |
-| Upload button next to New Content                                                                 | Picture upload inside pages; files Phase 4                                          | ⬜                                    |
-| Org header with member avatars and invite (+)                                                     | Members and invitations                                                             | ⬜ (Phase 6)                          |
+| Trenning                                                                                          | Ekra                                                                                           | Status                                |
+| ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------- |
+| Kinds: Folder, Page, Course, Quiz, Assignment, Learning Path, Wiki (tabs)                         | Same seven kinds, one tab each                                                                 | ✅                                    |
+| Side list: Recents, Shared Content, Archived, Templates                                           | Show menu: Recently opened, Archived, Templates. Shared waits for sharing (Phase 6)            | 🟡                                    |
+| Favorites listed in the side panel                                                                | Favorites view and stars                                                                       | 🟡 side list ⬜                       |
+| Projects (groupings in the side panel)                                                            | Folders                                                                                        | 🟡                                    |
+| "Create new content" dialog: a card per kind with a line about it, "AI Powered" / "New" badges    | Kind picker in New content, lead line per kind                                                 | ✅ (AI: Phase 9)                      |
+| Category tags and filter chips ("Category: Prototyping, Not Urgent", Add Filter, Reset)           | Status filter, search, sort                                                                    | ⬜ categories                         |
+| Sort (Date Created), grid / list                                                                  | Last updated, Newest, Name; grid and list                                                      | ✅                                    |
+| Row: thumbnail, title, "by author · created", tags, path count, assigned avatars, completion ring | Kind icon, title, status, author, updated                                                      | 🟡 thumbnail, assigned, completion ⬜ |
+| Upload button next to New Content                                                                 | Picture upload inside pages; files Phase 4                                                     | ⬜                                    |
+| Org header with member avatars and invite (+)                                                     | Settings > Members: invite by email with a role, invitation page (accept first), roles, remove | 🟡 header avatars ⬜                  |
 
 ### Content building
 
@@ -45,10 +45,10 @@ Status: ✅ done · 🟡 partly · ⬜ not yet (with the phase in PLAN.md that b
 
 ### Learning paths
 
-| Trenning                                                                                                                                                                                         | Ekra             | Status       |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------- | ------------ |
-| Paths combining courses, pages, assignments, quizzes, wikis                                                                                                                                      | Path kind exists | ⬜ (Phase 6) |
-| Path wizard: 1 Overview (thumbnail, category, estimated duration, trainer, language, description) → 2 Add content (stages, sequential or free order, from library or upload) → 3 Assign learners |                  | ⬜ (Phase 6) |
+| Trenning                                                                                                                                                                                         | Ekra                                                                                                         | Status                                        |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ | --------------------------------------------- |
+| Paths combining courses, pages, assignments, quizzes, wikis                                                                                                                                      | Path builder: stages of courses, pages, quizzes, wikis, assignments; progress and locks for learners         | ✅                                            |
+| Path wizard: 1 Overview (thumbnail, category, estimated duration, trainer, language, description) → 2 Add content (stages, sequential or free order, from library or upload) → 3 Assign learners | Overview = create/edit dialog (cover, category, description); stages and order in the builder; Assign button | 🟡 one page, no wizard; upload into a path ⬜ |
 
 ### Quizzes
 
@@ -65,22 +65,22 @@ Status: ✅ done · 🟡 partly · ⬜ not yet (with the phase in PLAN.md that b
 
 ### Assignment and monitoring
 
-| Trenning                                                                                                    | Ekra                             | Status          |
-| ----------------------------------------------------------------------------------------------------------- | -------------------------------- | --------------- |
-| Assign learners (enroll) with start and due date                                                            | Lesson progress per person (API) | ⬜ (Phase 6)    |
-| All Assignees table: name, team, role, start, due, status (Completed, Over due, Not started, In progress %) |                                  | ⬜ (Phase 6)    |
-| Send reminder (with a wait before sending again), message templates (time running out, overdue)             |                                  | ⬜ (Phase 6)    |
-| Bulk: edit due date (date, time, time zone), send reminder, remove; Export CSV                              |                                  | ⬜ (Phase 6/10) |
+| Trenning                                                                                                    | Ekra                                                                                                | Status                           |
+| ----------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | -------------------------------- |
+| Assign learners (enroll) with start and due date                                                            | Enroll learners with start and due date (assignees page)                                            | ✅                               |
+| All Assignees table: name, team, role, start, due, status (Completed, Over due, Not started, In progress %) | All Assignees: name, role, start, due, status ring (Completed, Overdue, Not started, In progress %) | 🟡 team column, sort, filters ⬜ |
+| Send reminder (with a wait before sending again), message templates (time running out, overdue)             | Send reminder, 30-minute wait, two messages shared with the email                                   | ✅                               |
+| Bulk: edit due date (date, time, time zone), send reminder, remove; Export CSV                              | Bulk edit due date, remind, remove; Export CSV                                                      | 🟡 time zone picker ⬜           |
 
 ### Learner portal
 
-| Trenning                                                              | Ekra                                                     | Status                                |
-| --------------------------------------------------------------------- | -------------------------------------------------------- | ------------------------------------- |
-| Home / My Learning / Catalog / Favorites                              | Library for learners (published only), favorites, recent | 🟡 portal ⬜ (Phase 10)               |
-| Greeting, points, badges, certificates                                |                                                          | ⬜ (Phase 6 certificates, Phase 10)   |
-| In progress (completion, deadline, Start / Continue), new enrollments | Course page: lessons done, Start / Continue              | 🟡 deadline, enrollments (Phase 6/10) |
-| Learning time, daily goal and streak, leaderboard                     |                                                          | ⬜ (Phase 10)                         |
-| Messages and notifications in the header                              |                                                          | ⬜                                    |
+| Trenning                                                              | Ekra                                                                                                     | Status                          |
+| --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| Home / My Learning / Catalog / Favorites                              | Home: My learning and Completed; library is the catalog for learners (published only), favorites, recent | 🟡 catalog tab ⬜               |
+| Greeting, points, badges, certificates                                | Greeting; certificates (claim after finishing, public check page, print to PDF)                          | 🟡 points, badges ⬜ (Phase 10) |
+| In progress (completion, deadline, Start / Continue), new enrollments | Home rows: progress, due date, status, start from the catalog; course page Start / Continue              | ✅                              |
+| Learning time, daily goal and streak, leaderboard                     |                                                                                                          | ⬜ (Phase 10)                   |
+| Messages and notifications in the header                              |                                                                                                          | ⬜                              |
 
 ### Collaboration and AI
 

@@ -298,3 +298,50 @@ test("a learner starts something from the catalog themselves; a draft can't be s
 		"NOT_FOUND",
 	);
 });
+
+test("taking something unassigned puts it in your learning: a finished lesson, a page marked done", async () => {
+	const course = await make("course", "Self paced");
+	const section = data<{ id: string }>(
+		await gql(
+			"amina",
+			'mutation ($slug: String!, $c: ID!) { r: addSection(slug: $slug, courseId: $c, title: "One") { id } }',
+			{ slug: S, c: course },
+		),
+	).id;
+	const lesson = data<{ id: string }>(
+		await gql(
+			"amina",
+			'mutation ($slug: String!, $s: ID!) { r: addLesson(slug: $slug, sectionId: $s, kind: page, title: "Read") { id } }',
+			{ slug: S, s: section },
+		),
+	).id;
+	await publish(course);
+	const page = await make("page", "Read me");
+	await publish(page);
+
+	data(
+		await gql(
+			"carol",
+			"mutation ($slug: String!, $id: ID!) { r: completeLesson(slug: $slug, id: $id, complete: true) { id } }",
+			{ slug: S, id: lesson },
+		),
+	);
+	data(
+		await gql(
+			"carol",
+			"mutation ($slug: String!, $c: ID!) { r: markDone(slug: $slug, contentId: $c, done: true) }",
+			{ slug: S, c: page },
+		),
+	);
+	const mine = data<{ status: string; content: { title: string } }[]>(
+		await gql(
+			"carol",
+			"query ($slug: String!) { r: myLearning(slug: $slug) { status content { title } } }",
+			{ slug: S },
+		),
+	);
+	const status = (title: string) =>
+		mine.find((m) => m.content.title === title)?.status;
+	assert.equal(status("Self paced"), "completed");
+	assert.equal(status("Read me"), "completed");
+});

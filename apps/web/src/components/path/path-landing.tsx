@@ -9,9 +9,12 @@ import { allSteps, nextStep } from "@/lib/path-outline";
 export function PathLanding({
 	slug,
 	path,
+	onStart,
 }: {
 	slug: string;
 	path: LearningPath;
+	/** called when a learner starts or continues (not in a trainer's preview) */
+	onStart?: () => void;
 }) {
 	const steps = allSteps(path);
 	const done = steps.filter((s) => s.percent >= 100).length;
@@ -40,6 +43,7 @@ export function PathLanding({
 						params={{ slug, id: next.content.id }}
 						className={buttonVariants({ size: "lg" })}
 						data-testid="start-path"
+						onClick={onStart}
 					>
 						{cta}
 						<span
