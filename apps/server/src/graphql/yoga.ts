@@ -24,6 +24,7 @@ import { invitationResolvers, invitationTypeDefs } from "./invitation.ts";
 import { libraryResolvers, libraryTypeDefs } from "./library.ts";
 import { pathResolvers, pathTypeDefs } from "./path.ts";
 import { quizResolvers, quizTypeDefs } from "./quiz.ts";
+import { reportResolvers, reportTypeDefs } from "./report.ts";
 import { requireOrg } from "./tenant.ts";
 
 /**
@@ -99,6 +100,7 @@ const schema = createSchema<GraphQLContext>({
 		pathTypeDefs,
 		certificateTypeDefs,
 		invitationTypeDefs,
+		reportTypeDefs,
 	],
 	resolvers: [
 		libraryResolvers,
@@ -108,6 +110,7 @@ const schema = createSchema<GraphQLContext>({
 		pathResolvers,
 		certificateResolvers,
 		invitationResolvers,
+		reportResolvers,
 		{
 			Query: {
 				health: () => "ok",

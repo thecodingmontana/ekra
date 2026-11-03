@@ -32,6 +32,13 @@ export {
 	questionProblem,
 	seededShuffle,
 } from "./quiz.ts";
+export {
+	answerResult,
+	bestAttempt,
+	questionStats,
+	type ReportAttempt,
+	type ReportQuestion,
+} from "./report.ts";
 export { SLUG_MAX, SLUG_MIN, slugify, slugProblem } from "./slug.ts";
 export { spaced } from "./spaced.ts";
 export { tenantUrls } from "./tenant-url.ts";
