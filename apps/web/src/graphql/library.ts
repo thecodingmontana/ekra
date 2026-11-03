@@ -29,7 +29,7 @@ export type ContentItem = {
 	cover: string | null;
 };
 
-const ITEM = gql`
+export const ITEM = gql`
 	fragment ContentItemFields on ContentItem {
 		id
 		kind
