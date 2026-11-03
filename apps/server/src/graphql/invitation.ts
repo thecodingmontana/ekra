@@ -51,8 +51,7 @@ export const invitationResolvers = {
 				.innerJoin(organization, eq(organization.id, invitation.organizationId))
 				.innerJoin(user, eq(user.id, invitation.inviterId))
 				.where(eq(invitation.id, id.slice(0, 32)));
-			if (!row || row.status !== "pending" || row.expiresAt <= new Date())
-				return null;
+			if (row?.status !== "pending" || row.expiresAt <= new Date()) return null;
 			const [self] = await db
 				.select({ email: user.email })
 				.from(user)

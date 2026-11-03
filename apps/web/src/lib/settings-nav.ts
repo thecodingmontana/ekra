@@ -4,7 +4,8 @@ export type SettingsPath =
 	| "/o/$slug/settings/appearance"
 	| "/o/$slug/settings/security"
 	| "/o/$slug/settings/sessions"
-	| "/o/$slug/settings/organization";
+	| "/o/$slug/settings/organization"
+	| "/o/$slug/settings/members";
 export type SettingsItem = { to: SettingsPath; label: string; icon: string };
 export type SettingsGroup = {
 	title: string;
@@ -44,6 +45,11 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
 				to: "/o/$slug/settings/organization",
 				label: "General",
 				icon: "icon-[solar--buildings-2-linear]",
+			},
+			{
+				to: "/o/$slug/settings/members",
+				label: "Members",
+				icon: "icon-[solar--users-group-rounded-linear]",
 			},
 		],
 	},
