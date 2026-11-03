@@ -39,7 +39,23 @@ export function assigneesCsv(rows: readonly AssigneeRow[]): string {
 			String(r.percent),
 		]),
 	];
-	return `\uFEFF${lines.map((l) => l.map(field).join(",")).join("\r\n")}\r\n`;
+	return csvText(lines);
+}
+
+/** Lines of fields as CSV text, with a UTF-8 BOM so spreadsheets read accents. */
+export const csvText = (lines: readonly (readonly string[])[]) =>
+	`\uFEFF${lines.map((l) => l.map(field).join(",")).join("\r\n")}\r\n`;
+
+/** Saves CSV text as a file named after `name` (characters files can't hold become "-"). */
+export function downloadCsv(name: string, csv: string) {
+	const url = URL.createObjectURL(
+		new Blob([csv], { type: "text/csv;charset=utf-8" }),
+	);
+	const a = document.createElement("a");
+	a.href = url;
+	a.download = `${name.replace(/[\\/:*?"<>|]+/g, "-")}.csv`;
+	a.click();
+	URL.revokeObjectURL(url);
 }
 
 /** "Send again in 29m" while a reminder must wait (null: it can be sent now). */

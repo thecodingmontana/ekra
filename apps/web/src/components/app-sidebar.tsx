@@ -17,7 +17,7 @@ import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import { type ReactElement, type ReactNode, useEffect, useState } from "react";
 import { OrgLogo } from "@/components/org-logo";
 import type { Viewer } from "@/graphql/viewer";
-import { mainRole, ROLE_LABEL } from "@/lib/members";
+import { canManageContent, mainRole, ROLE_LABEL } from "@/lib/members";
 import { getTheme, setTheme, type Theme } from "@/lib/theme";
 import { useSignOut } from "@/lib/use-sign-out";
 
@@ -34,6 +34,13 @@ const NAV = [
 		label: "Library",
 		icon: "icon-[solar--library-linear]",
 		exact: false,
+	},
+	{
+		to: "/o/$slug/reports",
+		label: "Reports",
+		icon: "icon-[solar--chart-2-linear]",
+		exact: false,
+		manage: true,
 	},
 ] as const;
 
@@ -262,7 +269,9 @@ export function AppSidebar({
 						</button>
 					</SideTip>
 				)}
-				{NAV.map((n) => (
+				{NAV.filter(
+					(n) => !("manage" in n) || canManageContent(active?.role ?? ""),
+				).map((n) => (
 					<SideTip key={n.to} label={n.label} collapsed={collapsed}>
 						<Link
 							to={n.to}

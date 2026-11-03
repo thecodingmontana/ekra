@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { assignableRoles, canManageMember, mainRole } from "./members.ts";
+import {
+	assignableRoles,
+	canManageContent,
+	canManageMember,
+	mainRole,
+} from "./members.ts";
 
 const owner = { userId: "o", role: "owner" };
 const admin = { userId: "a", role: "admin" };
@@ -70,4 +75,11 @@ test("a combined role counts each part", () => {
 		"guest",
 	]);
 	assert.equal(assignableRoles("owner").length, 5);
+});
+
+test("owners, admins and trainers manage content; learners and guests don't", () => {
+	for (const r of ["owner", "admin", "trainer", "learner,trainer"])
+		assert.equal(canManageContent(r), true, r);
+	for (const r of ["learner", "guest", ""])
+		assert.equal(canManageContent(r), false, r);
 });

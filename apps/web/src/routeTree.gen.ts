@@ -24,9 +24,12 @@ import { Route as AuthedInviteIdRouteImport } from './routes/_authed/invite.$id'
 import { Route as AuthedOSlugRouteImport } from './routes/_authed/o.$slug'
 import { Route as AuthedSettingsSplatRouteImport } from './routes/_authed/settings.$'
 import { Route as AuthedOSlugIndexRouteImport } from './routes/_authed/o.$slug.index'
+import { Route as AuthedOSlugReportsRouteImport } from './routes/_authed/o.$slug.reports'
 import { Route as AuthedOSlugSettingsRouteImport } from './routes/_authed/o.$slug.settings'
 import { Route as AuthedOSlugLibraryIndexRouteImport } from './routes/_authed/o.$slug.library.index'
 import { Route as AuthedOSlugLibraryIdRouteImport } from './routes/_authed/o.$slug.library.$id'
+import { Route as AuthedOSlugReportsIndexRouteImport } from './routes/_authed/o.$slug.reports.index'
+import { Route as AuthedOSlugReportsContentRouteImport } from './routes/_authed/o.$slug.reports.content'
 import { Route as AuthedOSlugSettingsIndexRouteImport } from './routes/_authed/o.$slug.settings.index'
 import { Route as AuthedOSlugSettingsAppearanceRouteImport } from './routes/_authed/o.$slug.settings.appearance'
 import { Route as AuthedOSlugSettingsMembersRouteImport } from './routes/_authed/o.$slug.settings.members'
@@ -36,6 +39,7 @@ import { Route as AuthedOSlugSettingsSecurityRouteImport } from './routes/_authe
 import { Route as AuthedOSlugSettingsSessionsRouteImport } from './routes/_authed/o.$slug.settings.sessions'
 import { Route as AuthedOSlugLearnCourseIdLessonIdRouteImport } from './routes/_authed/o.$slug.learn.$courseId.$lessonId'
 import { Route as AuthedOSlugLibraryIdAssigneesRouteImport } from './routes/_authed/o.$slug.library.$id_.assignees'
+import { Route as AuthedOSlugReportsQuizIdRouteImport } from './routes/_authed/o.$slug.reports.quiz.$id'
 import { Route as AuthedOSlugLibraryIdLessonsLessonIdRouteImport } from './routes/_authed/o.$slug.library.$id_.lessons.$lessonId'
 
 const AuthedRoute = AuthedRouteImport.update({
@@ -112,6 +116,11 @@ const AuthedOSlugIndexRoute = AuthedOSlugIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthedOSlugRoute,
 } as any)
+const AuthedOSlugReportsRoute = AuthedOSlugReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AuthedOSlugRoute,
+} as any)
 const AuthedOSlugSettingsRoute = AuthedOSlugSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -127,6 +136,17 @@ const AuthedOSlugLibraryIdRoute = AuthedOSlugLibraryIdRouteImport.update({
   path: '/library/$id',
   getParentRoute: () => AuthedOSlugRoute,
 } as any)
+const AuthedOSlugReportsIndexRoute = AuthedOSlugReportsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthedOSlugReportsRoute,
+} as any)
+const AuthedOSlugReportsContentRoute =
+  AuthedOSlugReportsContentRouteImport.update({
+    id: '/content',
+    path: '/content',
+    getParentRoute: () => AuthedOSlugReportsRoute,
+  } as any)
 const AuthedOSlugSettingsIndexRoute =
   AuthedOSlugSettingsIndexRouteImport.update({
     id: '/',
@@ -181,6 +201,12 @@ const AuthedOSlugLibraryIdAssigneesRoute =
     path: '/library/$id/assignees',
     getParentRoute: () => AuthedOSlugRoute,
   } as any)
+const AuthedOSlugReportsQuizIdRoute =
+  AuthedOSlugReportsQuizIdRouteImport.update({
+    id: '/quiz/$id',
+    path: '/quiz/$id',
+    getParentRoute: () => AuthedOSlugReportsRoute,
+  } as any)
 const AuthedOSlugLibraryIdLessonsLessonIdRoute =
   AuthedOSlugLibraryIdLessonsLessonIdRouteImport.update({
     id: '/library/$id_/lessons/$lessonId',
@@ -202,9 +228,11 @@ export interface FileRoutesByFullPath {
   '/invite/$id': typeof AuthedInviteIdRoute
   '/o/$slug': typeof AuthedOSlugRouteWithChildren
   '/settings/$': typeof AuthedSettingsSplatRoute
+  '/o/$slug/reports': typeof AuthedOSlugReportsRouteWithChildren
   '/o/$slug/settings': typeof AuthedOSlugSettingsRouteWithChildren
   '/o/$slug/': typeof AuthedOSlugIndexRoute
   '/o/$slug/library/$id': typeof AuthedOSlugLibraryIdRoute
+  '/o/$slug/reports/content': typeof AuthedOSlugReportsContentRoute
   '/o/$slug/settings/appearance': typeof AuthedOSlugSettingsAppearanceRoute
   '/o/$slug/settings/members': typeof AuthedOSlugSettingsMembersRoute
   '/o/$slug/settings/organization': typeof AuthedOSlugSettingsOrganizationRoute
@@ -212,9 +240,11 @@ export interface FileRoutesByFullPath {
   '/o/$slug/settings/security': typeof AuthedOSlugSettingsSecurityRoute
   '/o/$slug/settings/sessions': typeof AuthedOSlugSettingsSessionsRoute
   '/o/$slug/library/': typeof AuthedOSlugLibraryIndexRoute
+  '/o/$slug/reports/': typeof AuthedOSlugReportsIndexRoute
   '/o/$slug/settings/': typeof AuthedOSlugSettingsIndexRoute
   '/o/$slug/learn/$courseId/$lessonId': typeof AuthedOSlugLearnCourseIdLessonIdRoute
   '/o/$slug/library/$id/assignees': typeof AuthedOSlugLibraryIdAssigneesRoute
+  '/o/$slug/reports/quiz/$id': typeof AuthedOSlugReportsQuizIdRoute
   '/o/$slug/library/$id/lessons/$lessonId': typeof AuthedOSlugLibraryIdLessonsLessonIdRoute
 }
 export interface FileRoutesByTo {
@@ -232,6 +262,7 @@ export interface FileRoutesByTo {
   '/settings/$': typeof AuthedSettingsSplatRoute
   '/o/$slug': typeof AuthedOSlugIndexRoute
   '/o/$slug/library/$id': typeof AuthedOSlugLibraryIdRoute
+  '/o/$slug/reports/content': typeof AuthedOSlugReportsContentRoute
   '/o/$slug/settings/appearance': typeof AuthedOSlugSettingsAppearanceRoute
   '/o/$slug/settings/members': typeof AuthedOSlugSettingsMembersRoute
   '/o/$slug/settings/organization': typeof AuthedOSlugSettingsOrganizationRoute
@@ -239,9 +270,11 @@ export interface FileRoutesByTo {
   '/o/$slug/settings/security': typeof AuthedOSlugSettingsSecurityRoute
   '/o/$slug/settings/sessions': typeof AuthedOSlugSettingsSessionsRoute
   '/o/$slug/library': typeof AuthedOSlugLibraryIndexRoute
+  '/o/$slug/reports': typeof AuthedOSlugReportsIndexRoute
   '/o/$slug/settings': typeof AuthedOSlugSettingsIndexRoute
   '/o/$slug/learn/$courseId/$lessonId': typeof AuthedOSlugLearnCourseIdLessonIdRoute
   '/o/$slug/library/$id/assignees': typeof AuthedOSlugLibraryIdAssigneesRoute
+  '/o/$slug/reports/quiz/$id': typeof AuthedOSlugReportsQuizIdRoute
   '/o/$slug/library/$id/lessons/$lessonId': typeof AuthedOSlugLibraryIdLessonsLessonIdRoute
 }
 export interface FileRoutesById {
@@ -260,9 +293,11 @@ export interface FileRoutesById {
   '/_authed/invite/$id': typeof AuthedInviteIdRoute
   '/_authed/o/$slug': typeof AuthedOSlugRouteWithChildren
   '/_authed/settings/$': typeof AuthedSettingsSplatRoute
+  '/_authed/o/$slug/reports': typeof AuthedOSlugReportsRouteWithChildren
   '/_authed/o/$slug/settings': typeof AuthedOSlugSettingsRouteWithChildren
   '/_authed/o/$slug/': typeof AuthedOSlugIndexRoute
   '/_authed/o/$slug/library/$id': typeof AuthedOSlugLibraryIdRoute
+  '/_authed/o/$slug/reports/content': typeof AuthedOSlugReportsContentRoute
   '/_authed/o/$slug/settings/appearance': typeof AuthedOSlugSettingsAppearanceRoute
   '/_authed/o/$slug/settings/members': typeof AuthedOSlugSettingsMembersRoute
   '/_authed/o/$slug/settings/organization': typeof AuthedOSlugSettingsOrganizationRoute
@@ -270,9 +305,11 @@ export interface FileRoutesById {
   '/_authed/o/$slug/settings/security': typeof AuthedOSlugSettingsSecurityRoute
   '/_authed/o/$slug/settings/sessions': typeof AuthedOSlugSettingsSessionsRoute
   '/_authed/o/$slug/library/': typeof AuthedOSlugLibraryIndexRoute
+  '/_authed/o/$slug/reports/': typeof AuthedOSlugReportsIndexRoute
   '/_authed/o/$slug/settings/': typeof AuthedOSlugSettingsIndexRoute
   '/_authed/o/$slug/learn/$courseId/$lessonId': typeof AuthedOSlugLearnCourseIdLessonIdRoute
   '/_authed/o/$slug/library/$id_/assignees': typeof AuthedOSlugLibraryIdAssigneesRoute
+  '/_authed/o/$slug/reports/quiz/$id': typeof AuthedOSlugReportsQuizIdRoute
   '/_authed/o/$slug/library/$id_/lessons/$lessonId': typeof AuthedOSlugLibraryIdLessonsLessonIdRoute
 }
 export interface FileRouteTypes {
@@ -291,9 +328,11 @@ export interface FileRouteTypes {
     | '/invite/$id'
     | '/o/$slug'
     | '/settings/$'
+    | '/o/$slug/reports'
     | '/o/$slug/settings'
     | '/o/$slug/'
     | '/o/$slug/library/$id'
+    | '/o/$slug/reports/content'
     | '/o/$slug/settings/appearance'
     | '/o/$slug/settings/members'
     | '/o/$slug/settings/organization'
@@ -301,9 +340,11 @@ export interface FileRouteTypes {
     | '/o/$slug/settings/security'
     | '/o/$slug/settings/sessions'
     | '/o/$slug/library/'
+    | '/o/$slug/reports/'
     | '/o/$slug/settings/'
     | '/o/$slug/learn/$courseId/$lessonId'
     | '/o/$slug/library/$id/assignees'
+    | '/o/$slug/reports/quiz/$id'
     | '/o/$slug/library/$id/lessons/$lessonId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -321,6 +362,7 @@ export interface FileRouteTypes {
     | '/settings/$'
     | '/o/$slug'
     | '/o/$slug/library/$id'
+    | '/o/$slug/reports/content'
     | '/o/$slug/settings/appearance'
     | '/o/$slug/settings/members'
     | '/o/$slug/settings/organization'
@@ -328,9 +370,11 @@ export interface FileRouteTypes {
     | '/o/$slug/settings/security'
     | '/o/$slug/settings/sessions'
     | '/o/$slug/library'
+    | '/o/$slug/reports'
     | '/o/$slug/settings'
     | '/o/$slug/learn/$courseId/$lessonId'
     | '/o/$slug/library/$id/assignees'
+    | '/o/$slug/reports/quiz/$id'
     | '/o/$slug/library/$id/lessons/$lessonId'
   id:
     | '__root__'
@@ -348,9 +392,11 @@ export interface FileRouteTypes {
     | '/_authed/invite/$id'
     | '/_authed/o/$slug'
     | '/_authed/settings/$'
+    | '/_authed/o/$slug/reports'
     | '/_authed/o/$slug/settings'
     | '/_authed/o/$slug/'
     | '/_authed/o/$slug/library/$id'
+    | '/_authed/o/$slug/reports/content'
     | '/_authed/o/$slug/settings/appearance'
     | '/_authed/o/$slug/settings/members'
     | '/_authed/o/$slug/settings/organization'
@@ -358,9 +404,11 @@ export interface FileRouteTypes {
     | '/_authed/o/$slug/settings/security'
     | '/_authed/o/$slug/settings/sessions'
     | '/_authed/o/$slug/library/'
+    | '/_authed/o/$slug/reports/'
     | '/_authed/o/$slug/settings/'
     | '/_authed/o/$slug/learn/$courseId/$lessonId'
     | '/_authed/o/$slug/library/$id_/assignees'
+    | '/_authed/o/$slug/reports/quiz/$id'
     | '/_authed/o/$slug/library/$id_/lessons/$lessonId'
   fileRoutesById: FileRoutesById
 }
@@ -483,6 +531,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedOSlugIndexRouteImport
       parentRoute: typeof AuthedOSlugRoute
     }
+    '/_authed/o/$slug/reports': {
+      id: '/_authed/o/$slug/reports'
+      path: '/reports'
+      fullPath: '/o/$slug/reports'
+      preLoaderRoute: typeof AuthedOSlugReportsRouteImport
+      parentRoute: typeof AuthedOSlugRoute
+    }
     '/_authed/o/$slug/settings': {
       id: '/_authed/o/$slug/settings'
       path: '/settings'
@@ -503,6 +558,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/o/$slug/library/$id'
       preLoaderRoute: typeof AuthedOSlugLibraryIdRouteImport
       parentRoute: typeof AuthedOSlugRoute
+    }
+    '/_authed/o/$slug/reports/': {
+      id: '/_authed/o/$slug/reports/'
+      path: '/'
+      fullPath: '/o/$slug/reports/'
+      preLoaderRoute: typeof AuthedOSlugReportsIndexRouteImport
+      parentRoute: typeof AuthedOSlugReportsRoute
+    }
+    '/_authed/o/$slug/reports/content': {
+      id: '/_authed/o/$slug/reports/content'
+      path: '/content'
+      fullPath: '/o/$slug/reports/content'
+      preLoaderRoute: typeof AuthedOSlugReportsContentRouteImport
+      parentRoute: typeof AuthedOSlugReportsRoute
     }
     '/_authed/o/$slug/settings/': {
       id: '/_authed/o/$slug/settings/'
@@ -567,6 +636,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedOSlugLibraryIdAssigneesRouteImport
       parentRoute: typeof AuthedOSlugRoute
     }
+    '/_authed/o/$slug/reports/quiz/$id': {
+      id: '/_authed/o/$slug/reports/quiz/$id'
+      path: '/quiz/$id'
+      fullPath: '/o/$slug/reports/quiz/$id'
+      preLoaderRoute: typeof AuthedOSlugReportsQuizIdRouteImport
+      parentRoute: typeof AuthedOSlugReportsRoute
+    }
     '/_authed/o/$slug/library/$id_/lessons/$lessonId': {
       id: '/_authed/o/$slug/library/$id_/lessons/$lessonId'
       path: '/library/$id/lessons/$lessonId'
@@ -576,6 +652,21 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface AuthedOSlugReportsRouteChildren {
+  AuthedOSlugReportsContentRoute: typeof AuthedOSlugReportsContentRoute
+  AuthedOSlugReportsIndexRoute: typeof AuthedOSlugReportsIndexRoute
+  AuthedOSlugReportsQuizIdRoute: typeof AuthedOSlugReportsQuizIdRoute
+}
+
+const AuthedOSlugReportsRouteChildren: AuthedOSlugReportsRouteChildren = {
+  AuthedOSlugReportsContentRoute: AuthedOSlugReportsContentRoute,
+  AuthedOSlugReportsIndexRoute: AuthedOSlugReportsIndexRoute,
+  AuthedOSlugReportsQuizIdRoute: AuthedOSlugReportsQuizIdRoute,
+}
+
+const AuthedOSlugReportsRouteWithChildren =
+  AuthedOSlugReportsRoute._addFileChildren(AuthedOSlugReportsRouteChildren)
 
 interface AuthedOSlugSettingsRouteChildren {
   AuthedOSlugSettingsAppearanceRoute: typeof AuthedOSlugSettingsAppearanceRoute
@@ -601,6 +692,7 @@ const AuthedOSlugSettingsRouteWithChildren =
   AuthedOSlugSettingsRoute._addFileChildren(AuthedOSlugSettingsRouteChildren)
 
 interface AuthedOSlugRouteChildren {
+  AuthedOSlugReportsRoute: typeof AuthedOSlugReportsRouteWithChildren
   AuthedOSlugSettingsRoute: typeof AuthedOSlugSettingsRouteWithChildren
   AuthedOSlugIndexRoute: typeof AuthedOSlugIndexRoute
   AuthedOSlugLibraryIdRoute: typeof AuthedOSlugLibraryIdRoute
@@ -611,6 +703,7 @@ interface AuthedOSlugRouteChildren {
 }
 
 const AuthedOSlugRouteChildren: AuthedOSlugRouteChildren = {
+  AuthedOSlugReportsRoute: AuthedOSlugReportsRouteWithChildren,
   AuthedOSlugSettingsRoute: AuthedOSlugSettingsRouteWithChildren,
   AuthedOSlugIndexRoute: AuthedOSlugIndexRoute,
   AuthedOSlugLibraryIdRoute: AuthedOSlugLibraryIdRoute,

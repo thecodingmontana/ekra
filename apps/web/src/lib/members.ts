@@ -31,6 +31,10 @@ const isOwner = (role: string) => rolesOf(role).includes("owner");
 export const canManageMembers = (role: string) =>
 	isOwner(role) || rolesOf(role).includes("admin");
 
+/** Owners, admins and trainers manage content and see reports; one of several roles is enough. */
+export const canManageContent = (role: string) =>
+	rolesOf(role).some((r) => r === "owner" || r === "admin" || r === "trainer");
+
 /** The roles you may give someone: only owners make owners. */
 export const assignableRoles = (viewerRole: string): readonly Role[] =>
 	isOwner(viewerRole) ? ROLES : ROLES.filter((r) => r !== "owner");

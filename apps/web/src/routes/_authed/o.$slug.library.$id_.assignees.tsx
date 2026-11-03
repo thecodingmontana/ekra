@@ -29,6 +29,7 @@ import {
 } from "@/graphql/library";
 import {
 	assigneesCsv,
+	downloadCsv,
 	fromLocalInput,
 	STATUS_LABEL,
 	sendAgainLabel,
@@ -162,14 +163,7 @@ function AssigneesPage() {
 				percent: e.percent,
 			})),
 		);
-		const url = URL.createObjectURL(
-			new Blob([csv], { type: "text/csv;charset=utf-8" }),
-		);
-		const a = document.createElement("a");
-		a.href = url;
-		a.download = `${(content?.content?.title ?? "assignees").replace(/[\\/:*?"<>|]+/g, "-")} assignees.csv`;
-		a.click();
-		URL.revokeObjectURL(url);
+		downloadCsv(`${content?.content?.title ?? "assignees"} assignees`, csv);
 	}
 
 	return (
