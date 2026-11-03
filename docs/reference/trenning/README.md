@@ -34,14 +34,14 @@ Status: ✅ done · 🟡 partly · ⬜ not yet (with the phase in PLAN.md that b
 
 ### Content building
 
-| Trenning                                         | Ekra                                                                               | Status                             |
-| ------------------------------------------------ | ---------------------------------------------------------------------------------- | ---------------------------------- |
-| Rich materials with multimedia and interactivity | Editor: headings, lists, tasks, callouts, tables, toggles, code, pictures, YouTube | ✅                                 |
-| Embeds and uploaded video in materials           | YouTube embeds ✅; uploaded video                                                  | 🟡 (Phase 4)                       |
-| Version history: view, track, restore            | History panel with word diff and restore                                           | ✅                                 |
-| Collaboration, every change tracked              | Autosave with conflict check, versions per sitting, live updates                   | ✅                                 |
-| Wiki builder for resource lists                  | Wiki kind uses the page editor                                                     | 🟡 resource-list builder ⬜        |
-| Course: sections and chapters                    | Sections and lessons (API)                                                         | 🟡 builder UI and player (Phase 4) |
+| Trenning                                         | Ekra                                                                               | Status                      |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------- | --------------------------- |
+| Rich materials with multimedia and interactivity | Editor: headings, lists, tasks, callouts, tables, toggles, code, pictures, YouTube | ✅                          |
+| Embeds and uploaded video in materials           | YouTube embeds ✅; uploaded video in course lessons (parts upload, HLS player) ✅  | 🟡 upload inside pages ⬜   |
+| Version history: view, track, restore            | History panel with word diff and restore                                           | ✅                          |
+| Collaboration, every change tracked              | Autosave with conflict check, versions per sitting, live updates                   | ✅                          |
+| Wiki builder for resource lists                  | Wiki kind uses the page editor                                                     | 🟡 resource-list builder ⬜ |
+| Course: sections and chapters                    | Builder: sections, video / reading / quiz lessons, drag to reorder, in-order lock  | ✅                          |
 
 ### Learning paths
 
@@ -52,13 +52,16 @@ Status: ✅ done · 🟡 partly · ⬜ not yet (with the phase in PLAN.md that b
 
 ### Quizzes
 
-| Trenning                                                                                                                                               | Ekra                                | Status       |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------- | ------------ |
-| Builder: question list on the side, question types (multiple choice, fill in the blank…), required, answer order random or kept, time estimate, points |                                     | ⬜ (Phase 5) |
-| Correct answers and designed wrong options                                                                                                             |                                     | ⬜ (Phase 5) |
-| Result screen with pass / fail message                                                                                                                 |                                     | ⬜ (Phase 5) |
-| Preview, Publish, history on quizzes                                                                                                                   | Publish and history exist for pages | ⬜ (Phase 5) |
-| Create questions with AI                                                                                                                               |                                     | ⬜ (Phase 9) |
+| Trenning                                                                                                                                                  | Ekra                                                                                                                                                                                                                   | Status                                                                                       |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Builder: question list on the side, question types (multiple choice, fill in the blank…), required, answer order random or kept, time estimate, points    | Question list (add, drag or menu to reorder, delete), editor per kind: multiple choice (text and/or picture choices, one or several right), fill in the blank, hotspot; required, points, explanation; saves as you go | ✅ (no per-question time estimate; other Trenning kinds such as reorder, match, dropdown ⬜) |
+| Settings: pass mark, attempts, random question pool, shuffle choices, show answers during / after                                                         | Settings: pass mark, time limit, attempts, random subset, shuffle questions and choices, show answers never / after each / at the end                                                                                  | ✅                                                                                           |
+| Correct answers and designed wrong options                                                                                                                | Right choices, accepted answers per blank plus extra wrong words, hotspot areas drawn on the picture                                                                                                                   | ✅                                                                                           |
+| Hotspot with pictures, multiple pictures as answers                                                                                                       | Hotspot (rectangles on an uploaded picture), pictures on choices                                                                                                                                                       | ✅ (point and free-form hotspot shapes ⬜)                                                   |
+| Taking: Question N of M, countdown, Previous / Continue (Cmd+Enter), "not sure", quiz map (all, answered, not answered, not sure), drag tiles into blanks | Same; tiles can also be placed by clicking (keyboard, touch); time running out hands the attempt in                                                                                                                    | ✅ (focus mode, report an issue ⬜)                                                          |
+| Result screen with pass / fail message                                                                                                                    | Score, passed / not, pass or fail message, per-question review with right answers and explanations when the quiz shows them                                                                                            | ✅                                                                                           |
+| Preview, Publish, history on quizzes                                                                                                                      | Preview (takes it as the trainer), Publish                                                                                                                                                                             | 🟡 history of quiz questions ⬜                                                              |
+| Create questions with AI                                                                                                                                  |                                                                                                                                                                                                                        | ⬜ (Phase 9)                                                                                 |
 
 ### Assignment and monitoring
 
@@ -71,13 +74,13 @@ Status: ✅ done · 🟡 partly · ⬜ not yet (with the phase in PLAN.md that b
 
 ### Learner portal
 
-| Trenning                                                              | Ekra                                                     | Status                              |
-| --------------------------------------------------------------------- | -------------------------------------------------------- | ----------------------------------- |
-| Home / My Learning / Catalog / Favorites                              | Library for learners (published only), favorites, recent | 🟡 portal ⬜ (Phase 10)             |
-| Greeting, points, badges, certificates                                |                                                          | ⬜ (Phase 6 certificates, Phase 10) |
-| In progress (completion, deadline, Start / Continue), new enrollments | Progress stored per lesson                               | ⬜ (Phase 6/10)                     |
-| Learning time, daily goal and streak, leaderboard                     |                                                          | ⬜ (Phase 10)                       |
-| Messages and notifications in the header                              |                                                          | ⬜                                  |
+| Trenning                                                              | Ekra                                                     | Status                                |
+| --------------------------------------------------------------------- | -------------------------------------------------------- | ------------------------------------- |
+| Home / My Learning / Catalog / Favorites                              | Library for learners (published only), favorites, recent | 🟡 portal ⬜ (Phase 10)               |
+| Greeting, points, badges, certificates                                |                                                          | ⬜ (Phase 6 certificates, Phase 10)   |
+| In progress (completion, deadline, Start / Continue), new enrollments | Course page: lessons done, Start / Continue              | 🟡 deadline, enrollments (Phase 6/10) |
+| Learning time, daily goal and streak, leaderboard                     |                                                          | ⬜ (Phase 10)                         |
+| Messages and notifications in the header                              |                                                          | ⬜                                    |
 
 ### Collaboration and AI
 
@@ -92,23 +95,23 @@ Status: ✅ done · 🟡 partly · ⬜ not yet (with the phase in PLAN.md that b
 
 Each desktop recording shows one flow (the phone versions show the same on a small screen). What to check in each:
 
-| #   | Recording                    | Shows                                                    | Ekra phase              |
-| --- | ---------------------------- | -------------------------------------------------------- | ----------------------- |
-| 1   | Learning Path                | Building a path: overview, stages, adding content, order | 6                       |
-| 2   | Assign Learner               | Picking learners for a path, dates                       | 6                       |
-| 3   | Create Page With AI / Manual | New page from a prompt, or blank                         | 3 ✅ manual, 9 AI       |
-| 4   | Formatting Text              | Editor toolbar and blocks                                | 3 ✅                    |
-| 5   | Video Embed                  | Embedding / uploading a video in a page                  | 3 ✅ embed, 4 upload    |
-| 6   | View Versioning              | History panel, compare, restore                          | 3 ✅                    |
-| 7   | Manage Assignees             | Assignee table, reminders, due dates, bulk actions       | 6                       |
-| 8   | Setup Quiz                   | Quiz settings (pass mark, time, order)                   | 5                       |
-| 9   | Add Question From Scratch    | Question builder, answer options                         | 5                       |
-| 10  | Hotspot And Multiple Images  | Hotspot questions, picture answers                       | 5                       |
-| 11  | View Report By Learner       | One learner's progress and scores                        | 10                      |
-| 12  | View Report                  | Content report (completion, scores)                      | 10                      |
-| 13  | Wiki Builder                 | Wiki made of resource lists                              | 6 / 10                  |
-| 14  | AI Search Engine             | Ask AI search over the content                           | 9                       |
-| 15  | Start Course Page            | Learner opens a course, lesson player                    | 4                       |
-| 16  | Chat Bot Scenario            | AI assistant guiding a learner                           | 9                       |
-| 17  | Start Quiz                   | Learner takes a quiz, result screen                      | 5                       |
-| 18  | Material Update              | Trainer updates content, learners see what changed       | 3 ✅ history, 10 notify |
+| #   | Recording                    | Shows                                                    | Ekra phase                                      |
+| --- | ---------------------------- | -------------------------------------------------------- | ----------------------------------------------- |
+| 1   | Learning Path                | Building a path: overview, stages, adding content, order | 6                                               |
+| 2   | Assign Learner               | Picking learners for a path, dates                       | 6                                               |
+| 3   | Create Page With AI / Manual | New page from a prompt, or blank                         | 3 ✅ manual, 9 AI                               |
+| 4   | Formatting Text              | Editor toolbar and blocks                                | 3 ✅                                            |
+| 5   | Video Embed                  | Embedding / uploading a video in a page                  | 3 ✅ embed, 4 🟡 upload (lessons ✅)            |
+| 6   | View Versioning              | History panel, compare, restore                          | 3 ✅                                            |
+| 7   | Manage Assignees             | Assignee table, reminders, due dates, bulk actions       | 6                                               |
+| 8   | Setup Quiz                   | Quiz settings (pass mark, time, order)                   | 5                                               |
+| 9   | Add Question From Scratch    | Question builder, answer options                         | 5                                               |
+| 10  | Hotspot And Multiple Images  | Hotspot questions, picture answers                       | 5                                               |
+| 11  | View Report By Learner       | One learner's progress and scores                        | 10                                              |
+| 12  | View Report                  | Content report (completion, scores)                      | 10                                              |
+| 13  | Wiki Builder                 | Wiki made of resource lists                              | 6 / 10                                          |
+| 14  | AI Search Engine             | Ask AI search over the content                           | 9                                               |
+| 15  | Start Course Page            | Learner opens a course, lesson player                    | 4 ✅ (no Discussion/File tabs, certificate yet) |
+| 16  | Chat Bot Scenario            | AI assistant guiding a learner                           | 9                                               |
+| 17  | Start Quiz                   | Learner takes a quiz, result screen                      | 5                                               |
+| 18  | Material Update              | Trainer updates content, learners see what changed       | 3 ✅ history, 10 notify                         |

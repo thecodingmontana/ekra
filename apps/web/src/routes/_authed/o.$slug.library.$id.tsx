@@ -11,6 +11,7 @@ import {
 	useNavigate,
 } from "@tanstack/react-router";
 import { type ReactNode, useEffect, useState } from "react";
+import { CourseArea } from "@/components/course/course-area";
 import { BodyEditor } from "@/components/editor/body-editor";
 import { ReadOnlyBody } from "@/components/editor/read-only-body";
 import { VersionHistory } from "@/components/editor/version-history";
@@ -20,6 +21,7 @@ import {
 	ContentMenu,
 	useContentActions,
 } from "@/components/library/content-menu";
+import { QuizPage } from "@/components/quiz/quiz-page";
 import {
 	CONTENT,
 	type ContentData,
@@ -209,7 +211,7 @@ function ContentPage() {
 					</Button>
 					{canManage && !archived && (
 						<>
-							{item.kind !== "folder" && (
+							{!["folder", "course", "quiz"].includes(item.kind) && (
 								<Button
 									variant="outline"
 									onClick={() => setHistory(true)}
@@ -285,6 +287,20 @@ function ContentPage() {
 							title="Restore this folder to see what's inside"
 							body="Archived folders can't be opened. Restoring it puts it and its content back in the library."
 						/>
+					) : item.kind === "course" ? (
+						<CourseArea
+							slug={slug}
+							id={item.id}
+							cover={item.cover}
+							canManage={canManage && !archived}
+						/>
+					) : item.kind === "quiz" ? (
+						<QuizPage
+							slug={slug}
+							id={item.id}
+							title={item.title}
+							canManage={canManage && !archived}
+						/>
 					) : canManage && !archived ? (
 						<BodyEditor key={bodyKey} slug={slug} item={item} />
 					) : item.doc ? (
@@ -350,17 +366,19 @@ function ContentPage() {
 				</aside>
 			</div>
 
-			{canManage && !archived && item.kind !== "folder" && (
-				<VersionHistory
-					slug={slug}
-					id={item.id}
-					doc={item.doc}
-					open={history}
-					onOpenChange={setHistory}
-					// the editor starts again from the restored body
-					onRestored={() => setBodyKey((n) => n + 1)}
-				/>
-			)}
+			{canManage &&
+				!archived &&
+				!["folder", "course", "quiz"].includes(item.kind) && (
+					<VersionHistory
+						slug={slug}
+						id={item.id}
+						doc={item.doc}
+						open={history}
+						onOpenChange={setHistory}
+						// the editor starts again from the restored body
+						onRestored={() => setBodyKey((n) => n + 1)}
+					/>
+				)}
 			{canManage && (
 				<ContentFormModal
 					open={editing}
