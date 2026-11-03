@@ -10,7 +10,7 @@
 	},
 	"scripts": {
 		"typecheck": "tsc --noEmit",
-		"test": "node --test 'src/**/*.test.ts'"
+		"test": "node --test \"src/**/*.test.ts\""
 	},
 	"dependencies": {
 		"zod": "^4.6.7"
