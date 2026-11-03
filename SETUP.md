@@ -40,6 +40,11 @@ Supported systems: Linux, macOS, and Windows through WSL 2.
 
 Ekra is developed inside Linux. On Windows, use WSL 2 with Ubuntu.
 
+Plain Windows (PowerShell) also works, with Docker Desktop for Postgres and SeaweedFS. You'll need Node (the
+version in `.nvmrc`), pnpm, Git for Windows (its `sh` runs the commit-message hook) and, to run the video worker
+outside Docker, ffmpeg on your PATH (`winget install ffmpeg`). Chrome and Edge open `*.ekra.localhost` addresses
+without any hosts-file change. WSL 2 stays the recommended way: it's what the project is tested on.
+
 1. Open PowerShell as administrator and run:
 
    ```powershell
