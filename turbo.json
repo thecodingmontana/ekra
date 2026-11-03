@@ -16,9 +16,9 @@
 		"test": {
 			// a package's tests wait for its dependencies' tests: they share the test database and its migrations
 			"dependsOn": ["^build", "^test"],
-			// tests talk to a real database, so always run them and let its address through
+			// tests talk to a real database and storage, so always run them and let their settings through
 			"cache": false,
-			"passThroughEnv": ["DATABASE_URL", "TEST_DATABASE_URL"]
+			"passThroughEnv": ["DATABASE_URL", "TEST_DATABASE_URL", "S3_*"]
 		}
 	}
 }
