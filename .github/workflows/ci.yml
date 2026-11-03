@@ -31,7 +31,16 @@ jobs:
       # CI-only stand-ins for a throwaway database, not secrets
       DATABASE_URL: postgres://ekra:ekra@localhost:5432/ekra_test
       TEST_DATABASE_URL: postgres://ekra:ekra@localhost:5432/ekra_test
+      # and for a throwaway SeaweedFS (file storage) started below
+      S3_ENDPOINT: http://localhost:8334
+      S3_ACCESS_KEY: ekra-ci
+      S3_SECRET_KEY: ekra-ci-only
     steps:
+      # a service container can't take the "-s3" argument, so storage starts here, like infra/docker-compose.yml
+      - run: >-
+          docker run -d --name seaweedfs -p 8334:8333
+          -e AWS_ACCESS_KEY_ID=ekra-ci -e AWS_SECRET_ACCESS_KEY=ekra-ci-only
+          chrislusf/seaweedfs:4.51 server -dir=/data -s3 -s3.port=8333
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
@@ -44,5 +53,7 @@ jobs:
       - run: pnpm db:migrate
       # the video pipeline's tests run the real ffmpeg (the worker needs it in production too)
       - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
+      - name: Wait for storage
+        run: timeout 90 bash -c 'until curl -s -o /dev/null localhost:8334; do sleep 2; done'
       - run: pnpm test
       - run: pnpm build
