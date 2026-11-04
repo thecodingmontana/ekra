@@ -35,6 +35,26 @@ export const reportTypeDefs = /* GraphQL */ `
 		contentReport(slug: String!, kind: ContentKind!): [ContentReportRow!]!
 		"One quiz: totals, each question's answers, and each learner's results (managers); null when not found."
 		quizReport(slug: String!, id: ID!): QuizReport
+		"One member's assignments and recent activity (managers); null when that person isn't a member."
+		learnerDetail(slug: String!, userId: ID!): LearnerDetail
+	}
+
+	type LearnerDetail {
+		person: ReportPerson!
+		email: String!
+		"newest first"
+		assignments: [LearnerAssignment!]!
+		"newest first, at most 30: started, completed, passed, failed"
+		recent: [ActivityEvent!]!
+	}
+
+	type LearnerAssignment {
+		content: ReportContent!
+		"not_started, in_progress, completed or overdue"
+		status: String!
+		percent: Int!
+		startAt: String!
+		dueAt: String
 	}
 
 	type ReportPerson {
@@ -60,6 +80,8 @@ export const reportTypeDefs = /* GraphQL */ `
 		"newest first, at most 30: started, completed, passed, failed"
 		recent: [ActivityEvent!]!
 		learners: [LearnerRow!]!
+		"everything assigned to one of the learners, by title"
+		assignedContent: [ReportContent!]!
 	}
 
 	type DayCount {
@@ -87,6 +109,8 @@ export const reportTypeDefs = /* GraphQL */ `
 		completed: Int!
 		overdue: Int!
 		inProgress: Int!
+		"the content assigned to them"
+		assignedIds: [ID!]!
 		"average progress over their enrollments, 0 with none"
 		percent: Int!
 		lastOpened: ReportContent
@@ -207,13 +231,99 @@ const activity = (userIds: string[]) => {
 	) as activity`;
 };
 
+/** These people's latest starts, completions and quiz results, newest first, at most 30. */
+async function recentEvents(
+	tx: Tx,
+	ids: string[],
+	person: (id: string) => Person,
+) {
+	const rows = await tx.execute<{
+		user_id: string;
+		at: string;
+		kind: string;
+		id: string;
+		title: string;
+		content_kind: string;
+	}>(sql`
+		select activity.user_id, ${iso("activity.at")} as at, activity.kind, c.id, c.title, c.kind as content_kind
+		from ${activity(ids)} join content_item c on c.id = activity.content_id
+		where activity.kind in ('started', 'completed', 'passed', 'failed')
+		order by activity.at desc limit 30`);
+	return rows.map((r) => ({
+		at: r.at,
+		person: person(r.user_id),
+		kind: r.kind,
+		content: { id: r.id, title: r.title, kind: r.content_kind },
+	}));
+}
+
+/** One member with their email, what they've been given and what they did lately; null for a non-member. */
+async function learnerDetail(tx: Tx, orgId: string, userId: string) {
+	const [found] = await db
+		.select({
+			id: user.id,
+			name: user.name,
+			image: user.image,
+			role: member.role,
+			email: user.email,
+		})
+		.from(member)
+		.innerJoin(user, eq(user.id, member.userId))
+		.where(and(eq(member.organizationId, orgId), eq(member.userId, userId)));
+	if (!found) return null;
+	const { email, ...person } = found;
+	const rows = await tx
+		.select({
+			startAt: enrollment.startAt,
+			dueAt: enrollment.dueAt,
+			content: {
+				id: contentItem.id,
+				title: contentItem.title,
+				kind: contentItem.kind,
+			},
+		})
+		.from(enrollment)
+		.innerJoin(contentItem, eq(contentItem.id, enrollment.contentId))
+		.where(eq(enrollment.userId, userId))
+		.orderBy(desc(enrollment.createdAt));
+	// a quiz whose time ran out counts as handed in, even if nobody opened it since
+	await gradeOverdue(tx, [userId]);
+	const progress = await progressOfAll(
+		tx,
+		rows.map((r) => r.content),
+		[userId],
+	);
+	return {
+		person,
+		email,
+		assignments: rows.map((r) => {
+			const p = progress.get(r.content.id)?.get(userId) ?? {
+				percent: 0,
+				started: false,
+			};
+			return {
+				content: r.content,
+				status: enrollmentStatus({ ...p, dueAt: r.dueAt }),
+				percent: p.percent,
+				startAt: r.startAt.toISOString(),
+				dueAt: r.dueAt?.toISOString() ?? null,
+			};
+		}),
+		recent: await recentEvents(tx, [userId], () => person),
+	};
+}
+
 async function learnerReport(tx: Tx, orgId: string) {
 	const members = await people(orgId);
 	const enrolled = await tx
 		.select({
 			userId: enrollment.userId,
 			dueAt: enrollment.dueAt,
-			item: { id: contentItem.id, kind: contentItem.kind },
+			item: {
+				id: contentItem.id,
+				kind: contentItem.kind,
+				title: contentItem.title,
+			},
 		})
 		.from(enrollment)
 		.innerJoin(contentItem, eq(contentItem.id, enrollment.contentId));
@@ -237,6 +347,7 @@ async function learnerReport(tx: Tx, orgId: string) {
 			mostActive: [],
 			recent: [],
 			learners: [],
+			assignedContent: [],
 		};
 
 	// a quiz whose time ran out counts as handed in, even if nobody opened it since
@@ -257,18 +368,6 @@ async function learnerReport(tx: Tx, orgId: string) {
 		select user_id, count(*)::int as count from ${activity(ids)}
 		where at >= ${new Date(now - 7 * DAY_MS).toISOString()}
 		group by user_id order by count desc, user_id limit 5`);
-	const recent = await tx.execute<{
-		user_id: string;
-		at: string;
-		kind: string;
-		id: string;
-		title: string;
-		content_kind: string;
-	}>(sql`
-		select activity.user_id, ${iso("activity.at")} as at, activity.kind, c.id, c.title, c.kind as content_kind
-		from ${activity(ids)} join content_item c on c.id = activity.content_id
-		where activity.kind in ('started', 'completed', 'passed', 'failed')
-		order by activity.at desc limit 30`);
 	const opened = await tx
 		.selectDistinctOn([contentView.userId], {
 			userId: contentView.userId,
@@ -296,25 +395,22 @@ async function learnerReport(tx: Tx, orgId: string) {
 			person: person(r.user_id),
 			count: r.count,
 		})),
-		recent: recent.map((r) => ({
-			at: r.at,
-			person: person(r.user_id),
-			kind: r.kind,
-			content: { id: r.id, title: r.title, kind: r.content_kind },
-		})),
+		recent: await recentEvents(tx, ids, person),
+		assignedContent: [
+			...new Map(mine.map((e) => [e.item.id, e.item])).values(),
+		].sort((a, b) => a.title.localeCompare(b.title)),
 		learners: learners.map((l) => {
-			const statuses = mine
-				.filter((e) => e.userId === l.id)
-				.map((e) => {
-					const p: Progress = progress.get(e.item.id)?.get(l.id) ?? {
-						percent: 0,
-						started: false,
-					};
-					return {
-						percent: p.percent,
-						status: enrollmentStatus({ ...p, dueAt: e.dueAt }),
-					};
-				});
+			const theirs = mine.filter((e) => e.userId === l.id);
+			const statuses = theirs.map((e) => {
+				const p: Progress = progress.get(e.item.id)?.get(l.id) ?? {
+					percent: 0,
+					started: false,
+				};
+				return {
+					percent: p.percent,
+					status: enrollmentStatus({ ...p, dueAt: e.dueAt }),
+				};
+			});
 			const count = (s: string) =>
 				statuses.filter((x) => x.status === s).length;
 			const last = lastOpened.get(l.id);
@@ -324,6 +420,7 @@ async function learnerReport(tx: Tx, orgId: string) {
 				completed: count("completed"),
 				overdue: count("overdue"),
 				inProgress: count("in_progress"),
+				assignedIds: [...new Set(theirs.map((e) => e.item.id))],
 				percent: average(statuses.map((s) => s.percent)) ?? 0,
 				lastOpened: last?.content ?? null,
 				lastOpenedAt: last?.at.toISOString() ?? null,
@@ -487,6 +584,18 @@ export const reportResolvers = {
 		) =>
 			manage(ctx, args.slug, (tx) =>
 				contentReport(tx, parse(KINDS, args.kind)),
+			),
+		learnerDetail: (
+			_p: unknown,
+			args: { slug: string; userId: string },
+			ctx: Ctx,
+		) =>
+			manage(ctx, args.slug, (tx, org) =>
+				learnerDetail(
+					tx,
+					org.id,
+					parse(z.string().min(1).max(64), args.userId),
+				),
 			),
 		quizReport: (_p: unknown, { slug, id }: SlugId, ctx: Ctx) =>
 			manage(ctx, slug, async (tx, org, userId) => {

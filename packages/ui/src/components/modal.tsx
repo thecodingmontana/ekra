@@ -96,6 +96,67 @@ export function Modal({
 	);
 }
 
+const SHEET =
+	"fixed inset-x-0 bottom-0 z-76 flex max-h-[92vh] flex-col rounded-t-[14px] bg-popover text-popover-foreground shadow-[0_12px_32px_-8px_rgba(28,25,20,0.16),0_0_0_1px_var(--border)] outline-none transition-transform duration-260 ease-[cubic-bezier(0.23,1,0.32,1)] data-ending-style:translate-y-full data-ending-style:duration-180 data-starting-style:translate-y-full motion-reduce:transition-none sm:inset-y-0 sm:right-0 sm:left-auto sm:max-h-none sm:w-[min(480px,100vw)] sm:rounded-none sm:rounded-l-xl sm:data-ending-style:translate-x-full sm:data-ending-style:translate-y-0 sm:data-starting-style:translate-x-full sm:data-starting-style:translate-y-0 dark:shadow-[0_16px_40px_-10px_rgba(0,0,0,0.6),0_0_0_1px_var(--border)]";
+
+/** A panel from the right edge (from the bottom on phones) with a header and ×; it scrolls on its own. */
+export function Sheet({
+	open,
+	onOpenChange,
+	title,
+	header,
+	children,
+	testId,
+}: {
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
+	/** names the sheet for screen readers */
+	title: string;
+	/** shown in place of the plain title */
+	header?: ReactNode;
+	children: ReactNode;
+	testId?: string;
+}) {
+	return (
+		<Dialog.Root open={open} onOpenChange={onOpenChange}>
+			<Dialog.Portal>
+				<Dialog.Backdrop className={BACKDROP} />
+				<Dialog.Popup className={SHEET} data-testid={testId}>
+					<div className="flex items-start gap-2 border-b px-4 py-3.5">
+						<Dialog.Title
+							className={cn(
+								"m-0 min-w-0 flex-1 font-semibold text-md",
+								header && "sr-only",
+							)}
+						>
+							{title}
+						</Dialog.Title>
+						{header && <div className="min-w-0 flex-1">{header}</div>}
+						<Dialog.Close
+							render={
+								<Button
+									variant="ghost"
+									size="icon-sm"
+									className="shrink-0 text-muted-foreground"
+								/>
+							}
+							aria-label="Close"
+						>
+							<span
+								className="icon-[solar--close-linear] size-4"
+								aria-hidden="true"
+							/>
+						</Dialog.Close>
+					</div>
+					<div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+						{children}
+					</div>
+				</Dialog.Popup>
+			</Dialog.Portal>
+		</Dialog.Root>
+	);
+}
+
 /** The body of a Modal: padded, scrolls when long. */
 export function ModalBody({
 	className,

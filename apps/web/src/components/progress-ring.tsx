@@ -1,4 +1,5 @@
 import { cn } from "@ekra/ui/lib/utils";
+import { STATUS_LABEL } from "@/lib/assignees";
 
 /** A ring filled to `percent` (0–100) in the text color, on a faint track; size and place it with `className`. */
 export function ProgressRing({
@@ -41,5 +42,36 @@ export function ProgressRing({
 				strokeDashoffset={c * (1 - filled)}
 			/>
 		</svg>
+	);
+}
+
+const RING_TONE: Record<string, string> = {
+	completed: "text-tint-green",
+	overdue: "text-tint-red",
+	in_progress: "text-tint-amber",
+	not_started: "text-muted-foreground",
+};
+
+/** A small ring filled to the percent, in the colour of an assignment's status, with the status and percent beside it. */
+export function StatusRing({
+	status,
+	percent,
+}: {
+	status: string;
+	percent: number;
+}) {
+	return (
+		<span className="flex items-center gap-2" data-testid="assignee-status">
+			<ProgressRing
+				percent={percent}
+				className={cn("size-5 shrink-0", RING_TONE[status])}
+			/>
+			<span className="flex flex-col leading-tight">
+				<span className="whitespace-nowrap text-muted-foreground text-xs">
+					{STATUS_LABEL[status] ?? status}
+				</span>
+				<span className="font-medium text-xs">{percent}%</span>
+			</span>
+		</span>
 	);
 }

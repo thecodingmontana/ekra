@@ -21,6 +21,7 @@ export type LearnerRow = {
 	completed: number;
 	overdue: number;
 	inProgress: number;
+	assignedIds: string[];
 	percent: number;
 	lastOpened: ReportContent | null;
 	lastOpenedAt: string | null;
@@ -31,6 +32,20 @@ export type LearnerReport = {
 	mostActive: { person: ReportPerson; count: number }[];
 	recent: ActivityEvent[];
 	learners: LearnerRow[];
+	assignedContent: ReportContent[];
+};
+export type LearnerAssignment = {
+	content: ReportContent;
+	status: "not_started" | "in_progress" | "completed" | "overdue";
+	percent: number;
+	startAt: string;
+	dueAt: string | null;
+};
+export type LearnerDetail = {
+	person: ReportPerson;
+	email: string;
+	assignments: LearnerAssignment[];
+	recent: ActivityEvent[];
 };
 export type ContentReportRow = {
 	content: ReportContent;
@@ -119,11 +134,15 @@ export const LEARNER_REPORT = gql`
 				completed
 				overdue
 				inProgress
+				assignedIds
 				percent
 				lastOpened {
 					...ReportContentFields
 				}
 				lastOpenedAt
+			}
+			assignedContent {
+				...ReportContentFields
 			}
 		}
 	}
@@ -131,6 +150,40 @@ export const LEARNER_REPORT = gql`
 	${CONTENT}
 `;
 export type LearnerReportData = { learnerReport: LearnerReport };
+
+/** One person: who they are, what they've been given and what they did lately. */
+export const LEARNER_DETAIL = gql`
+	query LearnerDetail($slug: String!, $userId: ID!) {
+		learnerDetail(slug: $slug, userId: $userId) {
+			person {
+				...ReportPersonFields
+			}
+			email
+			assignments {
+				content {
+					...ReportContentFields
+				}
+				status
+				percent
+				startAt
+				dueAt
+			}
+			recent {
+				at
+				kind
+				person {
+					...ReportPersonFields
+				}
+				content {
+					...ReportContentFields
+				}
+			}
+		}
+	}
+	${PERSON}
+	${CONTENT}
+`;
+export type LearnerDetailData = { learnerDetail: LearnerDetail | null };
 
 /** Every item of one kind, with how its learners are doing. */
 export const CONTENT_REPORT = gql`

@@ -1,10 +1,13 @@
+import { ago } from "@ekra/core";
 import { Av } from "@ekra/ui/components/av";
 import { cn } from "@ekra/ui/lib/utils";
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { ProgressRing } from "@/components/progress-ring";
-import type { ReportPerson } from "@/graphql/report";
+import type { ActivityEvent, ReportPerson } from "@/graphql/report";
+import { KINDS } from "@/lib/content-kinds";
 import { mainRole, ROLE_LABEL } from "@/lib/members";
+import { EVENT_VERB } from "@/lib/reports";
 
 export const CELL = "border-border/70 border-b px-3 py-[9px] text-left";
 export const HEAD = cn(
@@ -222,5 +225,119 @@ export function Stat({
 				{children}
 			</span>
 		</div>
+	);
+}
+
+/** A column header that sorts the table: click for ascending, again for descending; an arrow marks the sorted one. */
+export function SortHead<K extends string>({
+	id,
+	label,
+	sort,
+	dir,
+	onSort,
+	className,
+}: {
+	id: K;
+	label: string;
+	/** the column sorted by now, if any */
+	sort: K | undefined;
+	dir: "asc" | "desc";
+	onSort: (id: K, dir: "asc" | "desc") => void;
+	className?: string;
+}) {
+	const on = sort === id;
+	const next = on && dir === "asc" ? "desc" : "asc";
+	return (
+		<th
+			className={cn(HEAD, className)}
+			aria-sort={on ? (dir === "asc" ? "ascending" : "descending") : undefined}
+		>
+			<button
+				type="button"
+				onClick={() => onSort(id, next)}
+				className={cn(
+					"-mx-1 inline-flex items-center gap-1 rounded-[5px] px-1 py-0.5 font-medium transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring",
+					on && "text-foreground",
+				)}
+				data-testid={`sort-${id}`}
+			>
+				{label}
+				<span
+					aria-hidden="true"
+					className={cn(
+						"size-3",
+						on
+							? dir === "asc"
+								? "icon-[solar--arrow-up-linear]"
+								: "icon-[solar--arrow-down-linear]"
+							: "icon-[solar--sort-vertical-linear] opacity-40",
+					)}
+				/>
+			</button>
+		</th>
+	);
+}
+
+const EVENT_TONE: Record<ActivityEvent["kind"], string> = {
+	started: "text-tint-blue bg-tint-blue/13",
+	completed: "text-tint-green bg-tint-green/13",
+	passed: "text-tint-green bg-tint-green/13",
+	failed: "text-tint-red bg-tint-red/13",
+};
+
+/** "Leo Learner completed Forklift basics · 2h ago" */
+export function ActivityLine({
+	slug,
+	event,
+	hidePerson,
+}: {
+	slug: string;
+	event: ActivityEvent;
+	/** in one person's own list: no avatar, and the verb starts the line */
+	hidePerson?: boolean;
+}) {
+	const kind = KINDS[event.content.kind];
+	return (
+		<li
+			className="flex items-center gap-2.5 rounded-md px-1 py-1.5"
+			data-testid="activity-line"
+		>
+			{!hidePerson && (
+				<Av name={event.person.name} image={event.person.image} size="md" />
+			)}
+			<p className="min-w-0 flex-1 text-sm leading-snug">
+				{!hidePerson && (
+					<>
+						<b className="font-medium">{event.person.name}</b>{" "}
+					</>
+				)}
+				<span
+					className={cn(
+						"inline-flex h-[18px] items-center rounded-[5px] px-1.5 font-medium text-[11px]",
+						EVENT_TONE[event.kind],
+					)}
+				>
+					{EVENT_VERB[event.kind]}
+				</span>{" "}
+				<Link
+					to="/o/$slug/library/$id"
+					params={{ slug, id: event.content.id }}
+					className="inline-flex max-w-full items-center gap-1 align-bottom font-medium underline-offset-2 hover:underline"
+				>
+					<span
+						aria-hidden="true"
+						className={cn(kind.icon, "size-3.5 shrink-0 text-muted-foreground")}
+					/>
+					<span className="truncate">{event.content.title}</span>
+				</Link>
+			</p>
+			<time
+				dateTime={event.at}
+				className="shrink-0 text-muted-foreground text-xs"
+				suppressHydrationWarning
+			>
+				{ago(event.at)}
+			</time>
+		</li>
 	);
 }

@@ -17,7 +17,7 @@ const STATUSES: [Exclude<LibraryStatus, "all">, string][] = [
 ];
 
 /** A filter in use: what it is, and × to drop it. */
-function Chip({
+export function Chip({
 	label,
 	value,
 	onClear,

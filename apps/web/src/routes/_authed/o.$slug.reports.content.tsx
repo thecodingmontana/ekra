@@ -9,6 +9,7 @@ import {
 	PAGE,
 	PercentRing,
 	ReportsNav,
+	SortHead,
 	TableSkeleton,
 	Tabs,
 } from "@/components/reports/report-bits";
@@ -18,11 +19,22 @@ import {
 	type ContentReportRow,
 } from "@/graphql/report";
 import { KINDS } from "@/lib/content-kinds";
-import { REPORT_KINDS, type ReportKind } from "@/lib/reports";
+import {
+	CONTENT_SORT,
+	type ContentSort,
+	REPORT_KINDS,
+	type ReportKind,
+	sortRows,
+} from "@/lib/reports";
 import { prime, reloadOnEnter } from "@/lib/routing";
 
 const search = z.object({
 	kind: z.enum(REPORT_KINDS).optional().catch(undefined),
+	sort: z
+		.enum(Object.keys(CONTENT_SORT) as [ContentSort, ...ContentSort[]])
+		.optional()
+		.catch(undefined),
+	dir: z.enum(["asc", "desc"]).optional().catch(undefined),
 });
 
 export const Route = createFileRoute("/_authed/o/$slug/reports/content")({
@@ -53,13 +65,34 @@ const STATUS: Record<string, string> = {
 
 function ContentReportPage() {
 	const { slug } = Route.useParams();
-	const { kind = "course" } = Route.useSearch();
+	const { kind = "course", sort, dir = "asc" } = Route.useSearch();
 	const navigate = useNavigate({ from: Route.fullPath });
 	const { data } = useQuery<ContentReportData>(CONTENT_REPORT, {
 		variables: { slug, kind },
 	});
-	const rows = data?.contentReport;
 	const quiz = kind === "quiz";
+	// accuracy is a quiz-only column
+	const by = sort === "accuracy" && !quiz ? undefined : sort;
+	const rows =
+		data?.contentReport &&
+		(by
+			? sortRows(data.contentReport, CONTENT_SORT[by], dir)
+			: data.contentReport);
+	const onSort = (id: ContentSort, d: "asc" | "desc") =>
+		navigate({
+			search: (s) => ({ ...s, sort: id, dir: d === "asc" ? undefined : d }),
+			replace: true,
+		});
+	const head = (id: ContentSort, label: string, className?: string) => (
+		<SortHead
+			id={id}
+			label={label}
+			sort={by}
+			dir={dir}
+			onSort={onSort}
+			className={className}
+		/>
+	);
 
 	return (
 		<main className={PAGE}>
@@ -73,7 +106,7 @@ function ContentReportPage() {
 				tabs={TABS}
 				onChange={(k) =>
 					navigate({
-						search: { kind: k === "course" ? undefined : k },
+						search: (s) => ({ ...s, kind: k === "course" ? undefined : k }),
 						replace: true,
 					})
 				}
@@ -85,12 +118,12 @@ function ContentReportPage() {
 					<table className="w-full min-w-[720px] border-collapse text-sm">
 						<thead>
 							<tr>
-								<th className={cn(HEAD, "pl-4")}>{KINDS[kind].label}</th>
+								{head("title", KINDS[kind].label, "pl-4")}
 								<th className={HEAD}>Status</th>
-								<th className={HEAD}>Learners</th>
-								<th className={HEAD}>Completed</th>
-								<th className={HEAD}>Average progress</th>
-								{quiz && <th className={HEAD}>Accuracy</th>}
+								{head("learners", "Learners")}
+								{head("completed", "Completed")}
+								{head("percent", "Average progress")}
+								{quiz && head("accuracy", "Accuracy")}
 								<th className={CELL}>
 									<span className="sr-only">Open</span>
 								</th>

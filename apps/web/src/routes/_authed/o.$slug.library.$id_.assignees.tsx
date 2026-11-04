@@ -9,7 +9,7 @@ import { toast } from "@ekra/ui/lib/toast";
 import { cn } from "@ekra/ui/lib/utils";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { type ReactNode, useEffect, useState } from "react";
-import { ProgressRing } from "@/components/progress-ring";
+import { StatusRing } from "@/components/progress-ring";
 import {
 	ASSIGNEES,
 	type AssigneesData,
@@ -31,7 +31,6 @@ import {
 	assigneesCsv,
 	downloadCsv,
 	fromLocalInput,
-	STATUS_LABEL,
 	sendAgainLabel,
 	toLocalInput,
 } from "@/lib/assignees";
@@ -457,37 +456,6 @@ function BarButton({
 			<span className={cn(icon, "size-3.5")} aria-hidden="true" />
 			<span className="max-sm:sr-only">{children}</span>
 		</button>
-	);
-}
-
-const RING_TONE: Record<Enrollment["status"], string> = {
-	completed: "text-tint-green",
-	overdue: "text-tint-red",
-	in_progress: "text-tint-amber",
-	not_started: "text-muted-foreground",
-};
-
-/** A small ring filled to the percent, with the status and the percent beside it. */
-function StatusRing({
-	status,
-	percent,
-}: {
-	status: Enrollment["status"];
-	percent: number;
-}) {
-	return (
-		<span className="flex items-center gap-2" data-testid="assignee-status">
-			<ProgressRing
-				percent={percent}
-				className={cn("size-5 shrink-0", RING_TONE[status])}
-			/>
-			<span className="flex flex-col leading-tight">
-				<span className="whitespace-nowrap text-muted-foreground text-xs">
-					{STATUS_LABEL[status]}
-				</span>
-				<span className="font-medium text-xs">{percent}%</span>
-			</span>
-		</span>
 	);
 }
 

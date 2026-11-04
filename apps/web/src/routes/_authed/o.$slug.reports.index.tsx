@@ -1,21 +1,23 @@
 import { useQuery } from "@apollo/client/react";
 import { ago } from "@ekra/core";
-import { Av } from "@ekra/ui/components/av";
 import { Button } from "@ekra/ui/components/button";
 import { InputWithIcon } from "@ekra/ui/components/input-with-icon";
 import { cn } from "@ekra/ui/lib/utils";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
+import { LearnerFilterBar } from "@/components/reports/learner-filters";
+import { LearnerSheet } from "@/components/reports/learner-sheet";
 import {
+	ActivityLine,
 	CELL,
 	EmptyLine,
-	HEAD,
 	PAGE,
 	Panel,
 	PanelSkeleton,
 	PercentRing,
 	PersonCell,
 	ReportsNav,
+	SortHead,
 	TableSkeleton,
 	Tabs,
 } from "@/components/reports/report-bits";
@@ -24,25 +26,43 @@ import {
 	MostActiveChart,
 } from "@/components/reports/report-charts";
 import {
-	type ActivityEvent,
 	LEARNER_REPORT,
 	type LearnerReport,
 	type LearnerReportData,
 } from "@/graphql/report";
 import { downloadCsv } from "@/lib/assignees";
-import { KINDS } from "@/lib/content-kinds";
 import { mainRole, ROLE_LABEL } from "@/lib/members";
 import {
 	activeSeries,
-	EVENT_VERB,
+	FILTER_ROLES,
 	filterLearners,
+	LEARNER_SORT,
+	LEARNER_STATUSES,
+	type LearnerFilters,
+	type LearnerSort,
+	type LearnerStatus,
 	learnersCsv,
+	sortRows,
 } from "@/lib/reports";
 import { prime, reloadOnEnter } from "@/lib/routing";
 
 const search = z.object({
 	tab: z.enum(["overview", "progress"]).optional().catch(undefined),
 	q: z.string().max(200).optional().catch(undefined),
+	sort: z
+		.enum(Object.keys(LEARNER_SORT) as [LearnerSort, ...LearnerSort[]])
+		.optional()
+		.catch(undefined),
+	dir: z.enum(["asc", "desc"]).optional().catch(undefined),
+	status: z
+		.enum(
+			LEARNER_STATUSES.map(([k]) => k) as [LearnerStatus, ...LearnerStatus[]],
+		)
+		.optional()
+		.catch(undefined),
+	role: z.enum(FILTER_ROLES).optional().catch(undefined),
+	content: z.string().max(64).optional().catch(undefined),
+	learner: z.string().max(64).optional().catch(undefined),
 });
 type Search = z.infer<typeof search>;
 
@@ -71,7 +91,8 @@ const TABS = [
 
 function LearnersReportPage() {
 	const { slug } = Route.useParams();
-	const { tab = "overview", q = "" } = Route.useSearch();
+	const params = Route.useSearch();
+	const { tab = "overview", learner } = params;
 	const navigate = useNavigate({ from: Route.fullPath });
 	const setSearch = (patch: Partial<Search>) =>
 		navigate({ search: (s) => ({ ...s, ...patch }), replace: true });
@@ -98,10 +119,15 @@ function LearnersReportPage() {
 				<Progress
 					slug={slug}
 					report={report}
-					q={q}
-					onSearch={(v) => setSearch({ q: v || undefined })}
+					params={params}
+					setSearch={setSearch}
 				/>
 			)}
+			<LearnerSheet
+				slug={slug}
+				userId={learner}
+				onClose={() => setSearch({ learner: undefined })}
+			/>
 		</main>
 	);
 }
@@ -221,68 +247,34 @@ function Overview({
 	);
 }
 
-const EVENT_TONE: Record<ActivityEvent["kind"], string> = {
-	started: "text-tint-blue bg-tint-blue/13",
-	completed: "text-tint-green bg-tint-green/13",
-	passed: "text-tint-green bg-tint-green/13",
-	failed: "text-tint-red bg-tint-red/13",
-};
-
-/** "Leo Learner completed Forklift basics · 2h ago" */
-function ActivityLine({ slug, event }: { slug: string; event: ActivityEvent }) {
-	const kind = KINDS[event.content.kind];
-	return (
-		<li
-			className="flex items-center gap-2.5 rounded-md px-1 py-1.5"
-			data-testid="activity-line"
-		>
-			<Av name={event.person.name} image={event.person.image} size="md" />
-			<p className="min-w-0 flex-1 text-sm leading-snug">
-				<b className="font-medium">{event.person.name}</b>{" "}
-				<span
-					className={cn(
-						"inline-flex h-[18px] items-center rounded-[5px] px-1.5 font-medium text-[11px]",
-						EVENT_TONE[event.kind],
-					)}
-				>
-					{EVENT_VERB[event.kind]}
-				</span>{" "}
-				<Link
-					to="/o/$slug/library/$id"
-					params={{ slug, id: event.content.id }}
-					className="inline-flex max-w-full items-center gap-1 align-bottom font-medium underline-offset-2 hover:underline"
-				>
-					<span
-						aria-hidden="true"
-						className={cn(kind.icon, "size-3.5 shrink-0 text-muted-foreground")}
-					/>
-					<span className="truncate">{event.content.title}</span>
-				</Link>
-			</p>
-			<time
-				dateTime={event.at}
-				className="shrink-0 text-muted-foreground text-xs"
-				suppressHydrationWarning
-			>
-				{ago(event.at)}
-			</time>
-		</li>
-	);
-}
+const COLUMNS: [LearnerSort, string][] = [
+	["assigned", "Assigned"],
+	["completed", "Completed"],
+	["inProgress", "In progress"],
+	["overdue", "Overdue"],
+	["percent", "Average progress"],
+	["lastOpened", "Last opened"],
+];
 
 function Progress({
 	slug,
 	report,
-	q,
-	onSearch,
+	params,
+	setSearch,
 }: {
 	slug: string;
 	report: LearnerReport | undefined;
-	q: string;
-	onSearch: (q: string) => void;
+	params: Search;
+	setSearch: (patch: Partial<Search>) => void;
 }) {
+	const { q = "", sort, dir = "asc", status, role, content } = params;
 	const learners = report?.learners ?? [];
-	const shown = filterLearners(learners, q);
+	const filters: LearnerFilters = { status, role, content };
+	const filtered = filterLearners(learners, q, filters);
+	const shown = sort ? sortRows(filtered, LEARNER_SORT[sort], dir) : filtered;
+	const onSort = (id: LearnerSort, d: "asc" | "desc") =>
+		setSearch({ sort: id, dir: d === "asc" ? undefined : d });
+	const open = (id: string) => setSearch({ learner: id });
 
 	return (
 		<>
@@ -294,10 +286,21 @@ function Progress({
 						placeholder="Search learners"
 						aria-label="Search learners"
 						value={q}
-						onChange={(e) => onSearch(e.target.value)}
+						onChange={(e) => setSearch({ q: e.target.value || undefined })}
 						data-testid="learner-search"
 					/>
 				</div>
+				<LearnerFilterBar
+					filters={filters}
+					content={report?.assignedContent ?? []}
+					onChange={(f) =>
+						setSearch({
+							status: f.status,
+							role: f.role,
+							content: f.content,
+						})
+					}
+				/>
 				<Button
 					variant="outline"
 					className="ml-auto"
@@ -329,20 +332,47 @@ function Progress({
 					<table className="w-full min-w-[860px] border-collapse text-sm">
 						<thead>
 							<tr>
-								<th className={cn(HEAD, "pl-4")}>Full name</th>
-								<th className={HEAD}>Assigned</th>
-								<th className={HEAD}>Completed</th>
-								<th className={HEAD}>In progress</th>
-								<th className={HEAD}>Overdue</th>
-								<th className={HEAD}>Average progress</th>
-								<th className={HEAD}>Last opened</th>
+								<SortHead
+									id="name"
+									label="Full name"
+									sort={sort}
+									dir={dir}
+									onSort={onSort}
+									className="pl-4"
+								/>
+								{COLUMNS.map(([id, label]) => (
+									<SortHead
+										key={id}
+										id={id}
+										label={label}
+										sort={sort}
+										dir={dir}
+										onSort={onSort}
+									/>
+								))}
 							</tr>
 						</thead>
 						<tbody>
 							{shown.map((r) => (
-								<tr key={r.person.id} data-testid="learner-row">
+								<tr
+									key={r.person.id}
+									className="cursor-pointer hover:bg-muted/40"
+									onClick={() => open(r.person.id)}
+									data-testid="learner-row"
+								>
 									<td className={cn(CELL, "pl-4")}>
-										<PersonCell person={r.person} />
+										<button
+											type="button"
+											className="-m-1 flex min-w-0 rounded-md p-1 text-left focus-visible:outline-2 focus-visible:outline-ring"
+											onClick={(e) => {
+												e.stopPropagation();
+												open(r.person.id);
+											}}
+											aria-label={`Open ${r.person.name}'s details`}
+											data-testid="learner-open"
+										>
+											<PersonCell person={r.person} />
+										</button>
 									</td>
 									<td className={cn(CELL, "tabular-nums")}>{r.assigned}</td>
 									<td className={cn(CELL, "tabular-nums")}>{r.completed}</td>
@@ -366,6 +396,7 @@ function Progress({
 													to="/o/$slug/library/$id"
 													params={{ slug, id: r.lastOpened.id }}
 													className="truncate font-medium underline-offset-2 hover:underline"
+													onClick={(e) => e.stopPropagation()}
 												>
 													{r.lastOpened.title}
 												</Link>
@@ -390,7 +421,7 @@ function Progress({
 										<EmptyLine icon="icon-[solar--users-group-rounded-linear]">
 											{learners.length === 0
 												? "No learners yet. Invite people to your organization to see their progress here."
-												: "No learners match your search."}
+												: "No learners match your search and filters."}
 										</EmptyLine>
 									</td>
 								</tr>

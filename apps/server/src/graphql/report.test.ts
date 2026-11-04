@@ -404,3 +404,99 @@ test("the quiz report gives totals, each question's answers and the learners' gr
 	assert.deepEqual(grid("dave")?.answers, [false, false]);
 	assert.equal(grid("dave")?.passed, false);
 });
+
+const DETAIL = `query ($slug: String!, $u: ID!) { r: learnerDetail(slug: $slug, userId: $u) {
+	person { id name role } email
+	assignments { content { id kind } status percent startAt dueAt }
+	recent { at kind person { id } content { id } }
+} }`;
+
+test("learners can't open someone's detail", async () => {
+	assert.equal(
+		code(await gql("carol", DETAIL, { slug: S, u: ids.dave })),
+		"FORBIDDEN",
+	);
+});
+
+test("a non-member or another organization's person gives null", async () => {
+	assert.equal(
+		data(await gql("amina", DETAIL, { slug: S, u: ids.brian })),
+		null,
+		"brian is only in his own school",
+	);
+	assert.equal(
+		data(await gql("amina", DETAIL, { slug: S, u: "nobody" })),
+		null,
+	);
+	assert.equal(
+		data(await gql("brian", DETAIL, { slug: slugs.brian, u: ids.dave })),
+		null,
+	);
+});
+
+test("a learner's detail gives their assignments and recent activity", async () => {
+	type Detail = {
+		person: { id: string; role: string };
+		email: string;
+		assignments: {
+			content: { id: string; kind: string };
+			status: string;
+			percent: number;
+			startAt: string;
+			dueAt: string | null;
+		}[];
+		recent: {
+			at: string;
+			kind: string;
+			person: { id: string };
+			content: { id: string };
+		}[];
+	};
+	const r = data<Detail>(await gql("amina", DETAIL, { slug: S, u: ids.dave }));
+	assert.equal(r.person.id, ids.dave);
+	assert.equal(r.person.role, "learner");
+	assert.equal(r.email, emailOf("dave"));
+	assert.deepEqual(
+		r.assignments.map((a) => [a.content.id, a.status, a.percent, a.dueAt]),
+		[
+			[quizId, "in_progress", 0, null],
+			[courseId, "in_progress", 50, null],
+		],
+		"newest first",
+	);
+	assert.ok(r.assignments.every((a) => a.startAt));
+	assert.ok(r.recent.length > 0);
+	assert.ok(r.recent.every((e) => e.person.id === ids.dave));
+	assert.ok(
+		r.recent.some((e) => e.kind === "failed" && e.content.id === quizId),
+	);
+	assert.deepEqual(
+		r.recent.map((e) => e.at),
+		r.recent
+			.map((e) => e.at)
+			.sort()
+			.reverse(),
+		"newest first",
+	);
+});
+
+test("the learner report lists each learner's assigned content", async () => {
+	const r = data<{
+		learners: { person: { id: string }; assignedIds: string[] }[];
+		assignedContent: { id: string; title: string }[];
+	}>(
+		await gql(
+			"amina",
+			`query ($slug: String!) { r: learnerReport(slug: $slug) { learners { person { id } assignedIds } assignedContent { id title } } }`,
+			{ slug: S },
+		),
+	);
+	assert.deepEqual(
+		r.learners.find((l) => l.person.id === ids.dave)?.assignedIds.sort(),
+		[courseId, quizId].sort(),
+	);
+	assert.deepEqual(
+		r.assignedContent.map((c) => c.title),
+		["Safety basics", "Safety check"],
+	);
+});
