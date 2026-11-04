@@ -131,7 +131,7 @@ async function take(who: string, quizId: string, answers: [string, unknown][]) {
 }
 
 const LEARNERS = `query ($slug: String!) { r: learnerReport(slug: $slug) {
-	totalLearners dailyActive { day count } mostActive { person { id } count }
+	totalLearners weeklyActive { day count } mostActive { person { id } count }
 	recent { at kind person { id } content { id kind } }
 	learners { person { id name role } assigned completed overdue inProgress percent lastOpened { id } lastOpenedAt }
 } }`;
@@ -252,7 +252,7 @@ test("another organization's quiz gives null", async () => {
 
 type LearnerReport = {
 	totalLearners: number;
-	dailyActive: { day: string; count: number }[];
+	weeklyActive: { day: string; count: number }[];
 	mostActive: { person: { id: string }; count: number }[];
 	recent: { kind: string; person: { id: string }; content: { id: string } }[];
 	learners: {
@@ -267,15 +267,22 @@ type LearnerReport = {
 	}[];
 };
 
-test("the learner report counts learners, daily activity and each learner's progress", async () => {
+test("the learner report counts learners, weekly activity and each learner's progress", async () => {
 	const r = data<LearnerReport>(await gql("amina", LEARNERS, { slug: S }));
 	assert.equal(r.totalLearners, 2);
-	assert.equal(r.dailyActive.length, 56);
+	assert.equal(r.weeklyActive.length, 8);
+	const today = Math.floor(Date.now() / 86_400_000) * 86_400_000;
 	assert.equal(
-		r.dailyActive.at(-1)?.day,
-		new Date().toISOString().slice(0, 10),
+		r.weeklyActive.at(-1)?.day,
+		new Date(today - 6 * 86_400_000).toISOString().slice(0, 10),
+		"the newest week is the 7 days ending today",
 	);
-	assert.equal(r.dailyActive.at(-1)?.count, 2, "today: carol and dave");
+	assert.equal(
+		r.weeklyActive.at(-1)?.count,
+		2,
+		"carol and dave, each once despite several things done",
+	);
+	assert.equal(r.weeklyActive.at(-2)?.count, 0);
 	assert.deepEqual(
 		r.mostActive.map((m) => m.person.id).sort(),
 		[ids.carol, ids.dave].sort(),

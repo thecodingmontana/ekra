@@ -20,7 +20,6 @@ export const EVENT_VERB: Record<ActivityEvent["kind"], string> = {
 	failed: "failed",
 };
 
-const DAY_MS = 86_400_000;
 const utc = (d: string) => new Date(`${d}T00:00:00Z`);
 
 /** "3 Nov" for a "YYYY-MM-DD" day, the same on every machine. */
@@ -31,22 +30,9 @@ export const dayLabel = (d: string) =>
 		timeZone: "UTC",
 	});
 
-/** One point per day from the first to the last given day, with 0 for any day missing, oldest first. */
-export function activeSeries(
-	days: readonly DayCount[],
-): { day: string; label: string; learners: number }[] {
-	if (days.length === 0) return [];
-	const counts = new Map(days.map((d) => [d.day, d.count]));
-	const sorted = [...counts.keys()].sort();
-	const first = utc(sorted[0] as string).getTime();
-	const last = utc(sorted.at(-1) as string).getTime();
-	const out = [];
-	for (let t = first; t <= last; t += DAY_MS) {
-		const day = new Date(t).toISOString().slice(0, 10);
-		out.push({ day, label: dayLabel(day), learners: counts.get(day) ?? 0 });
-	}
-	return out;
-}
+/** One chart point per week (the server sends every week, oldest first), labelled by the week's first day. */
+export const activeSeries = (weeks: readonly DayCount[]) =>
+	weeks.map((w) => ({ day: w.day, label: dayLabel(w.day), learners: w.count }));
 
 /** Learners whose name has the search text (any case). */
 export function filterLearners<T extends Pick<LearnerRow, "person">>(

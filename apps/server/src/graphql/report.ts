@@ -53,8 +53,8 @@ export const reportTypeDefs = /* GraphQL */ `
 	type LearnerReport {
 		"members with the learner role, and every member who has something assigned or started"
 		totalLearners: Int!
-		"distinct people with any activity per day, the last 56 days (UTC), oldest first, every day present"
-		dailyActive: [DayCount!]!
+		"distinct people with any activity in each of the last 8 weeks (UTC), oldest first; day is the week's first day and the newest week ends today"
+		weeklyActive: [DayCount!]!
 		"the 5 people with the most activity in the last 7 days"
 		mostActive: [PersonCount!]!
 		"newest first, at most 30: started, completed, passed, failed"
@@ -149,7 +149,7 @@ export const reportTypeDefs = /* GraphQL */ `
 	}
 `;
 
-const DAYS = 56;
+const WEEKS = 8;
 const DAY_MS = 86_400_000;
 const KINDS = z.enum([
 	"folder",
@@ -223,13 +223,17 @@ async function learnerReport(tx: Tx, orgId: string) {
 	const ids = learners.map((l) => l.id);
 	const now = Date.now();
 	const today = Math.floor(now / DAY_MS) * DAY_MS;
-	const dayKeys = Array.from({ length: DAYS }, (_, i) =>
-		new Date(today - (DAYS - 1 - i) * DAY_MS).toISOString().slice(0, 10),
+	const todayKey = new Date(today).toISOString().slice(0, 10);
+	// each week's first day; the newest week is the 7 days ending today
+	const weekKeys = Array.from({ length: WEEKS }, (_, i) =>
+		new Date(today - ((WEEKS - 1 - i) * 7 + 6) * DAY_MS)
+			.toISOString()
+			.slice(0, 10),
 	);
 	if (!ids.length)
 		return {
 			totalLearners: 0,
-			dailyActive: dayKeys.map((day) => ({ day, count: 0 })),
+			weeklyActive: weekKeys.map((day) => ({ day, count: 0 })),
 			mostActive: [],
 			recent: [],
 			learners: [],
@@ -243,11 +247,12 @@ async function learnerReport(tx: Tx, orgId: string) {
 		mine.map((e) => e.item),
 		ids,
 	);
-	const since = new Date(today - (DAYS - 1) * DAY_MS);
-	const daily = await tx.execute<{ day: string; count: number }>(sql`
-		select to_char(at at time zone 'UTC', 'YYYY-MM-DD') as day, count(distinct user_id)::int as count
+	const since = new Date(today - (WEEKS * 7 - 1) * DAY_MS);
+	// weeks back from today (0 = this week); each person once per week
+	const weekly = await tx.execute<{ week: number; count: number }>(sql`
+		select ((${todayKey}::date - (at at time zone 'UTC')::date) / 7)::int as week, count(distinct user_id)::int as count
 		from ${activity(ids)} where at >= ${since.toISOString()} group by 1`);
-	const counts = new Map(daily.map((r) => [r.day, r.count]));
+	const counts = new Map(weekly.map((r) => [r.week, r.count]));
 	const busiest = await tx.execute<{ user_id: string; count: number }>(sql`
 		select user_id, count(*)::int as count from ${activity(ids)}
 		where at >= ${new Date(now - 7 * DAY_MS).toISOString()}
@@ -283,7 +288,10 @@ async function learnerReport(tx: Tx, orgId: string) {
 
 	return {
 		totalLearners: learners.length,
-		dailyActive: dayKeys.map((day) => ({ day, count: counts.get(day) ?? 0 })),
+		weeklyActive: weekKeys.map((day, i) => ({
+			day,
+			count: counts.get(WEEKS - 1 - i) ?? 0,
+		})),
 		mostActive: busiest.map((r) => ({
 			person: person(r.user_id),
 			count: r.count,

@@ -10,33 +10,19 @@ import {
 	percentOf,
 } from "./reports.ts";
 
-test("activeSeries fills missing days with 0, oldest first, and labels them", () => {
+test("activeSeries gives one point per week, in order, labelled by its first day", () => {
 	const s = activeSeries([
-		{ day: "2026-11-03", count: 3 },
-		{ day: "2026-10-31", count: 1 },
-		{ day: "2026-11-01", count: 2 },
+		{ day: "2026-10-22", count: 1 },
+		{ day: "2026-10-29", count: 3 },
 	]);
 	assert.deepEqual(
-		s.map((p) => [p.day, p.learners]),
+		s.map((p) => [p.label, p.learners]),
 		[
-			["2026-10-31", 1],
-			["2026-11-01", 2],
-			["2026-11-02", 0],
-			["2026-11-03", 3],
+			["22 Oct", 1],
+			["29 Oct", 3],
 		],
 	);
-	assert.equal(s[0]?.label, "31 Oct");
 	assert.deepEqual(activeSeries([]), []);
-});
-
-test("activeSeries keeps 56 days across a month end", () => {
-	const days = Array.from({ length: 56 }, (_, i) => ({
-		day: new Date(Date.UTC(2026, 8, 9 + i)).toISOString().slice(0, 10),
-		count: i % 3,
-	}));
-	const s = activeSeries(days);
-	assert.equal(s.length, 56);
-	assert.equal(s.at(-1)?.day, "2026-11-03");
 });
 
 const row = (name: string) => ({

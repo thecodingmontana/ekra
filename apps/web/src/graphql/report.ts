@@ -27,7 +27,7 @@ export type LearnerRow = {
 };
 export type LearnerReport = {
 	totalLearners: number;
-	dailyActive: DayCount[];
+	weeklyActive: DayCount[];
 	mostActive: { person: ReportPerson; count: number }[];
 	recent: ActivityEvent[];
 	learners: LearnerRow[];
@@ -91,7 +91,7 @@ export const LEARNER_REPORT = gql`
 	query LearnerReport($slug: String!) {
 		learnerReport(slug: $slug) {
 			totalLearners
-			dailyActive {
+			weeklyActive {
 				day
 				count
 			}

@@ -124,7 +124,7 @@ function Overview({
 				<PanelSkeleton />
 			</div>
 		);
-	const series = activeSeries(report.dailyActive);
+	const series = activeSeries(report.weeklyActive);
 	const anyActive = series.some((p) => p.learners > 0);
 	return (
 		<div className={GRID}>
@@ -182,8 +182,8 @@ function Overview({
 				)}
 			</Panel>
 			<Panel
-				title="Daily active learners"
-				sub="Learners active each day, last 8 weeks"
+				title="Weekly active learners"
+				sub="People active each week, each counted once, last 8 weeks"
 				className="lg:col-span-2"
 				testId="weekly-active"
 			>
