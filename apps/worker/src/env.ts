@@ -19,3 +19,9 @@ export const env = createEnv({
 	runtimeEnv: process.env,
 	emptyStringAsUndefined: true,
 });
+
+// .env.example's placeholder is public: fine on a laptop, never on a server
+if (env.NODE_ENV === "production" && env.S3_SECRET_KEY.includes("change-me"))
+	throw new Error(
+		"S3_SECRET_KEY still has the placeholder from .env.example. Set the storage's real secret key before running in production.",
+	);

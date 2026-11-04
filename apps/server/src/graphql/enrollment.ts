@@ -24,6 +24,7 @@ import {
 	type Ctx,
 	findMany,
 	findOne,
+	isGuest,
 	manage,
 	parse,
 	refuse,
@@ -124,6 +125,8 @@ const TAKEABLE = new Set([
 	"assignment",
 ]);
 const date = z.iso.datetime({ offset: true }).nullish();
+/** at most as many as one assignment makes */
+const enrollmentIds = z.array(z.string().max(32)).max(500);
 
 /** Content that can be given to people: visible here, and not a folder. */
 async function takeable(tx: Tx, org: ActiveOrg, userId: string, id: string) {
@@ -296,12 +299,13 @@ export const enrollmentResolvers = {
 			ctx: Ctx,
 		) =>
 			manage(ctx, args.slug, async (tx) => {
+				const ids = parse(enrollmentIds, args.ids);
 				const dueAt = parse(date, args.dueAt);
 				await tx
 					.update(enrollment)
 					.set({ dueAt: dueAt ? new Date(dueAt) : null })
-					.where(inArray(enrollment.id, args.ids));
-				return listEnrollments(tx, inArray(enrollment.id, args.ids));
+					.where(inArray(enrollment.id, ids));
+				return listEnrollments(tx, inArray(enrollment.id, ids));
 			}),
 		removeEnrollments: (
 			_p: unknown,
@@ -311,7 +315,7 @@ export const enrollmentResolvers = {
 			manage(ctx, slug, async (tx) => {
 				const gone = await tx
 					.delete(enrollment)
-					.where(inArray(enrollment.id, ids))
+					.where(inArray(enrollment.id, parse(enrollmentIds, ids)))
 					.returning({ id: enrollment.id });
 				return gone.length;
 			}),
@@ -321,6 +325,7 @@ export const enrollmentResolvers = {
 			ctx: Ctx,
 		) => {
 			const kind = parse(z.enum(["running_out", "overdue"]), args.kind);
+			const ids = parse(enrollmentIds, args.ids);
 			const from =
 				(ctx.session as { user?: { name?: string } } | null)?.user?.name ??
 				"Your trainer";
@@ -331,14 +336,14 @@ export const enrollmentResolvers = {
 					const asked = await tx
 						.select({ id: enrollment.id })
 						.from(enrollment)
-						.where(inArray(enrollment.id, args.ids));
+						.where(inArray(enrollment.id, ids));
 					// claimed in one statement, so two clicks at once can't both send
 					const claimed = await tx
 						.update(enrollment)
 						.set({ remindedAt: new Date() })
 						.where(
 							and(
-								inArray(enrollment.id, args.ids),
+								inArray(enrollment.id, ids),
 								or(
 									isNull(enrollment.remindedAt),
 									lt(
@@ -419,6 +424,9 @@ export const enrollmentResolvers = {
 		},
 		startLearning: (_p: unknown, args: Args<{ contentId: string }>, ctx: Ctx) =>
 			asMember(ctx, args.slug, async (tx, org, userId) => {
+				// guests take only what's assigned to them
+				if (isGuest(org.role))
+					return refuse("Guests take what's assigned to them.", "FORBIDDEN");
 				await takeable(tx, org, userId, args.contentId);
 				// already given it (assigned or started): keep that, with its dates
 				await tx

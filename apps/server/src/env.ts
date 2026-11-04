@@ -51,3 +51,17 @@ export const env = createEnv({
 	// treat VAR= in .env as unset, so defaults apply
 	emptyStringAsUndefined: true,
 });
+
+/** The secrets still set to `.env.example`'s placeholder ("change-me…"), by name. */
+export const placeholderSecrets = (secrets: Record<string, string>) =>
+	Object.keys(secrets).filter((name) => secrets[name]?.includes("change-me"));
+
+// anyone who has read .env.example knows these values: fine on a laptop, never on a server
+const placeholders = placeholderSecrets({
+	BETTER_AUTH_SECRET: env.BETTER_AUTH_SECRET,
+	S3_SECRET_KEY: env.S3_SECRET_KEY,
+});
+if (env.NODE_ENV === "production" && placeholders.length)
+	throw new Error(
+		`${placeholders.join(" and ")} still ${placeholders.length > 1 ? "have" : "has"} the placeholder from .env.example. Set a random value (openssl rand -base64 48) before running in production.`,
+	);

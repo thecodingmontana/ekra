@@ -29,6 +29,17 @@ export const cookieFrom = (response: Response) =>
 		.map((c) => c.split(";")[0])
 		.join("; ");
 
+/**
+ * A different client address for every request (from a random start, as test files run in parallel processes),
+ * so the rate limits, which stay on in tests as in production, count each call on its own and a busy test file
+ * never trips them. A test about limits sends its own address.
+ */
+let address = Math.floor(Math.random() * 2 ** 32);
+const nextIp = () => {
+	address = (address + 1) >>> 0;
+	return [24, 16, 8, 0].map((shift) => (address >>> shift) & 255).join(".");
+};
+
 /** A request the way the browser sends it: same origin, JSON, with a cookie when signed in. */
 export function call(
 	path: string,
@@ -40,6 +51,7 @@ export function call(
 		headers: {
 			origin: ORIGIN,
 			"content-type": "application/json",
+			"x-forwarded-for": nextIp(),
 			cookie,
 			...headers,
 		},

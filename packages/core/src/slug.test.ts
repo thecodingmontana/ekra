@@ -29,3 +29,23 @@ test("slugProblem explains what's wrong", () => {
 	assert.match(slugProblem("www") ?? "", /reserved/);
 	assert.match(slugProblem("api") ?? "", /reserved/);
 });
+
+test("names a phishing page could pose as are reserved", () => {
+	for (const name of [
+		"login",
+		"signin",
+		"signup",
+		"sso",
+		"accounts",
+		"account",
+		"billing",
+		"auth",
+		"admin",
+		"support",
+		"help",
+		"status",
+		"mail",
+		"www",
+	])
+		assert.match(slugProblem(name) ?? "", /reserved/, name);
+});

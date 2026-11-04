@@ -190,7 +190,8 @@ export type AttemptQuestion = {
 
 export type QuestionReview = {
 	questionId: string;
-	correct: boolean;
+	/** null when the quiz doesn't show answers */
+	correct: boolean | null;
 	/** JSON, or null when the quiz doesn't show answers */
 	correctAnswer: string | null;
 	explanation: string | null;

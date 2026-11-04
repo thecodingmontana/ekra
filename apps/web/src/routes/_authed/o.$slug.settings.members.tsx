@@ -13,13 +13,14 @@ import { ConfirmModal } from "@ekra/ui/components/modal";
 import { Spinner } from "@ekra/ui/components/spinner";
 import { toast } from "@ekra/ui/lib/toast";
 import { cn } from "@ekra/ui/lib/utils";
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute, notFound, useRouter } from "@tanstack/react-router";
 import { type FormEvent, useState } from "react";
 import { SBlock, SettingsHeader } from "@/components/settings-ui";
 import { authClient, authErrorMessage } from "@/lib/auth-client";
 import { authGet } from "@/lib/auth-get";
 import {
 	assignableRoles,
+	canManageContent,
 	canManageMember,
 	canManageMembers,
 	mainRole,
@@ -45,6 +46,10 @@ type Invitation = {
 
 export const Route = createFileRoute("/_authed/o/$slug/settings/members")({
 	head: () => ({ meta: [{ title: "Members · Ekra" }] }),
+	// the list shows everyone's email: only for people who run the organization (the API refuses others too)
+	beforeLoad: ({ context: { membership } }) => {
+		if (!canManageContent(membership.role)) throw notFound();
+	},
 	loader: async ({ context: { membership } }) => {
 		const org = encodeURIComponent(membership.organization.id);
 		const [members, invitations] = await Promise.all([

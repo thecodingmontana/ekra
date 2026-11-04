@@ -14,13 +14,15 @@ import { routeTree } from "./routeTree.gen";
 // During server rendering, call the API directly with the visitor's cookies; in the browser, use /api on this origin.
 const graphqlFetch = createIsomorphicFn()
 	.server((): typeof fetch => async (_input, init) => {
-		const [{ env }, { getRequestHeaders }] = await Promise.all([
+		const [{ env }, { getRequestHeaders, getRequest }] = await Promise.all([
 			import("./env.ts"),
 			import("@tanstack/react-start/server"),
 		]);
 		const headers = new Headers(init?.headers);
 		const cookie = getRequestHeaders().get("cookie");
 		if (cookie) headers.set("cookie", cookie);
+		// the API takes POSTs only from the app's own origin (the address this page was opened at)
+		headers.set("origin", new URL(getRequest().url).origin);
 		return fetch(`${env.API_URL}/api/graphql`, { ...init, headers });
 	})
 	.client((): typeof fetch => (input, init) => {

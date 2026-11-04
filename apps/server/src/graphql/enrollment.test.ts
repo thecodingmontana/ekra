@@ -375,3 +375,113 @@ test("two reminders at once send one email, with the due date in UTC", async () 
 	assert.equal(sent.length, before + 1);
 	assert.match(sent.at(-1)?.text ?? "", /Due: 4 Nov 2026, 21:30 UTC\./);
 });
+
+test("a guest sees and takes only what's assigned to them, and can't start anything else", async () => {
+	await post("/api/auth/sign-in/magic-link", {
+		email: emailOf("gina"),
+		callbackURL: "/",
+	});
+	cookies.gina = cookieFrom(await call(linkInLatestEmail(emailOf("gina"))));
+	const [gina] = await db
+		.select({ id: user.id })
+		.from(user)
+		.where(eq(user.email, emailOf("gina")));
+	const [org] = await db
+		.select({ id: organization.id })
+		.from(organization)
+		.where(eq(organization.slug, S));
+	await db.insert(member).values({
+		organizationId: org?.id ?? "",
+		userId: gina?.id ?? "",
+		role: "guest",
+	});
+	try {
+		const given = await make("page", "Shared with the guest");
+		const open = await make("page", "Open to members");
+		const step = await make("page", "Inside a shared path");
+		const path = await make("path", "Shared path");
+		for (const id of [given, open, step, path]) await publish(id);
+		const stage = data<{ id: string }>(
+			await gql(
+				"amina",
+				'mutation ($slug: String!, $p: ID!) { r: addStage(slug: $slug, pathId: $p, title: "One") { id } }',
+				{ slug: S, p: path },
+			),
+		).id;
+		data(
+			await gql(
+				"amina",
+				"mutation ($slug: String!, $s: ID!, $c: ID!) { r: addStep(slug: $slug, stageId: $s, contentId: $c) { id } }",
+				{ slug: S, s: stage, c: step },
+			),
+		);
+		for (const c of [given, path])
+			data(await gql("amina", ENROLL, { slug: S, c, u: [gina?.id] }));
+
+		const library = data<{ items: { id: string }[] }>(
+			await gql(
+				"gina",
+				"query ($slug: String!) { r: library(slug: $slug) { items { id } } }",
+				{ slug: S },
+			),
+		);
+		assert.deepEqual(
+			library.items.map((i) => i.id).sort(),
+			[given, path, step].sort(),
+		);
+		const content = (id: string) =>
+			gql(
+				"gina",
+				"query ($slug: String!, $id: ID!) { r: content(slug: $slug, id: $id) { id } }",
+				{ slug: S, id },
+			);
+		assert.equal((await content(open)).data?.r, null);
+		assert.equal(data<{ id: string }>(await content(step)).id, step);
+
+		const start = (c: string) =>
+			gql(
+				"gina",
+				"mutation ($slug: String!, $c: ID!) { r: startLearning(slug: $slug, contentId: $c) }",
+				{ slug: S, c },
+			);
+		assert.equal(code(await start(open)), "FORBIDDEN");
+		assert.equal(code(await start(given)), "FORBIDDEN");
+		// what's assigned can still be finished
+		assert.equal(
+			data(
+				await gql(
+					"gina",
+					"mutation ($slug: String!, $c: ID!) { r: markDone(slug: $slug, contentId: $c, done: true) }",
+					{ slug: S, c: given },
+				),
+			),
+			true,
+		);
+	} finally {
+		await db.delete(user).where(eq(user.email, emailOf("gina")));
+	}
+});
+
+test("enrollment lists are capped like assigning", async () => {
+	const many = Array.from({ length: 501 }, (_, i) => `x${i}`);
+	const queries = [
+		[
+			"updateEnrollments",
+			"mutation ($slug: String!, $ids: [ID!]!) { r: updateEnrollments(slug: $slug, ids: $ids) { id } }",
+		],
+		[
+			"removeEnrollments",
+			"mutation ($slug: String!, $ids: [ID!]!) { r: removeEnrollments(slug: $slug, ids: $ids) }",
+		],
+		[
+			"remindEnrollments",
+			"mutation ($slug: String!, $ids: [ID!]!) { r: remindEnrollments(slug: $slug, ids: $ids, kind: overdue) { sent } }",
+		],
+	] as const;
+	for (const [name, query] of queries)
+		assert.equal(
+			code(await gql("amina", query, { slug: S, ids: many })),
+			"BAD_USER_INPUT",
+			name,
+		);
+});

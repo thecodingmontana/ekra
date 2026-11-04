@@ -26,6 +26,8 @@ export function QuizResults({
 		? Math.round((result.score * 100) / result.maxScore)
 		: 0;
 	const right = result.review.filter((r) => r.correct).length;
+	// a quiz that never shows answers gives only the score
+	const shown = result.review.some((r) => r.correct !== null);
 	const tone = result.passed === false ? "text-destructive" : "text-tint-green";
 
 	return (
@@ -68,8 +70,8 @@ export function QuizResults({
 								: "Quiz finished"}
 					</h2>
 					<p className="m-0 text-muted-foreground" data-testid="results-score">
-						{result.score} of {result.maxScore} points · {right} of{" "}
-						{result.review.length} questions right
+						{result.score} of {result.maxScore} points
+						{shown && ` · ${right} of ${result.review.length} questions right`}
 					</p>
 					{result.message && (
 						<p
@@ -103,25 +105,27 @@ export function QuizResults({
 							>
 								<div className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
 									<span className="font-medium">Question {i + 1}</span>
-									<span
-										className={cn(
-											"inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-medium text-xs",
-											r?.correct
-												? "bg-tint-green/12 text-tint-green"
-												: "bg-destructive/10 text-destructive",
-										)}
-									>
+									{r && r.correct !== null && (
 										<span
 											className={cn(
+												"inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-medium text-xs",
 												r?.correct
-													? "icon-[solar--check-circle-linear]"
-													: "icon-[solar--close-circle-linear]",
-												"size-3.5",
+													? "bg-tint-green/12 text-tint-green"
+													: "bg-destructive/10 text-destructive",
 											)}
-											aria-hidden="true"
-										/>
-										{r?.correct ? "Right" : "Wrong"}
-									</span>
+										>
+											<span
+												className={cn(
+													r?.correct
+														? "icon-[solar--check-circle-linear]"
+														: "icon-[solar--close-circle-linear]",
+													"size-3.5",
+												)}
+												aria-hidden="true"
+											/>
+											{r?.correct ? "Right" : "Wrong"}
+										</span>
+									)}
 									<span className="ml-auto flex items-center gap-1 text-muted-foreground text-xs">
 										<span
 											className={cn(KIND_ICON[q.kind], "size-3")}

@@ -12,7 +12,7 @@ import {
 } from "@tanstack/react-router";
 import { createIsomorphicFn } from "@tanstack/react-start";
 import { type ReactElement, type ReactNode, useEffect, useState } from "react";
-import { SETTINGS_GROUPS } from "@/lib/settings-nav";
+import { settingsGroupsFor } from "@/lib/settings-nav";
 
 const COOKIE = "settings_nav_collapsed";
 
@@ -76,7 +76,7 @@ function SettingsLayout() {
 		document.cookie = `${COOKIE}=${next ? 1 : 0}; path=/; max-age=31536000; samesite=lax`;
 	}
 
-	const groups = SETTINGS_GROUPS;
+	const groups = settingsGroupsFor(membership.role);
 	const current = groups
 		.flatMap((g) => g.items)
 		.find((i) => pathname.endsWith(i.to.replace("/o/$slug", "")));

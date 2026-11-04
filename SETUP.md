@@ -183,26 +183,26 @@ openssl rand -hex 24
 
 `POSTGRES_PASSWORD` appears again inside `DATABASE_URL` and `TEST_DATABASE_URL`: use the same value in all three.
 
-| Variable                                            | What it is                                                                                                                             |
-| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | Database user, password and name created on first start                                                                                |
-| `POSTGRES_PORT`                                     | Port on your machine for Postgres (default `5433`, so it doesn't clash with a native Postgres on 5432)                                 |
-| `DATABASE_URL`                                      | Connection string the apps use                                                                                                         |
-| `TEST_DATABASE_URL`                                 | Separate database for tests (`ekra_test`, created automatically)                                                                       |
-| `S3_PORT`                                           | Port on your machine for SeaweedFS's S3 API (default `8334`)                                                                           |
-| `S3_ENDPOINT`                                       | S3 address the apps use                                                                                                                |
-| `S3_REGION`                                         | Any value; SeaweedFS ignores it but S3 clients need one                                                                                |
-| `S3_BUCKET`                                         | Bucket for uploads and videos (the API creates it on the first upload)                                                                 |
-| `S3_ACCESS_KEY`, `S3_SECRET_KEY`                    | S3 credentials. SeaweedFS creates an admin user with them on start                                                                     |
-| `SERVER_HOST`, `SERVER_PORT`                        | Where the API server listens (default `127.0.0.1:4000`)                                                                                |
-| `NODE_ENV`                                          | `development` (default), `test` or `production`. GraphiQL is off in production                                                         |
-| `API_URL`                                           | Where the web app reaches the API server (default `http://127.0.0.1:4000`)                                                             |
-| `BETTER_AUTH_SECRET`                                | Signs sign-in sessions ([Better Auth](https://www.better-auth.com)). 32+ random characters: `openssl rand -base64 48`                  |
-| `BETTER_AUTH_URL`                                   | The address people open the app at (default `http://ekra.localhost:3000`, the web app; organizations get subdomains of it)             |
-| `TRUSTED_PROXIES`                                   | Production: your reverse proxy's IPs or CIDRs (comma-separated), so rate limits see each visitor's real IP. Loopback is always trusted |
-| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`          | Optional. "Continue with Google" appears only when both are set (callback `<BETTER_AUTH_URL>/api/auth/callback/google`)                |
-| `EMAIL_PROVIDER`                                    | `resend` (default) or `console`. See [Email](#email-sign-in-links-confirmations-password-resets)                                       |
-| `RESEND_API_KEY`, `EMAIL_FROM`                      | Resend API key and the sender address (`Ekra <noreply@your-domain.com>`)                                                               |
+| Variable                                            | What it is                                                                                                                                    |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | Database user, password and name created on first start                                                                                       |
+| `POSTGRES_PORT`                                     | Port on your machine for Postgres (default `5433`, so it doesn't clash with a native Postgres on 5432)                                        |
+| `DATABASE_URL`                                      | Connection string the apps use                                                                                                                |
+| `TEST_DATABASE_URL`                                 | Separate database for tests (`ekra_test`, created automatically)                                                                              |
+| `S3_PORT`                                           | Port on your machine for SeaweedFS's S3 API (default `8334`)                                                                                  |
+| `S3_ENDPOINT`                                       | S3 address the apps use                                                                                                                       |
+| `S3_REGION`                                         | Any value; SeaweedFS ignores it but S3 clients need one                                                                                       |
+| `S3_BUCKET`                                         | Bucket for uploads and videos (the API creates it on the first upload)                                                                        |
+| `S3_ACCESS_KEY`, `S3_SECRET_KEY`                    | S3 credentials. SeaweedFS creates an admin user with them on start                                                                            |
+| `SERVER_HOST`, `SERVER_PORT`                        | Where the API server listens (default `127.0.0.1:4000`)                                                                                       |
+| `NODE_ENV`                                          | `development` (default), `test` or `production`. Production turns off GraphiQL and introspection, sends HSTS, and refuses `change-me` secrets |
+| `API_URL`                                           | Where the web app reaches the API server (default `http://127.0.0.1:4000`)                                                                    |
+| `BETTER_AUTH_SECRET`                                | Signs sign-in sessions ([Better Auth](https://www.better-auth.com)). 32+ random characters: `openssl rand -base64 48`                         |
+| `BETTER_AUTH_URL`                                   | The address people open the app at (default `http://ekra.localhost:3000`, the web app; organizations get subdomains of it)                    |
+| `TRUSTED_PROXIES`                                   | Production: your reverse proxy's IPs or CIDRs (comma-separated), so rate limits see each visitor's real IP. Loopback is always trusted        |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`          | Optional. "Continue with Google" appears only when both are set (callback `<BETTER_AUTH_URL>/api/auth/callback/google`)                       |
+| `EMAIL_PROVIDER`                                    | `resend` (default) or `console`. See [Email](#email-sign-in-links-confirmations-password-resets)                                              |
+| `RESEND_API_KEY`, `EMAIL_FROM`                      | Resend API key and the sender address (`Ekra <noreply@your-domain.com>`)                                                                      |
 
 Each app checks its variables when it starts (with [`@t3-oss/env-core`](https://env.t3.gg) and zod, in the app's
 `src/env.ts`). A missing or invalid value stops it with a message naming the variable.
@@ -424,7 +424,12 @@ all (the session cookie is set for `ekra.localhost` and its subdomains).
 - The page shows **API: ok** when the web app can reach the API.
 - The browser only talks to `/api` on port 3000. The web server forwards `/api/*` to `API_URL`, in development and in
   the production build, so cookies stay on one origin.
-- Production build: `pnpm --filter @ekra/web build`, then `pnpm --filter @ekra/web start` (serves `.output/`).
+- Production build: `pnpm --filter @ekra/web build`, then `NODE_ENV=production pnpm --filter @ekra/web start` (serves `.output/`).
+  Its pages carry a Content-Security-Policy (`apps/web/src/lib/security-headers.ts`); development sends none, so
+  Vite's live reload works. A new outside origin (fonts, pictures, embeds) has to be added there.
+- Security in production: the API takes GraphQL and media changes only from the app's own origins (your proxy must
+  pass the `Origin` header through), and counts GraphQL changes, upload starts and crash reports per visitor IP in
+  memory (one API process; set `TRUSTED_PROXIES` so the IP is the visitor's). Sign-in limits are kept in Postgres.
 - UI components come from `packages/ui` (shadcn/ui on Base UI). Add one with
   `pnpm dlx shadcn@latest add <component> -c apps/web`; it lands in `packages/ui/src/components`.
 

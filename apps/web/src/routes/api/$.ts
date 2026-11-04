@@ -18,6 +18,9 @@ const HOP_BY_HOP = [
  */
 async function forward({ request }: { request: Request }): Promise<Response> {
 	const url = new URL(request.url);
+	// only the operator's proxy asks this, straight at the API; the public never needs it
+	if (url.pathname.replace(/\/+$/, "") === "/api/domains/allowed")
+		return new Response(null, { status: 404 });
 	const headers = new Headers(request.headers);
 	headers.delete("host");
 	headers.set("x-forwarded-host", url.host);

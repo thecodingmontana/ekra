@@ -153,7 +153,7 @@ type Attempt = {
 		maxScore: number;
 		passed: boolean | null;
 		message: string | null;
-		review: { correct: boolean; correctAnswer: string | null }[];
+		review: { correct: boolean | null; correctAnswer: string | null }[];
 	} | null;
 };
 const ATTEMPT_FIELDS =
@@ -434,4 +434,34 @@ test("a timed-out attempt shows in your learning as handed in, without opening t
 		),
 	);
 	assert.equal(mine.find((m) => m.content.id === id)?.status, "completed");
+});
+
+test("answers stop at the deadline itself; the grace is only for handing in", async () => {
+	const id = await newQuiz("On the dot", { timeLimitSeconds: 60 });
+	const attempt = data<Attempt>(await start("dan", id));
+	const mc = attempt.questions.find((q) => q.kind === "multiple_choice");
+	// a few seconds past the deadline, inside the hand-in grace
+	await db
+		.update(quizAttempt)
+		.set({ deadline: new Date(Date.now() - 5_000) })
+		.where(eq(quizAttempt.id, attempt.id));
+	assert.equal(
+		code(await answer("dan", attempt.id, mc?.id ?? "", RIGHT.multiple_choice)),
+		"FORBIDDEN",
+	);
+	assert.ok(data<Attempt>(await submit("dan", attempt.id)).result);
+});
+
+test("a quiz that never shows answers doesn't say which ones were right", async () => {
+	const id = await newQuiz("Secret", { showAnswers: "never" });
+	const attempt = data<Attempt>(await start("dan", id));
+	for (const q of attempt.questions)
+		await answer("dan", attempt.id, q.id, RIGHT[q.kind]);
+	const done = data<Attempt>(await submit("dan", attempt.id));
+	assert.ok(done.result?.score, "the total score is still shown");
+	assert.ok(
+		done.result?.review.every(
+			(r) => r.correct === null && r.correctAnswer === null,
+		),
+	);
 });

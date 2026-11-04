@@ -5,9 +5,10 @@ import {
 	contentVersion,
 	contentView,
 	type courseSection,
-	type lesson,
+	enrollment,
+	lesson,
 	type pathStage,
-	type pathStep,
+	pathStep,
 	type quizQuestion,
 	type Tx,
 	user,
@@ -22,6 +23,7 @@ import {
 	inArray,
 	isNotNull,
 	isNull,
+	or,
 	type SQL,
 	sql,
 } from "drizzle-orm";
@@ -34,7 +36,7 @@ import { type ActiveOrg, orgBySlug } from "./tenant.ts";
 /**
  * An organization's learning content (the library). Every read and write runs through withOrg, so Postgres
  * row-level security only lets this organization's rows through. Owners, admins and trainers manage content;
- * learners and guests see what's published, never drafts or templates.
+ * learners see what's published, never drafts or templates; guests only the published part of what's assigned to them.
  */
 export const libraryTypeDefs = /* GraphQL */ `
 	extend type Query {
@@ -228,8 +230,43 @@ export const learnerVisible = () =>
 		eq(contentItem.isTemplate, false),
 		isNull(contentItem.archivedAt),
 	);
-const visibleTo = (org: ActiveOrg) =>
-	canManageContent(org.role) ? undefined : learnerVisible();
+
+export const isGuest = (role: string) =>
+	role.split(",").every((r) => r.trim() === "guest");
+
+/**
+ * What's been given to a guest: their enrollments, the steps of paths among them, and the quizzes inside
+ * those courses (a course can sit in a path), so they can take everything assigned to them.
+ */
+function assignedTo(userId: string) {
+	const given = db
+		.select({ id: enrollment.contentId })
+		.from(enrollment)
+		.where(eq(enrollment.userId, userId));
+	const steps = db
+		.select({ id: pathStep.contentId })
+		.from(pathStep)
+		.where(inArray(pathStep.pathId, given));
+	const quizzes = db
+		.select({ id: lesson.quizId })
+		.from(lesson)
+		.where(
+			or(inArray(lesson.courseId, given), inArray(lesson.courseId, steps)),
+		);
+	return or(
+		inArray(contentItem.id, given),
+		inArray(contentItem.id, steps),
+		inArray(contentItem.id, quizzes),
+	);
+}
+
+/** Managers see everything; learners what's published; guests only the published part of what they were given. */
+const visibleTo = (org: ActiveOrg, userId: string) =>
+	canManageContent(org.role)
+		? undefined
+		: isGuest(org.role)
+			? and(learnerVisible(), assignedTo(userId))
+			: learnerVisible();
 
 export function parse<T extends z.ZodType>(
 	schema: T,
@@ -304,7 +341,7 @@ export async function findOne(
 	id: string,
 ) {
 	const [row] = await select(tx, userId)
-		.where(and(eq(contentItem.id, id), visibleTo(org)))
+		.where(and(eq(contentItem.id, id), visibleTo(org, userId)))
 		.limit(1);
 	return row ?? null;
 }
@@ -318,7 +355,7 @@ export async function findMany(
 ) {
 	if (!ids.length) return new Map<string, Selected>();
 	const rows = await select(tx, userId).where(
-		and(inArray(contentItem.id, [...new Set(ids)]), visibleTo(org)),
+		and(inArray(contentItem.id, [...new Set(ids)]), visibleTo(org, userId)),
 	);
 	return new Map(rows.map((r) => [r.item.id, r]));
 }
@@ -517,7 +554,7 @@ export const libraryResolvers = {
 							archived
 								? isNotNull(contentItem.archivedAt)
 								: isNull(contentItem.archivedAt),
-							visibleTo(org),
+							visibleTo(org, userId),
 						),
 					)
 					.orderBy(desc(contentItem.updatedAt))

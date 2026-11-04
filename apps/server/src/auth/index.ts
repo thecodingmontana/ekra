@@ -5,7 +5,7 @@ import {
 	passwordProblem,
 	slugProblem,
 } from "@ekra/core";
-import { generateId, schema } from "@ekra/db";
+import { generateId, member, schema } from "@ekra/db";
 import {
 	invitationEmail,
 	resetPasswordEmail,
@@ -14,15 +14,20 @@ import {
 } from "@ekra/email";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { APIError, createAuthMiddleware } from "better-auth/api";
+import {
+	APIError,
+	createAuthMiddleware,
+	getSessionFromCtx,
+} from "better-auth/api";
 import { deleteSessionCookie } from "better-auth/cookies";
 import { generateRandomString } from "better-auth/crypto";
 import { magicLink, organization, twoFactor } from "better-auth/plugins";
+import { and, eq } from "drizzle-orm";
 import { db } from "../db.ts";
 import { mailer, sendInBackground } from "../email.ts";
 import { env } from "../env.ts";
 import { nameFromEmail } from "./name-from-email.ts";
-import { ac, roles } from "./permissions.ts";
+import { ac, canManageContent, roles } from "./permissions.ts";
 import { isTrustedDevice } from "./trusted-device.ts";
 
 const MAGIC_LINK_MINUTES = 10;
@@ -65,6 +70,44 @@ function assertSlug(slug: string) {
 
 const INVITATION_DAYS = 7;
 
+/** Better Auth's endpoints that list everyone's email in an organization: only for those who run it. */
+const ROSTER_PATHS = new Set([
+	"/organization/list-members",
+	"/organization/get-full-organization",
+	"/organization/list-invitations",
+]);
+
+/** The caller's role in the organization a request names (id or slug), else the session's active one. */
+async function roleIn(
+	userId: string,
+	query: { organizationId?: unknown; organizationSlug?: unknown } | undefined,
+	activeOrganizationId: string | null | undefined,
+) {
+	const id =
+		typeof query?.organizationId === "string" ? query.organizationId : null;
+	const slug =
+		typeof query?.organizationSlug === "string" ? query.organizationSlug : null;
+	const which = id ?? (slug ? null : activeOrganizationId);
+	if (!which && !slug) return null;
+	const [row] = await db
+		.select({ role: member.role })
+		.from(member)
+		.innerJoin(
+			schema.organization,
+			eq(schema.organization.id, member.organizationId),
+		)
+		.where(
+			and(
+				eq(member.userId, userId),
+				which
+					? eq(member.organizationId, which)
+					: eq(schema.organization.slug, slug ?? ""),
+			),
+		)
+		.limit(1);
+	return row?.role ?? null;
+}
+
 /** Sign-in methods that are switched on, so the sign-in page only offers those. */
 export const signInMethods = [
 	"password",
@@ -96,8 +139,18 @@ export const auth = betterAuth({
 		// a visitor's IP is the last address in X-Forwarded-For that isn't one of our proxies (the web app adds it)
 		ipAddress: { trustedProxies: env.TRUSTED_PROXIES },
 	},
-	// counted in Postgres rather than in memory, so limits hold across server restarts and instances
-	rateLimit: { storage: "database" },
+	// counted in Postgres rather than in memory, so limits hold across server restarts and instances; on in every
+	// environment (Better Auth turns it off outside production by default), so development and tests see them too
+	rateLimit: {
+		enabled: true,
+		storage: "database",
+		customRules: {
+			// each one sends an email
+			"/organization/invite-member": { window: 600, max: 10 },
+			// a six-digit code can't be guessed in a few tries a minute
+			"/two-factor/*": { window: 60, max: 5 },
+		},
+	},
 	emailAndPassword: {
 		enabled: true,
 		// password sign-in works once the address is confirmed (Google and email links prove it already)
@@ -147,6 +200,22 @@ export const auth = betterAuth({
 	hooks: {
 		// the same password rules the forms show (packages/core), so calling the API directly can't skip them
 		before: createAuthMiddleware(async (ctx) => {
+			if (ROSTER_PATHS.has(ctx.path)) {
+				const session = await getSessionFromCtx(ctx);
+				// signed out: Better Auth answers 401 itself
+				if (!session) return;
+				const role = await roleIn(
+					session.user.id,
+					ctx.query,
+					session.session.activeOrganizationId,
+				);
+				if (!role || !canManageContent(role))
+					throw new APIError("FORBIDDEN", {
+						message:
+							"Only people who run this organization can see its members.",
+					});
+				return;
+			}
 			const body = ctx.body as
 				| { password?: unknown; newPassword?: unknown }
 				| undefined;
@@ -161,10 +230,12 @@ export const auth = betterAuth({
 			if (problem) throw new APIError("BAD_REQUEST", { message: problem });
 		}),
 		// Better Auth asks for the second step only after password sign-in; do the same for
-		// Google and emailed links, so neither skips it (passkeys are already two factors)
+		// Google (the redirect callback, or an ID token sent to /sign-in/social) and emailed links,
+		// so none skips it (passkeys are already two factors)
 		after: createAuthMiddleware(async (ctx) => {
 			if (
 				!ctx.path.startsWith("/callback/") &&
+				ctx.path !== "/sign-in/social" &&
 				ctx.path !== "/magic-link/verify"
 			)
 				return;
@@ -294,3 +365,7 @@ export const auth = betterAuth({
 });
 
 export type Auth = typeof auth;
+
+/** The app's own address or one of its organizations' subdomains: Better Auth's trustedOrigins rule, reused. */
+export const isTrustedOrigin = async (origin: string | null | undefined) =>
+	!!origin && (await auth.$context).isTrustedOrigin(origin);

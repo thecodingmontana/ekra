@@ -183,7 +183,8 @@ export const quizTypeDefs = /* GraphQL */ `
 
 	type QuestionReview {
 		questionId: ID!
-		correct: Boolean!
+		"null when the quiz doesn't show answers"
+		correct: Boolean
 		"JSON, or null when the quiz doesn't show answers"
 		correctAnswer: String
 		explanation: String
@@ -198,7 +199,7 @@ export const quizTypeDefs = /* GraphQL */ `
 	}
 `;
 
-/** A few seconds' grace after the deadline, for answers already on their way. */
+/** A few seconds' grace after the deadline before an open attempt is handed in for its learner. */
 const GRACE_MS = 30_000;
 const DEFAULTS = {
 	passPercent: null,
@@ -364,7 +365,8 @@ async function attemptView(tx: Tx, attempt: Attempt, settings: Settings) {
 						const p = q.payload as QuestionPayload;
 						return {
 							questionId: q.id,
-							correct: isCorrect(p, attempt.answers[q.id]),
+							// with "never", only the total score is shown
+							correct: reveal ? isCorrect(p, attempt.answers[q.id]) : null,
 							correctAnswer: reveal ? correctAnswerOf(p) : null,
 							explanation: reveal ? q.explanation : null,
 						};
@@ -700,7 +702,8 @@ export const quizResolvers = {
 				const { settings } = await visibleQuiz(tx, org, userId, attempt.quizId);
 				if (attempt.submittedAt)
 					return refuse("This attempt is already handed in.", "FORBIDDEN");
-				if (timeUp(attempt, GRACE_MS))
+				// the grace is for handing in what's already saved, not for new answers
+				if (timeUp(attempt))
 					return refuse("Time's up for this attempt.", "FORBIDDEN");
 				if (!attempt.questionIds.includes(args.questionId))
 					return refuse(

@@ -3,16 +3,19 @@ import { eq } from "drizzle-orm";
 import { createError, EvlogError, parseError } from "evlog";
 import type { EvlogVariables } from "evlog/hono";
 import { Hono } from "hono";
+import { createMiddleware } from "hono/factory";
+import { secureHeaders } from "hono/secure-headers";
 import { streamSSE } from "hono/streaming";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { z } from "zod";
-import { auth } from "./auth/index.ts";
+import { auth, isTrustedOrigin } from "./auth/index.ts";
 import { db } from "./db.ts";
 import { env } from "./env.ts";
 import { orgBySlug } from "./graphql/tenant.ts";
 import { yoga } from "./graphql/yoga.ts";
 import { requestLogs } from "./log.ts";
 import { media } from "./media.ts";
+import { perMinute } from "./rate-limit.ts";
 import { onChange, trackStream } from "./realtime.ts";
 
 /** Every API route lives under /api, so a proxy (or the web app's server) can send /api/* here. */
@@ -20,6 +23,30 @@ export const app = new Hono<EvlogVariables>().basePath("/api");
 
 // one structured log event per request (src/log.ts)
 app.use(requestLogs);
+
+app.use(
+	secureHeaders({
+		xFrameOptions: "DENY",
+		xContentTypeOptions: "nosniff",
+		referrerPolicy: "strict-origin-when-cross-origin",
+		permissionsPolicy: { camera: [], microphone: [], geolocation: [] },
+		// only behind HTTPS; on a laptop it would pin http://localhost to https
+		strictTransportSecurity:
+			env.NODE_ENV === "production"
+				? "max-age=31536000; includeSubDomains"
+				: false,
+		// the API serves JSON and media, not pages; the web app sets its own CSP
+		contentSecurityPolicy: undefined,
+		crossOriginResourcePolicy: false,
+		crossOriginOpenerPolicy: false,
+		crossOriginEmbedderPolicy: false,
+		originAgentCluster: false,
+		xDnsPrefetchControl: false,
+		xDownloadOptions: false,
+		xPermittedCrossDomainPolicies: false,
+		xXssProtection: false,
+	}),
+);
 
 // the full error goes into the request's log event; the client gets the safe parts only
 app.onError((error, c) => {
@@ -59,7 +86,7 @@ const clientError = z.object({
 	stack: z.string().max(8000).optional(),
 	path: z.string().max(500),
 });
-app.post("/client-error", async (c) => {
+app.post("/client-error", perMinute(20), async (c) => {
 	const body = clientError.safeParse(await c.req.json().catch(() => null));
 	if (!body.success) return c.body(null, 400);
 	const { message, stack, path } = body.data;
@@ -70,7 +97,49 @@ app.post("/client-error", async (c) => {
 // Better Auth: sign-in, sessions, organizations, members, invitations, teams
 app.on(["GET", "POST"], "/auth/*", (c) => auth.handler(c.req.raw));
 
-app.on(["GET", "POST"], "/graphql", (c) => yoga.fetch(c.req.raw));
+// A change to GraphQL or media must come from the app itself: browsers always send Origin on such requests, so one
+// that's missing or foreign is another site (or a script) riding on the visitor's cookies. Sign-in has its own check.
+const sameSiteWrites = createMiddleware(async (c, next) => {
+	if (c.req.method === "GET" || c.req.method === "HEAD") return next();
+	if (!(await isTrustedOrigin(c.req.header("origin"))))
+		throw createError({
+			message: "This request didn't come from the app.",
+			status: 403,
+			why: "Changes are only accepted from the app's own pages.",
+		});
+	return next();
+});
+app.use("/graphql", sameSiteWrites);
+app.use("/media", sameSiteWrites);
+app.use("/media/*", sameSiteWrites);
+
+// generous for changes made in the app; tighter for starting uploads (each one is stored and processed)
+app.use(
+	"/graphql",
+	perMinute(
+		300,
+		// a rough look is enough: the word in a string only counts a query too
+		async (request) =>
+			request.method === "POST" &&
+			/\bmutation\b/.test(await request.clone().text()),
+	),
+);
+const mediaStart = perMinute(30, (request) => request.method === "POST");
+app.use("/media", mediaStart);
+app.use("/media/videos", mediaStart);
+
+app.on(["GET", "POST", "OPTIONS"], "/graphql", (c) => {
+	// a form post can't send JSON, so it can't run a mutation either
+	if (
+		c.req.method === "POST" &&
+		!c.req.header("content-type")?.toLowerCase().startsWith("application/json")
+	)
+		throw createError({
+			message: "Send GraphQL requests as JSON.",
+			status: 415,
+		});
+	return yoga.fetch(c.req.raw);
+});
 
 app.route("/media", media);
 

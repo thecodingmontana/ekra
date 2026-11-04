@@ -6,14 +6,14 @@ import { maxDepthPlugin } from "@escape.tech/graphql-armor-max-depth";
 import { asc, eq } from "drizzle-orm";
 import { identifyUser } from "evlog/better-auth";
 import { useLogger } from "evlog/hono";
-import { GraphQLError } from "graphql";
+import { GraphQLError, NoSchemaIntrospectionCustomRule } from "graphql";
 import {
 	createSchema,
 	createYoga,
 	type Plugin,
 	useErrorHandler,
 } from "graphql-yoga";
-import { auth, signInMethods } from "../auth/index.ts";
+import { auth, isTrustedOrigin, signInMethods } from "../auth/index.ts";
 import { db } from "../db.ts";
 import { env } from "../env.ts";
 import { announceChange, mutationSlugs } from "../realtime.ts";
@@ -179,6 +179,13 @@ const announceChanges: Plugin<GraphQLContext> = {
 	}),
 };
 
+/** In production the schema isn't handed out (no __schema or __type queries); __typename still works. */
+export const noIntrospection: Plugin = {
+	onValidate: ({ addValidationRule }) => {
+		addValidationRule(NoSchemaIntrospectionCustomRule);
+	},
+};
+
 /** A bug rather than an expected refusal: anything not thrown on purpose as a GraphQLError. */
 const isUnexpected = (error: GraphQLError) =>
 	!!error.originalError && !(error.originalError instanceof GraphQLError);
@@ -207,6 +214,7 @@ export const yoga = createYoga<object, GraphQLContext>({
 		maxDepthPlugin({ n: LIMITS.depth }),
 		costLimitPlugin({ maxCost: LIMITS.cost }),
 		announceChanges,
+		...(env.NODE_ENV === "production" ? [noIntrospection] : []),
 		useErrorHandler(({ errors }) => {
 			for (const error of errors)
 				if (error instanceof GraphQLError && isUnexpected(error)) {
@@ -218,6 +226,13 @@ export const yoga = createYoga<object, GraphQLContext>({
 				}
 		}),
 	],
+	// only the app and its organizations' subdomains may read responses with the visitor's cookies
+	cors: async (request) => {
+		const origin = request.headers.get("origin");
+		return origin && (await isTrustedOrigin(origin))
+			? { origin, credentials: true }
+			: false;
+	},
 	graphqlEndpoint: "/api/graphql",
 	graphiql: env.NODE_ENV !== "production",
 });
