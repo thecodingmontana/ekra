@@ -12,8 +12,8 @@
 		"test": "node --env-file-if-exists=../../.env --import ./src/test-env.ts src/test-migrate.ts && node --env-file-if-exists=../../.env --import ./src/test-env.ts --test \"src/**/*.test.ts\""
 	},
 	"dependencies": {
-		"@better-auth/oauth-provider": "1.7.14",
-		"@better-auth/passkey": "1.7.14",
+		"@better-auth/oauth-provider": "1.7.15",
+		"@better-auth/passkey": "1.7.15",
 		"@ekra/core": "workspace:*",
 		"@ekra/db": "workspace:*",
 		"@ekra/email": "workspace:*",
@@ -22,18 +22,18 @@
 		"@escape.tech/graphql-armor-cost-limit": "2.4.3",
 		"@escape.tech/graphql-armor-max-aliases": "2.6.2",
 		"@escape.tech/graphql-armor-max-depth": "2.4.2",
-		"@hono/node-server": "^2.1.5",
+		"@hono/node-server": "^2.1.6",
 		"@modelcontextprotocol/sdk": "~1.32.2",
 		"@t3-oss/env-core": "^0.13.11",
 		"@tanstack/ai": "^0.71.0",
 		"@tanstack/ai-openrouter": "^0.23.1",
 		"@tanstack/ai-persistence": "^0.10.1",
-		"better-auth": "1.7.14",
+		"better-auth": "1.7.15",
 		"drizzle-orm": "1.0.0-rc.5",
 		"evlog": "^2.34.0",
 		"graphql": "^16.10.0",
 		"graphql-yoga": "^6.0.1",
-		"hono": "^4.13.14",
+		"hono": "^4.13.16",
 		"zod": "^4.6.7"
 	},
 	"devDependencies": {
