@@ -49,6 +49,10 @@ function FullState({
 
 export function PageNotFound() {
 	const router = useRouter();
+	// a route that hides itself (notFound in beforeLoad) still sets its own title; don't name the hidden page
+	useEffect(() => {
+		document.title = "Page not found · Ekra";
+	}, []);
 	return (
 		<FullState
 			icon="icon-[solar--file-text-linear]"

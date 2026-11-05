@@ -47,6 +47,9 @@ export default defineConfig(async ({ mode }) => {
 				"qrcode.react",
 			],
 		},
+		// production server: bundle every package, so CommonJS ones (use-sync-external-store) don't require() a
+		// second React from node_modules at run time and break server rendering ("Invalid hook call")
+		ssr: mode === "production" ? { noExternal: true as const } : undefined,
 		plugins: [devtools(), nitro(), tailwindcss(), tanstackStart(), viteReact()],
 	};
 });
