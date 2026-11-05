@@ -381,6 +381,23 @@ Sign-in, sessions, organizations, members, roles, invitations and teams are hand
   over what changed, then `pnpm db:generate`.
 - **Ids** are 16-character nanoids (`generateId()` in `packages/db`), for Better Auth's tables too.
 
+### AI agents (MCP server)
+
+AI agents (Claude Code, Cursor, Codex, …) can sign in as a person over OAuth and use Ekra with exactly that
+person's role in each organization, through the MCP server at `/api/mcp` (Streamable HTTP). No extra variables:
+the address is `BETTER_AUTH_URL` + `/api/mcp`, always the app's own address (not an organization's subdomain).
+
+```bash
+claude mcp add --transport http ekra http://ekra.localhost:3000/api/mcp
+```
+
+Then run `/mcp` in Claude Code and pick **ekra**: a browser opens to sign in and approve the app. Other agents take
+the same address. Agents register themselves (`/api/auth/oauth2/register`); nothing is granted until the person
+approves it. Access tokens last 10 minutes; **Settings → Security → Connected apps → Disconnect** stops an app at
+once and ends its refresh tokens. The discovery documents are at `/.well-known/oauth-protected-resource` and
+`/.well-known/oauth-authorization-server`. Signing keys (RS256) are created on first use and stored in the `jwks`
+table, the private half encrypted with `BETTER_AUTH_SECRET`; tools are listed in `apps/server/src/mcp.ts`.
+
 ### Email (sign-in links, confirmations, password resets)
 
 Email goes through one small interface in `packages/email`, so you can use any provider. Pick it with

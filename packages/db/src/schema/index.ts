@@ -38,6 +38,16 @@ export {
 	enrollment,
 	enrollmentSource,
 } from "./enrollment.ts";
+export {
+	jwks,
+	oauthAccessToken,
+	oauthClient,
+	oauthClientAssertion,
+	oauthClientResource,
+	oauthConsent,
+	oauthRefreshToken,
+	oauthResource,
+} from "./oauth.ts";
 export { pathStage, pathStep } from "./path.ts";
 export {
 	questionKind,

@@ -12,6 +12,7 @@
 		"test": "node --env-file-if-exists=../../.env --import ./src/test-env.ts src/test-migrate.ts && node --env-file-if-exists=../../.env --import ./src/test-env.ts --test \"src/**/*.test.ts\""
 	},
 	"dependencies": {
+		"@better-auth/oauth-provider": "1.7.14",
 		"@better-auth/passkey": "1.7.14",
 		"@ekra/core": "workspace:*",
 		"@ekra/db": "workspace:*",
@@ -22,6 +23,7 @@
 		"@escape.tech/graphql-armor-max-aliases": "2.6.2",
 		"@escape.tech/graphql-armor-max-depth": "2.4.2",
 		"@hono/node-server": "^2.1.5",
+		"@modelcontextprotocol/sdk": "~1.32.2",
 		"@t3-oss/env-core": "^0.13.11",
 		"better-auth": "1.7.14",
 		"drizzle-orm": "1.0.0-rc.5",

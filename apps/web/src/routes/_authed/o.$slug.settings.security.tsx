@@ -1,12 +1,13 @@
-import { day } from "@ekra/core";
+import { ago, day } from "@ekra/core";
 import { Button } from "@ekra/ui/components/button";
 import { Field, FieldDescription, FieldLabel } from "@ekra/ui/components/field";
 import { Input } from "@ekra/ui/components/input";
+import { ConfirmModal } from "@ekra/ui/components/modal";
 import { Spinner } from "@ekra/ui/components/spinner";
 import { toast } from "@ekra/ui/lib/toast";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { QRCodeSVG } from "qrcode.react";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { SBlock, SettingsHeader } from "@/components/settings-ui";
 import { authClient, authErrorMessage } from "@/lib/auth-client";
 
@@ -24,6 +25,7 @@ function Security() {
 			/>
 			<AuthenticatorApp />
 			<Passkeys />
+			<ConnectedApps />
 		</>
 	);
 }
@@ -344,6 +346,101 @@ function Passkeys() {
 					Add a passkey
 				</Button>
 			</div>
+		</Section>
+	);
+}
+
+// the app's own address, not an organization's subdomain: agents' tokens are issued for this one
+const MCP_ADDRESS = `${new URL(__APP_URL__).origin}/api/mcp`;
+
+type ConnectedApp = { id: string; clientId: string; createdAt: string };
+
+/** AI agents (Claude Code, Cursor…) you let use Ekra as you, through /api/mcp. */
+function ConnectedApps() {
+	const [apps, setApps] = useState<(ConnectedApp & { name: string })[] | null>(
+		null,
+	);
+	const [leaving, setLeaving] = useState<
+		(ConnectedApp & { name: string }) | null
+	>(null);
+
+	const load = useCallback(async () => {
+		const res = await fetch("/api/auth/oauth2/get-consents");
+		const list = res.ok ? ((await res.json()) as ConnectedApp[]) : [];
+		// the name is whatever the app registered itself with
+		const named = await Promise.all(
+			list.map(async (app) => {
+				const r = await fetch(
+					`/api/auth/oauth2/public-client?client_id=${encodeURIComponent(app.clientId)}`,
+				);
+				const info = r.ok ? ((await r.json()) as { client_name?: string }) : {};
+				return { ...app, name: info.client_name?.trim() || "An app" };
+			}),
+		);
+		setApps(named);
+	}, []);
+	useEffect(() => {
+		void load();
+	}, [load]);
+
+	return (
+		<Section
+			title="Connected apps"
+			description="AI agents you let use Ekra as you, with your role in each organization. Disconnecting stops one at once."
+		>
+			{apps === null ? (
+				<FieldDescription className="flex items-center gap-2">
+					<Spinner className="size-3" /> Loading…
+				</FieldDescription>
+			) : apps.length === 0 ? (
+				<FieldDescription>No apps connected yet.</FieldDescription>
+			) : (
+				<ul className="divide-y rounded-lg border" data-testid="connected-apps">
+					{apps.map((app) => (
+						<li key={app.id} className="flex items-center gap-3 px-3 py-2.5">
+							<span
+								className="icon-[solar--plug-circle-linear] size-4 text-muted-foreground"
+								aria-hidden
+							/>
+							<div className="min-w-0 flex-1">
+								<div className="truncate text-sm">{app.name}</div>
+								<div className="text-muted-foreground text-xs">
+									Connected {ago(app.createdAt)}
+								</div>
+							</div>
+							<Button variant="ghost" size="sm" onClick={() => setLeaving(app)}>
+								Disconnect
+							</Button>
+						</li>
+					))}
+				</ul>
+			)}
+			<FieldDescription>
+				To connect an agent, give it this address:{" "}
+				<code className="rounded bg-muted px-1 py-0.5 text-foreground text-xs">
+					{MCP_ADDRESS}
+				</code>
+			</FieldDescription>
+			<ConfirmModal
+				open={!!leaving}
+				onOpenChange={(open) => !open && setLeaving(null)}
+				title={`Disconnect ${leaving?.name ?? "this app"}?`}
+				body={`${leaving?.name ?? "It"} stops working with Ekra right away. What it already did stays, as done by you. To use it again, connect it again and approve it.`}
+				ok="Disconnect"
+				danger
+				icon="icon-[solar--link-broken-linear]"
+				onConfirm={async () => {
+					if (!leaving) return;
+					const res = await fetch("/api/auth/oauth2/delete-consent", {
+						method: "POST",
+						headers: { "content-type": "application/json" },
+						body: JSON.stringify({ id: leaving.id }),
+					});
+					if (!res.ok) return void toast.error("Couldn't disconnect it.");
+					toast.success(`${leaving.name} disconnected`);
+					await load();
+				}}
+			/>
 		</Section>
 	);
 }

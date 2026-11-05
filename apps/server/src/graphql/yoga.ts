@@ -41,7 +41,7 @@ export type GraphQLContext = {
  */
 export const LIMITS = { aliases: 15, depth: 12, cost: 5000 };
 
-const schema = createSchema<GraphQLContext>({
+export const schema = createSchema<GraphQLContext>({
 	typeDefs: [
 		/* GraphQL */ `
 		type Query {
@@ -187,7 +187,7 @@ export const noIntrospection: Plugin = {
 };
 
 /** A bug rather than an expected refusal: anything not thrown on purpose as a GraphQLError. */
-const isUnexpected = (error: GraphQLError) =>
+export const isUnexpected = (error: GraphQLError) =>
 	!!error.originalError && !(error.originalError instanceof GraphQLError);
 
 export const yoga = createYoga<object, GraphQLContext>({

@@ -1,3 +1,4 @@
+import { oauthProvider } from "@better-auth/oauth-provider";
 import { passkey } from "@better-auth/passkey";
 import {
 	isImageSrc,
@@ -5,7 +6,14 @@ import {
 	passwordProblem,
 	slugProblem,
 } from "@ekra/core";
-import { generateId, member, schema } from "@ekra/db";
+import {
+	generateId,
+	member,
+	oauthAccessToken,
+	oauthConsent,
+	oauthRefreshToken,
+	schema,
+} from "@ekra/db";
 import {
 	invitationEmail,
 	resetPasswordEmail,
@@ -21,8 +29,8 @@ import {
 } from "better-auth/api";
 import { deleteSessionCookie } from "better-auth/cookies";
 import { generateRandomString } from "better-auth/crypto";
-import { magicLink, organization, twoFactor } from "better-auth/plugins";
-import { and, eq } from "drizzle-orm";
+import { jwt, magicLink, organization, twoFactor } from "better-auth/plugins";
+import { and, eq, isNull } from "drizzle-orm";
 import { db } from "../db.ts";
 import { mailer, sendInBackground } from "../email.ts";
 import { env } from "../env.ts";
@@ -106,6 +114,88 @@ async function roleIn(
 		)
 		.limit(1);
 	return row?.role ?? null;
+}
+
+/** Who signs agents' access tokens: the app's own address, where its sign-in lives. */
+export const AUTH_ISSUER = new URL(env.BETTER_AUTH_URL).origin;
+/** AI agents (MCP clients) get access tokens for this address, and use them only there. */
+export const MCP_RESOURCE = `${AUTH_ISSUER}/api/mcp`;
+/** What an agent can ask for: to act as you (offline_access: it stays connected between sessions). */
+export const MCP_SCOPES = ["profile", "email", "offline_access"];
+
+type AuthHookContext = Parameters<
+	Parameters<typeof createAuthMiddleware>[0]
+>[0];
+
+/**
+ * Disconnecting an agent (Settings → Security) deletes its approval, and /api/mcp refuses its access tokens from
+ * then on. Its refresh tokens would still mint new ones, so the agent would think it's connected and show no
+ * tools: end them too, and it asks to sign in again.
+ */
+async function endAgentTokens(ctx: AuthHookContext) {
+	const id = (ctx.body as { id?: unknown } | undefined)?.id;
+	const session = await getSessionFromCtx(ctx);
+	if (typeof id !== "string" || !session) return;
+	const [consent] = await db
+		.select({ clientId: oauthConsent.clientId })
+		.from(oauthConsent)
+		.where(
+			and(
+				eq(oauthConsent.id, id),
+				// only your own: nobody ends someone else's connection with a guessed id
+				eq(oauthConsent.userId, session.user.id),
+			),
+		);
+	if (!consent) return;
+	const mine = (table: typeof oauthRefreshToken | typeof oauthAccessToken) =>
+		and(
+			eq(table.userId, session.user.id),
+			eq(table.clientId, consent.clientId),
+			isNull(table.revoked),
+		);
+	const now = new Date();
+	await db
+		.update(oauthRefreshToken)
+		.set({ revoked: now })
+		.where(mine(oauthRefreshToken));
+	await db
+		.update(oauthAccessToken)
+		.set({ revoked: now })
+		.where(mine(oauthAccessToken));
+}
+
+const LOCAL_HOSTS = ["localhost", "127.0.0.1", "[::1]"];
+
+/**
+ * An agent on your computer registers as a public client with a local callback but rarely says it's a "native"
+ * app, and the plugin assumes "web", which forbids local callbacks. RFC 8252: a client with no secret whose
+ * callbacks are all on this machine is a native app, so say so for it (nothing else changes).
+ */
+function nativeClient(ctx: AuthHookContext) {
+	const body = ctx.body as
+		| {
+				application_type?: string;
+				token_endpoint_auth_method?: string;
+				redirect_uris?: unknown;
+		  }
+		| undefined;
+	if (
+		!body ||
+		body.application_type ||
+		body.token_endpoint_auth_method !== "none"
+	)
+		return;
+	const uris = Array.isArray(body.redirect_uris) ? body.redirect_uris : [];
+	const local = (uri: unknown) => {
+		try {
+			const { protocol, hostname } = new URL(String(uri));
+			return protocol === "http:" && LOCAL_HOSTS.includes(hostname);
+		} catch {
+			return false;
+		}
+	};
+	if (uris.length && uris.every(local))
+		return { context: { body: { ...body, application_type: "native" } } };
 }
 
 /** Sign-in methods that are switched on, so the sign-in page only offers those. */
@@ -200,6 +290,8 @@ export const auth = betterAuth({
 	hooks: {
 		// the same password rules the forms show (packages/core), so calling the API directly can't skip them
 		before: createAuthMiddleware(async (ctx) => {
+			if (ctx.path === "/oauth2/delete-consent") return endAgentTokens(ctx);
+			if (ctx.path === "/oauth2/register") return nativeClient(ctx);
 			if (ROSTER_PATHS.has(ctx.path)) {
 				const session = await getSessionFromCtx(ctx);
 				// signed out: Better Auth answers 401 itself
@@ -283,6 +375,28 @@ export const auth = betterAuth({
 				}
 			: {},
 	plugins: [
+		// the key pair that signs agents' access tokens (RS256, kept in the jwks table, private half encrypted)
+		jwt({
+			jwks: { keyPairConfig: { alg: "RS256", modulusLength: 2048 } },
+			jwt: { issuer: AUTH_ISSUER },
+			disableSettingJwtHeader: true,
+		}),
+		// AI agents (Claude Code, Cursor, Codex…) sign in as you over OAuth and then use Ekra through /api/mcp with
+		// your role in each organization. MCP clients register themselves, so registration is open; nothing is
+		// granted until you approve it on the consent page.
+		oauthProvider({
+			loginPage: "/oauth/signin",
+			consentPage: "/oauth/consent",
+			scopes: MCP_SCOPES,
+			allowDynamicClientRegistration: true,
+			allowUnauthenticatedClientRegistration: true,
+			clientRegistrationDefaultScopes: MCP_SCOPES,
+			// short-lived: /api/mcp also checks the approval still exists, so Disconnect is instant
+			resources: [
+				{ identifier: MCP_RESOURCE, name: "Ekra", accessTokenTtl: 600 },
+			],
+			clientRegistrationDefaultResources: [MCP_RESOURCE],
+		}),
 		// two-step sign-in with an authenticator app, plus single-use backup codes
 		twoFactor({
 			issuer: "Ekra",

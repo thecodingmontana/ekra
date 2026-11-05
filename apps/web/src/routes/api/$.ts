@@ -27,6 +27,12 @@ async function forward({ request }: { request: Request }): Promise<Response> {
 	headers.set("x-forwarded-proto", url.protocol.replace(":", ""));
 	// add who connected to us (the browser, or the operator's proxy), like any proxy does; the API trusts only
 	// TRUSTED_PROXIES in this chain, so a browser can't pick its own address to dodge sign-in rate limits
+	// Node's fetch always sends Sec-Fetch-Mode: cors, so pass on the browser's own (Better Auth answers a page
+	// load with a redirect but a script's request with JSON, e.g. when an AI agent's sign-in starts)
+	headers.set(
+		"x-forwarded-fetch-mode",
+		request.headers.get("sec-fetch-mode") ?? "none",
+	);
 	const peer = getRequestIP();
 	const chain = request.headers.get("x-forwarded-for");
 	if (peer) headers.set("x-forwarded-for", chain ? `${chain}, ${peer}` : peer);

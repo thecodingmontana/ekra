@@ -16,10 +16,14 @@ import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TwoFactorRouteImport } from './routes/two-factor'
+import { Route as DotwellKnownSplatRouteImport } from './routes/[.]well-known/$'
 import { Route as AuthedIndexRouteImport } from './routes/_authed/index'
 import { Route as AuthedOnboardingRouteImport } from './routes/_authed/onboarding'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
 import { Route as CertificatesIdRouteImport } from './routes/certificates.$id'
+import { Route as OauthApproveRouteImport } from './routes/oauth/approve'
+import { Route as OauthConsentRouteImport } from './routes/oauth/consent'
+import { Route as OauthSigninRouteImport } from './routes/oauth/signin'
 import { Route as AuthedInviteIdRouteImport } from './routes/_authed/invite.$id'
 import { Route as AuthedOSlugRouteImport } from './routes/_authed/o.$slug'
 import { Route as AuthedSettingsSplatRouteImport } from './routes/_authed/settings.$'
@@ -76,6 +80,11 @@ const TwoFactorRoute = TwoFactorRouteImport.update({
   path: '/two-factor',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DotwellKnownSplatRoute = DotwellKnownSplatRouteImport.update({
+  id: '/.well-known/$',
+  path: '/.well-known/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthedIndexRoute = AuthedIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -94,6 +103,21 @@ const ApiSplatRoute = ApiSplatRouteImport.update({
 const CertificatesIdRoute = CertificatesIdRouteImport.update({
   id: '/certificates/$id',
   path: '/certificates/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OauthApproveRoute = OauthApproveRouteImport.update({
+  id: '/oauth/approve',
+  path: '/oauth/approve',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OauthConsentRoute = OauthConsentRouteImport.update({
+  id: '/oauth/consent',
+  path: '/oauth/consent',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OauthSigninRoute = OauthSigninRouteImport.update({
+  id: '/oauth/signin',
+  path: '/oauth/signin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthedInviteIdRoute = AuthedInviteIdRouteImport.update({
@@ -222,9 +246,13 @@ export interface FileRoutesByFullPath {
   '/sign-up': typeof SignUpRoute
   '/terms': typeof TermsRoute
   '/two-factor': typeof TwoFactorRoute
+  '/.well-known/$': typeof DotwellKnownSplatRoute
   '/onboarding': typeof AuthedOnboardingRoute
   '/api/$': typeof ApiSplatRoute
   '/certificates/$id': typeof CertificatesIdRoute
+  '/oauth/approve': typeof OauthApproveRoute
+  '/oauth/consent': typeof OauthConsentRoute
+  '/oauth/signin': typeof OauthSigninRoute
   '/invite/$id': typeof AuthedInviteIdRoute
   '/o/$slug': typeof AuthedOSlugRouteWithChildren
   '/settings/$': typeof AuthedSettingsSplatRoute
@@ -254,9 +282,13 @@ export interface FileRoutesByTo {
   '/sign-up': typeof SignUpRoute
   '/terms': typeof TermsRoute
   '/two-factor': typeof TwoFactorRoute
+  '/.well-known/$': typeof DotwellKnownSplatRoute
   '/onboarding': typeof AuthedOnboardingRoute
   '/api/$': typeof ApiSplatRoute
   '/certificates/$id': typeof CertificatesIdRoute
+  '/oauth/approve': typeof OauthApproveRoute
+  '/oauth/consent': typeof OauthConsentRoute
+  '/oauth/signin': typeof OauthSigninRoute
   '/': typeof AuthedIndexRoute
   '/invite/$id': typeof AuthedInviteIdRoute
   '/settings/$': typeof AuthedSettingsSplatRoute
@@ -286,9 +318,13 @@ export interface FileRoutesById {
   '/sign-up': typeof SignUpRoute
   '/terms': typeof TermsRoute
   '/two-factor': typeof TwoFactorRoute
+  '/.well-known/$': typeof DotwellKnownSplatRoute
   '/_authed/onboarding': typeof AuthedOnboardingRoute
   '/api/$': typeof ApiSplatRoute
   '/certificates/$id': typeof CertificatesIdRoute
+  '/oauth/approve': typeof OauthApproveRoute
+  '/oauth/consent': typeof OauthConsentRoute
+  '/oauth/signin': typeof OauthSigninRoute
   '/_authed/': typeof AuthedIndexRoute
   '/_authed/invite/$id': typeof AuthedInviteIdRoute
   '/_authed/o/$slug': typeof AuthedOSlugRouteWithChildren
@@ -322,9 +358,13 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/terms'
     | '/two-factor'
+    | '/.well-known/$'
     | '/onboarding'
     | '/api/$'
     | '/certificates/$id'
+    | '/oauth/approve'
+    | '/oauth/consent'
+    | '/oauth/signin'
     | '/invite/$id'
     | '/o/$slug'
     | '/settings/$'
@@ -354,9 +394,13 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/terms'
     | '/two-factor'
+    | '/.well-known/$'
     | '/onboarding'
     | '/api/$'
     | '/certificates/$id'
+    | '/oauth/approve'
+    | '/oauth/consent'
+    | '/oauth/signin'
     | '/'
     | '/invite/$id'
     | '/settings/$'
@@ -385,9 +429,13 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/terms'
     | '/two-factor'
+    | '/.well-known/$'
     | '/_authed/onboarding'
     | '/api/$'
     | '/certificates/$id'
+    | '/oauth/approve'
+    | '/oauth/consent'
+    | '/oauth/signin'
     | '/_authed/'
     | '/_authed/invite/$id'
     | '/_authed/o/$slug'
@@ -420,8 +468,12 @@ export interface RootRouteChildren {
   SignUpRoute: typeof SignUpRoute
   TermsRoute: typeof TermsRoute
   TwoFactorRoute: typeof TwoFactorRoute
+  DotwellKnownSplatRoute: typeof DotwellKnownSplatRoute
   ApiSplatRoute: typeof ApiSplatRoute
   CertificatesIdRoute: typeof CertificatesIdRoute
+  OauthApproveRoute: typeof OauthApproveRoute
+  OauthConsentRoute: typeof OauthConsentRoute
+  OauthSigninRoute: typeof OauthSigninRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -475,6 +527,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TwoFactorRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/.well-known/$': {
+      id: '/.well-known/$'
+      path: '/.well-known/$'
+      fullPath: '/.well-known/$'
+      preLoaderRoute: typeof DotwellKnownSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authed/': {
       id: '/_authed/'
       path: '/'
@@ -501,6 +560,27 @@ declare module '@tanstack/react-router' {
       path: '/certificates/$id'
       fullPath: '/certificates/$id'
       preLoaderRoute: typeof CertificatesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/oauth/approve': {
+      id: '/oauth/approve'
+      path: '/oauth/approve'
+      fullPath: '/oauth/approve'
+      preLoaderRoute: typeof OauthApproveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/oauth/consent': {
+      id: '/oauth/consent'
+      path: '/oauth/consent'
+      fullPath: '/oauth/consent'
+      preLoaderRoute: typeof OauthConsentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/oauth/signin': {
+      id: '/oauth/signin'
+      path: '/oauth/signin'
+      fullPath: '/oauth/signin'
+      preLoaderRoute: typeof OauthSigninRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authed/invite/$id': {
@@ -745,8 +825,12 @@ const rootRouteChildren: RootRouteChildren = {
   SignUpRoute: SignUpRoute,
   TermsRoute: TermsRoute,
   TwoFactorRoute: TwoFactorRoute,
+  DotwellKnownSplatRoute: DotwellKnownSplatRoute,
   ApiSplatRoute: ApiSplatRoute,
   CertificatesIdRoute: CertificatesIdRoute,
+  OauthApproveRoute: OauthApproveRoute,
+  OauthConsentRoute: OauthConsentRoute,
+  OauthSigninRoute: OauthSigninRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

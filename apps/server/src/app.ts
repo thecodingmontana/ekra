@@ -1,3 +1,4 @@
+import { oauthProviderAuthServerMetadata } from "@better-auth/oauth-provider";
 import { certificate, organization } from "@ekra/db";
 import { eq } from "drizzle-orm";
 import { createError, EvlogError, parseError } from "evlog";
@@ -8,12 +9,19 @@ import { secureHeaders } from "hono/secure-headers";
 import { streamSSE } from "hono/streaming";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { z } from "zod";
-import { auth, isTrustedOrigin } from "./auth/index.ts";
+import {
+	AUTH_ISSUER,
+	auth,
+	isTrustedOrigin,
+	MCP_RESOURCE,
+	MCP_SCOPES,
+} from "./auth/index.ts";
 import { db } from "./db.ts";
 import { env } from "./env.ts";
 import { orgBySlug } from "./graphql/tenant.ts";
 import { yoga } from "./graphql/yoga.ts";
 import { requestLogs } from "./log.ts";
+import { mcpResponse } from "./mcp.ts";
 import { media } from "./media.ts";
 import { perMinute } from "./rate-limit.ts";
 import { onChange, trackStream } from "./realtime.ts";
@@ -94,8 +102,48 @@ app.post("/client-error", perMinute(20), async (c) => {
 	return c.body(null, 204);
 });
 
+/**
+ * The browser's Sec-Fetch-Mode as the web app's forwarder saw it (its own fetch replaces it with "cors"). Nothing
+ * is trusted from it: a client could send either header itself; it only picks a redirect or JSON.
+ */
+export function withFetchMode(request: Request) {
+	const mode = request.headers.get("x-forwarded-fetch-mode");
+	if (!mode) return request;
+	const headers = new Headers(request.headers);
+	headers.delete("x-forwarded-fetch-mode");
+	if (mode === "none") headers.delete("sec-fetch-mode");
+	else headers.set("sec-fetch-mode", mode);
+	return new Request(request, { headers });
+}
+
 // Better Auth: sign-in, sessions, organizations, members, invitations, teams
-app.on(["GET", "POST"], "/auth/*", (c) => auth.handler(c.req.raw));
+app.on(["GET", "POST"], "/auth/*", (c) =>
+	auth.handler(withFetchMode(c.req.raw)),
+);
+
+// How AI agents sign in to use /api/mcp; the web app serves these at its own /.well-known/ addresses
+const authServerMetadata = oauthProviderAuthServerMetadata(auth);
+app.get("/.well-known/oauth-authorization-server", (c) =>
+	authServerMetadata(c.req.raw),
+);
+// RFC 9728: /api/mcp is protected by Ekra's own sign-in (the OAuth issuer is the app itself)
+app.get("/.well-known/oauth-protected-resource", (c) => {
+	c.header("cache-control", "public, max-age=300");
+	c.header("access-control-allow-origin", "*");
+	return c.json({
+		resource: MCP_RESOURCE,
+		authorization_servers: [AUTH_ISSUER],
+		scopes_supported: MCP_SCOPES,
+		bearer_methods_supported: ["header"],
+		resource_name: "Ekra",
+	});
+});
+
+// Ekra for AI agents (MCP, Streamable HTTP, stateless). A bearer token only, never cookies: browsers don't send
+// one by themselves, so the Origin check below isn't needed here; the agent's own limit is per person.
+app.post("/mcp", mcpResponse);
+// no server-sent stream or sessions to resume: stateless
+app.on(["GET", "DELETE"], "/mcp", (c) => c.body(null, 405, { allow: "POST" }));
 
 // A change to GraphQL or media must come from the app itself: browsers always send Origin on such requests, so one
 // that's missing or foreign is another site (or a script) riding on the visitor's cookies. Sign-in has its own check.
