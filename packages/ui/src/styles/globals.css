@@ -232,3 +232,44 @@
 		animation: none;
 	}
 }
+
+/* the assistant's running step: its words shimmer */
+.ai-shim.on {
+	background:
+		linear-gradient(
+			90deg,
+			var(--muted-foreground) 0%,
+			var(--foreground) 45%,
+			var(--muted-foreground) 90%
+		)
+		0 0 / 200% 100%;
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+	animation: ai-shim 1.6s linear infinite;
+}
+@keyframes ai-shim {
+	to {
+		background-position: -200% 0;
+	}
+}
+/* the assistant's panel slides in from the right */
+@keyframes ai-drawer-in {
+	from {
+		transform: translateX(48px);
+		opacity: 0;
+	}
+}
+.ai-drawer-in {
+	animation: ai-drawer-in 0.34s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+	.ai-shim.on,
+	.ai-drawer-in {
+		animation: none;
+	}
+	.ai-shim.on {
+		color: var(--foreground);
+		background: none;
+	}
+}

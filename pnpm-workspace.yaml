@@ -5,3 +5,5 @@ packages:
 allowBuilds:
   # hooks are installed by the root "prepare" script instead
   lefthook: false
+  # its "prepare" script rebuilds the package from source; the published build is enough
+  "@openrouter/sdk": false

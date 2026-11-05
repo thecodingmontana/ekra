@@ -5,11 +5,44 @@ import {
 	Outlet,
 	redirect,
 	useLocation,
+	useParams,
 } from "@tanstack/react-router";
 import { createIsomorphicFn } from "@tanstack/react-start";
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
+import {
+	AssistantProvider,
+	useAssistant,
+} from "@/components/assistant/assistant-context";
 import { VIEWER, type Viewer } from "@/graphql/viewer";
+import { canManageContent } from "@/lib/members";
+
+// the chat (and its AI client) loads only once someone opens the assistant
+const AssistantPanel = lazy(() =>
+	import("@/components/assistant/assistant-panel").then((m) => ({
+		default: m.AssistantPanel,
+	})),
+);
+
+/** The assistant's panel for the organization on screen, while it's open. */
+function Assistant({ viewer }: { viewer: Viewer }) {
+	const { open } = useAssistant();
+	const slug = useParams({ strict: false, select: (p) => p.slug });
+	const membership = viewer.memberships.find(
+		(m) => m.organization.slug === slug,
+	);
+	if (!open || !membership) return null;
+	return (
+		<Suspense fallback={null}>
+			<AssistantPanel
+				slug={membership.organization.slug}
+				orgId={membership.organization.id}
+				userId={viewer.id}
+				manager={canManageContent(membership.role)}
+			/>
+		</Suspense>
+	);
+}
 
 /** Everything behind sign-in. Signed-out visitors go to /sign-in and come back here afterwards. */
 export const Route = createFileRoute("/_authed")({
@@ -89,49 +122,56 @@ function AuthedLayout() {
 		);
 
 	return (
-		<TooltipProvider>
-			<div
-				className={cn(
-					// the column width animates (drawer curve, 220ms)
-					"grid h-dvh transition-[grid-template-columns] duration-[220ms] ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none md:grid-cols-[var(--side-w)_minmax(0,1fr)]",
-					collapsed ? "[--side-w:52px]" : "[--side-w:248px]",
-				)}
-			>
-				{/* phones: the sidebar is a drawer over the page */}
-				{drawer && (
-					<button
-						type="button"
-						aria-label="Close menu"
-						className="fixed inset-0 z-40 bg-black/30 animate-in fade-in duration-150 md:hidden"
-						onClick={() => setDrawer(false)}
-					/>
-				)}
+		<AssistantProvider>
+			<TooltipProvider>
 				<div
 					className={cn(
-						"fixed inset-y-0 left-0 z-50 w-70 transition-transform duration-[220ms] ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none md:static md:w-auto md:translate-x-0 md:transition-none",
-						drawer ? "translate-x-0 shadow-2xl" : "-translate-x-full",
+						// the column width animates (drawer curve, 220ms)
+						"grid h-dvh transition-[grid-template-columns] duration-[220ms] ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none md:grid-cols-[var(--side-w)_minmax(0,1fr)]",
+						collapsed ? "[--side-w:52px]" : "[--side-w:248px]",
 					)}
 				>
-					<AppSidebar viewer={viewer} collapsed={collapsed} onToggle={toggle} />
-				</div>
-				<div className="flex min-h-0 min-w-0 flex-col overflow-y-auto">
-					<div className="flex items-center gap-2 border-b px-3 py-2 md:hidden">
+					{/* phones: the sidebar is a drawer over the page */}
+					{drawer && (
 						<button
 							type="button"
-							aria-label="Open menu"
-							className="grid size-8 place-items-center rounded-md hover:bg-muted"
-							onClick={() => setDrawer(true)}
-						>
-							<span
-								aria-hidden
-								className="icon-[solar--hamburger-menu-linear] size-5"
-							/>
-						</button>
-						<span className="font-semibold">Ekra</span>
+							aria-label="Close menu"
+							className="fixed inset-0 z-40 bg-black/30 animate-in fade-in duration-150 md:hidden"
+							onClick={() => setDrawer(false)}
+						/>
+					)}
+					<div
+						className={cn(
+							"fixed inset-y-0 left-0 z-50 w-70 transition-transform duration-[220ms] ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none md:static md:w-auto md:translate-x-0 md:transition-none",
+							drawer ? "translate-x-0 shadow-2xl" : "-translate-x-full",
+						)}
+					>
+						<AppSidebar
+							viewer={viewer}
+							collapsed={collapsed}
+							onToggle={toggle}
+						/>
 					</div>
-					<Outlet />
+					<div className="flex min-h-0 min-w-0 flex-col overflow-y-auto">
+						<div className="flex items-center gap-2 border-b px-3 py-2 md:hidden">
+							<button
+								type="button"
+								aria-label="Open menu"
+								className="grid size-8 place-items-center rounded-md hover:bg-muted"
+								onClick={() => setDrawer(true)}
+							>
+								<span
+									aria-hidden
+									className="icon-[solar--hamburger-menu-linear] size-5"
+								/>
+							</button>
+							<span className="font-semibold">Ekra</span>
+						</div>
+						<Outlet />
+					</div>
 				</div>
-			</div>
-		</TooltipProvider>
+				<Assistant viewer={viewer} />
+			</TooltipProvider>
+		</AssistantProvider>
 	);
 }

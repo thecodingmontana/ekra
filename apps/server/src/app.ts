@@ -9,6 +9,7 @@ import { secureHeaders } from "hono/secure-headers";
 import { streamSSE } from "hono/streaming";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { z } from "zod";
+import { assistant } from "./ai/chat.ts";
 import {
 	AUTH_ISSUER,
 	auth,
@@ -160,6 +161,7 @@ const sameSiteWrites = createMiddleware(async (c, next) => {
 app.use("/graphql", sameSiteWrites);
 app.use("/media", sameSiteWrites);
 app.use("/media/*", sameSiteWrites);
+app.use("/ai/*", sameSiteWrites);
 
 // generous for changes made in the app; tighter for starting uploads (each one is stored and processed)
 app.use(
@@ -190,6 +192,13 @@ app.on(["GET", "POST", "OPTIONS"], "/graphql", (c) => {
 });
 
 app.route("/media", media);
+
+// the built-in assistant (src/ai/chat.ts): its own daily limit per person, plus a per-address cap on messages
+app.use(
+	"/ai/chat",
+	perMinute(30, (request) => request.method === "POST"),
+);
+app.route("/ai", assistant);
 
 // A certificate's public check (its id is the code): who, for what, from which organization, when. No sign-in.
 app.get("/certificates/:id", async (c) => {

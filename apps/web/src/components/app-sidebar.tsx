@@ -15,6 +15,10 @@ import {
 import { cn } from "@ekra/ui/lib/utils";
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import { type ReactElement, type ReactNode, useEffect, useState } from "react";
+import {
+	ASSISTANT,
+	useAssistant,
+} from "@/components/assistant/assistant-context";
 import { OrgLogo } from "@/components/org-logo";
 import type { Viewer } from "@/graphql/viewer";
 import { canManageContent, mainRole, ROLE_LABEL } from "@/lib/members";
@@ -115,6 +119,7 @@ export function AppSidebar({
 }) {
 	const navigate = useNavigate();
 	const signOut = useSignOut();
+	const assistant = useAssistant();
 	// the organization in the address (/o/acme/…), or the session's one elsewhere
 	const { slug: urlSlug } = useParams({ strict: false });
 	const active =
@@ -285,6 +290,31 @@ export function AppSidebar({
 						</Link>
 					</SideTip>
 				))}
+				<SideTip
+					label={
+						<>
+							Ask {ASSISTANT} <Kbd>⌘J</Kbd>
+						</>
+					}
+					collapsed={collapsed}
+				>
+					<button
+						type="button"
+						onClick={assistant.toggle}
+						aria-pressed={assistant.open}
+						data-testid="nav-assistant"
+						className={cn(
+							item,
+							"aria-pressed:bg-background aria-pressed:font-medium aria-pressed:text-foreground aria-pressed:shadow-[0_1px_2px_rgba(0,0,0,0.05),0_0_0_1px_var(--border)] dark:aria-pressed:bg-muted dark:aria-pressed:shadow-none",
+						)}
+					>
+						<span
+							aria-hidden
+							className="icon-[hugeicons--ai-magic] size-4 shrink-0"
+						/>
+						<span className={fade}>Ask {ASSISTANT}</span>
+					</button>
+				</SideTip>
 			</div>
 
 			<div className="flex flex-col gap-0.5 border-t px-2 pt-1.5 pb-2">

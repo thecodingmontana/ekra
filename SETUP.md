@@ -203,6 +203,10 @@ openssl rand -hex 24
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`          | Optional. "Continue with Google" appears only when both are set (callback `<BETTER_AUTH_URL>/api/auth/callback/google`)                       |
 | `EMAIL_PROVIDER`                                    | `resend` (default) or `console`. See [Email](#email-sign-in-links-confirmations-password-resets)                                              |
 | `RESEND_API_KEY`, `EMAIL_FROM`                      | Resend API key and the sender address (`Ekra <noreply@your-domain.com>`)                                                                      |
+| `OPENROUTER_API_KEY`                                | Optional. The AI assistant's shared [OpenRouter](https://openrouter.ai/keys) key. Without it, only people who add their own key can use it    |
+| `AI_MODEL`                                          | Optional. Pin one OpenRouter model id; unset rotates free models                                                                              |
+| `AI_DAILY_LIMIT`                                    | Messages a person may send the assistant a day on the shared key (default 20); their own key isn't limited                                    |
+| `AI_KEYS_SECRET`                                    | Optional. Encrypts people's own AI keys (32+ characters); falls back to `BETTER_AUTH_SECRET`. Changing it makes saved keys unreadable         |
 
 Each app checks its variables when it starts (with [`@t3-oss/env-core`](https://env.t3.gg) and zod, in the app's
 `src/env.ts`). A missing or invalid value stops it with a message naming the variable.
@@ -396,7 +400,22 @@ the same address. Agents register themselves (`/api/auth/oauth2/register`); noth
 approves it. Access tokens last 10 minutes; **Settings → Security → Connected apps → Disconnect** stops an app at
 once and ends its refresh tokens. The discovery documents are at `/.well-known/oauth-protected-resource` and
 `/.well-known/oauth-authorization-server`. Signing keys (RS256) are created on first use and stored in the `jwks`
-table, the private half encrypted with `BETTER_AUTH_SECRET`; tools are listed in `apps/server/src/mcp.ts`.
+table, the private half encrypted with `BETTER_AUTH_SECRET`; the tools are defined in `packages/core/src/agent-tools.ts`
+(shared with the built-in assistant) and run by `apps/server/src/agent-tools.ts`.
+
+### AI assistant
+
+Ari, the built-in assistant, opens from the sidebar (**Ask Ari**) or with ⌘J / Ctrl+J. It runs on
+[OpenRouter](https://openrouter.ai): set `OPENROUTER_API_KEY` in `.env` and restart the API. Without a model pinned
+(`AI_MODEL`) it rotates OpenRouter's free models that can call tools, skipping one for a while when it's busy or
+failing (the state is in the `ai_model` table). Each person gets `AI_DAILY_LIMIT` messages a day on the shared key;
+a message that gets no answer isn't counted. Anyone can add their own OpenRouter key (and pick a model) in
+**Settings → AI assistant**; it's checked with OpenRouter, encrypted with `AI_KEYS_SECRET` and never shown again.
+
+It uses the same tools as the MCP server, as the signed-in person, so it sees and changes only what they could;
+every change (assign, unassign, create a draft, mark done) waits for their approval in the chat. Chats are saved
+per person per organization (`ai_chat`, `ai_message`, under row-level security). Each answer is one log event
+(model, duration, tools, errors), never the messages or keys.
 
 ### Email (sign-in links, confirmations, password resets)
 

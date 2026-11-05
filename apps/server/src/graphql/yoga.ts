@@ -17,6 +17,7 @@ import { auth, isTrustedOrigin, signInMethods } from "../auth/index.ts";
 import { db } from "../db.ts";
 import { env } from "../env.ts";
 import { announceChange, mutationSlugs } from "../realtime.ts";
+import { aiResolvers, aiTypeDefs } from "./ai.ts";
 import { certificateResolvers, certificateTypeDefs } from "./certificate.ts";
 import { courseResolvers, courseTypeDefs } from "./course.ts";
 import { enrollmentResolvers, enrollmentTypeDefs } from "./enrollment.ts";
@@ -101,6 +102,7 @@ export const schema = createSchema<GraphQLContext>({
 		certificateTypeDefs,
 		invitationTypeDefs,
 		reportTypeDefs,
+		aiTypeDefs,
 	],
 	resolvers: [
 		libraryResolvers,
@@ -111,6 +113,7 @@ export const schema = createSchema<GraphQLContext>({
 		certificateResolvers,
 		invitationResolvers,
 		reportResolvers,
+		aiResolvers,
 		{
 			Query: {
 				health: () => "ok",

@@ -1,3 +1,4 @@
+export { aiChat, aiKey, aiMessage, aiModel, aiUsage } from "./ai.ts";
 export {
 	account,
 	invitation,

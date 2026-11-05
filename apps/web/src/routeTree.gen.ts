@@ -35,6 +35,7 @@ import { Route as AuthedOSlugLibraryIdRouteImport } from './routes/_authed/o.$sl
 import { Route as AuthedOSlugReportsIndexRouteImport } from './routes/_authed/o.$slug.reports.index'
 import { Route as AuthedOSlugReportsContentRouteImport } from './routes/_authed/o.$slug.reports.content'
 import { Route as AuthedOSlugSettingsIndexRouteImport } from './routes/_authed/o.$slug.settings.index'
+import { Route as AuthedOSlugSettingsAiRouteImport } from './routes/_authed/o.$slug.settings.ai'
 import { Route as AuthedOSlugSettingsAppearanceRouteImport } from './routes/_authed/o.$slug.settings.appearance'
 import { Route as AuthedOSlugSettingsMembersRouteImport } from './routes/_authed/o.$slug.settings.members'
 import { Route as AuthedOSlugSettingsOrganizationRouteImport } from './routes/_authed/o.$slug.settings.organization'
@@ -177,6 +178,11 @@ const AuthedOSlugSettingsIndexRoute =
     path: '/',
     getParentRoute: () => AuthedOSlugSettingsRoute,
   } as any)
+const AuthedOSlugSettingsAiRoute = AuthedOSlugSettingsAiRouteImport.update({
+  id: '/ai',
+  path: '/ai',
+  getParentRoute: () => AuthedOSlugSettingsRoute,
+} as any)
 const AuthedOSlugSettingsAppearanceRoute =
   AuthedOSlugSettingsAppearanceRouteImport.update({
     id: '/appearance',
@@ -261,6 +267,7 @@ export interface FileRoutesByFullPath {
   '/o/$slug/': typeof AuthedOSlugIndexRoute
   '/o/$slug/library/$id': typeof AuthedOSlugLibraryIdRoute
   '/o/$slug/reports/content': typeof AuthedOSlugReportsContentRoute
+  '/o/$slug/settings/ai': typeof AuthedOSlugSettingsAiRoute
   '/o/$slug/settings/appearance': typeof AuthedOSlugSettingsAppearanceRoute
   '/o/$slug/settings/members': typeof AuthedOSlugSettingsMembersRoute
   '/o/$slug/settings/organization': typeof AuthedOSlugSettingsOrganizationRoute
@@ -295,6 +302,7 @@ export interface FileRoutesByTo {
   '/o/$slug': typeof AuthedOSlugIndexRoute
   '/o/$slug/library/$id': typeof AuthedOSlugLibraryIdRoute
   '/o/$slug/reports/content': typeof AuthedOSlugReportsContentRoute
+  '/o/$slug/settings/ai': typeof AuthedOSlugSettingsAiRoute
   '/o/$slug/settings/appearance': typeof AuthedOSlugSettingsAppearanceRoute
   '/o/$slug/settings/members': typeof AuthedOSlugSettingsMembersRoute
   '/o/$slug/settings/organization': typeof AuthedOSlugSettingsOrganizationRoute
@@ -334,6 +342,7 @@ export interface FileRoutesById {
   '/_authed/o/$slug/': typeof AuthedOSlugIndexRoute
   '/_authed/o/$slug/library/$id': typeof AuthedOSlugLibraryIdRoute
   '/_authed/o/$slug/reports/content': typeof AuthedOSlugReportsContentRoute
+  '/_authed/o/$slug/settings/ai': typeof AuthedOSlugSettingsAiRoute
   '/_authed/o/$slug/settings/appearance': typeof AuthedOSlugSettingsAppearanceRoute
   '/_authed/o/$slug/settings/members': typeof AuthedOSlugSettingsMembersRoute
   '/_authed/o/$slug/settings/organization': typeof AuthedOSlugSettingsOrganizationRoute
@@ -373,6 +382,7 @@ export interface FileRouteTypes {
     | '/o/$slug/'
     | '/o/$slug/library/$id'
     | '/o/$slug/reports/content'
+    | '/o/$slug/settings/ai'
     | '/o/$slug/settings/appearance'
     | '/o/$slug/settings/members'
     | '/o/$slug/settings/organization'
@@ -407,6 +417,7 @@ export interface FileRouteTypes {
     | '/o/$slug'
     | '/o/$slug/library/$id'
     | '/o/$slug/reports/content'
+    | '/o/$slug/settings/ai'
     | '/o/$slug/settings/appearance'
     | '/o/$slug/settings/members'
     | '/o/$slug/settings/organization'
@@ -445,6 +456,7 @@ export interface FileRouteTypes {
     | '/_authed/o/$slug/'
     | '/_authed/o/$slug/library/$id'
     | '/_authed/o/$slug/reports/content'
+    | '/_authed/o/$slug/settings/ai'
     | '/_authed/o/$slug/settings/appearance'
     | '/_authed/o/$slug/settings/members'
     | '/_authed/o/$slug/settings/organization'
@@ -660,6 +672,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedOSlugSettingsIndexRouteImport
       parentRoute: typeof AuthedOSlugSettingsRoute
     }
+    '/_authed/o/$slug/settings/ai': {
+      id: '/_authed/o/$slug/settings/ai'
+      path: '/ai'
+      fullPath: '/o/$slug/settings/ai'
+      preLoaderRoute: typeof AuthedOSlugSettingsAiRouteImport
+      parentRoute: typeof AuthedOSlugSettingsRoute
+    }
     '/_authed/o/$slug/settings/appearance': {
       id: '/_authed/o/$slug/settings/appearance'
       path: '/appearance'
@@ -749,6 +768,7 @@ const AuthedOSlugReportsRouteWithChildren =
   AuthedOSlugReportsRoute._addFileChildren(AuthedOSlugReportsRouteChildren)
 
 interface AuthedOSlugSettingsRouteChildren {
+  AuthedOSlugSettingsAiRoute: typeof AuthedOSlugSettingsAiRoute
   AuthedOSlugSettingsAppearanceRoute: typeof AuthedOSlugSettingsAppearanceRoute
   AuthedOSlugSettingsMembersRoute: typeof AuthedOSlugSettingsMembersRoute
   AuthedOSlugSettingsOrganizationRoute: typeof AuthedOSlugSettingsOrganizationRoute
@@ -759,6 +779,7 @@ interface AuthedOSlugSettingsRouteChildren {
 }
 
 const AuthedOSlugSettingsRouteChildren: AuthedOSlugSettingsRouteChildren = {
+  AuthedOSlugSettingsAiRoute: AuthedOSlugSettingsAiRoute,
   AuthedOSlugSettingsAppearanceRoute: AuthedOSlugSettingsAppearanceRoute,
   AuthedOSlugSettingsMembersRoute: AuthedOSlugSettingsMembersRoute,
   AuthedOSlugSettingsOrganizationRoute: AuthedOSlugSettingsOrganizationRoute,

@@ -6,6 +6,7 @@ export type SettingsPath =
 	| "/o/$slug/settings/appearance"
 	| "/o/$slug/settings/security"
 	| "/o/$slug/settings/sessions"
+	| "/o/$slug/settings/ai"
 	| "/o/$slug/settings/organization"
 	| "/o/$slug/settings/members";
 export type SettingsItem = {
@@ -43,6 +44,11 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
 				to: "/o/$slug/settings/sessions",
 				label: "Sessions",
 				icon: "icon-[solar--devices-linear]",
+			},
+			{
+				to: "/o/$slug/settings/ai",
+				label: "AI assistant",
+				icon: "icon-[hugeicons--ai-magic]",
 			},
 		],
 	},

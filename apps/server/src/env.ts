@@ -46,6 +46,14 @@ export const env = createEnv({
 		S3_BUCKET: z.string().min(3).default("ekra"),
 		S3_ACCESS_KEY: z.string().min(1),
 		S3_SECRET_KEY: z.string().min(1),
+		// the assistant: an OpenRouter key shared by everyone (without one, only people's own keys work)
+		OPENROUTER_API_KEY: z.string().trim().min(1).optional(),
+		// pin one OpenRouter model id; unset rotates free models
+		AI_MODEL: z.string().trim().min(1).max(160).optional(),
+		// messages a person may send a day on the shared key (their own key isn't limited)
+		AI_DAILY_LIMIT: z.coerce.number().int().min(1).max(10_000).default(20),
+		// encrypts people's own keys; falls back to BETTER_AUTH_SECRET. Changing it makes saved keys unreadable.
+		AI_KEYS_SECRET: z.string().min(32).optional(),
 	},
 	runtimeEnv: process.env,
 	// treat VAR= in .env as unset, so defaults apply

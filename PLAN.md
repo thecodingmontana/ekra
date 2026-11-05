@@ -270,6 +270,7 @@ The full feature reference (screens, recordings, checklist with status) is Trenn
 ### Phase 9 — AI (M)
 
 - **Action**: port `lib/ai`; writing assist in editor; quiz generation from page/transcript; pgvector semantic search over content + transcripts; learner chatbot grounded in enrolled content.
+- **Done**: MCP server for outside agents (EKR-10) and Ari, the built-in assistant on OpenRouter (EKR-46): free-model rotation, a daily limit per person on the shared key, bring-your-own OpenRouter key (encrypted per person), chats saved per person per organization under RLS, and the same tools as MCP with approval for every change.
 
 ### Phase 10 — Reports, portal, discussions (M)
 

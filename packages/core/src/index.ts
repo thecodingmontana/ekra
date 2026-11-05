@@ -1,4 +1,13 @@
 export {
+	AGENT_LIST_CAP,
+	AGENT_TOOLS,
+	AGENT_WRITE_TOOLS,
+	type AgentTool,
+	type AgentToolAccess,
+	type AgentToolArgs,
+	type AgentToolName,
+} from "./agent-tools.ts";
+export {
 	checkDoc,
 	DocError,
 	type DocNode,
